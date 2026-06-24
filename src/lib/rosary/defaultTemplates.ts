@@ -1,0 +1,187 @@
+import type { PrayerId, RosaryStep, RosaryTemplate } from "@/lib/rosary/types";
+
+const closingPrayerIds: PrayerId[] = [
+  "hail-holy-queen",
+  "closing-prayer",
+  "memorare",
+  "st-michael-prayer",
+];
+
+const standardSteps: RosaryStep[] = [
+  {
+    id: "standard-opening",
+    type: "section-heading",
+    title: "Opening Prayers",
+    text: "Begin at the crucifix and first beads.",
+    order: 10,
+    enabled: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-sign-of-cross",
+    type: "prayer",
+    title: "Sign of the Cross",
+    prayerId: "sign-of-the-cross",
+    order: 20,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-apostles-creed",
+    type: "prayer",
+    title: "Apostles' Creed",
+    prayerId: "apostles-creed",
+    order: 30,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-opening-our-father",
+    type: "prayer",
+    title: "Our Father",
+    prayerId: "our-father",
+    order: 40,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-opening-hail-mary",
+    type: "prayer",
+    title: "Three Hail Marys",
+    prayerId: "hail-mary",
+    repeat: 3,
+    order: 50,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-opening-glory-be",
+    type: "prayer",
+    title: "Glory Be",
+    prayerId: "glory-be",
+    order: 60,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-decades",
+    type: "decade",
+    title: "Five Decades",
+    text: "For each mystery: announce the mystery, pray the Our Father, ten Hail Marys, the Glory Be, and the Fatima Prayer.",
+    order: 70,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-closing",
+    type: "section-heading",
+    title: "Closing Prayers",
+    text: "Conclude the Rosary together.",
+    order: 80,
+    enabled: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-hail-holy-queen",
+    type: "prayer",
+    title: "Hail Holy Queen",
+    prayerId: "hail-holy-queen",
+    order: 90,
+    enabled: true,
+    defaultCollapsed: true,
+    optional: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-closing-prayer",
+    type: "prayer",
+    title: "Closing Prayer",
+    prayerId: "closing-prayer",
+    order: 100,
+    enabled: true,
+    defaultCollapsed: true,
+    optional: true,
+    cardEligible: true,
+  },
+  {
+    id: "standard-final-sign",
+    type: "prayer",
+    title: "Sign of the Cross",
+    prayerId: "sign-of-the-cross",
+    order: 110,
+    enabled: true,
+    defaultCollapsed: true,
+    cardEligible: true,
+  },
+];
+
+const leaderSteps: RosaryStep[] = [
+  ...standardSteps.slice(0, 1),
+  {
+    id: "leader-gather",
+    type: "leader-note",
+    title: "Gather and orient the group",
+    text: "Name the route, invite a shared intention, and explain that the group will respond together.",
+    order: 15,
+    enabled: true,
+    leaderOnly: true,
+    cardEligible: true,
+  } satisfies RosaryStep,
+  ...standardSteps.slice(1, 7),
+  {
+    id: "leader-crossings",
+    type: "leader-note",
+    title: "Outdoor pacing reminder",
+    text: "Pause before crossings and uneven ground. Keep the pace slow enough for prayer and safe walking.",
+    order: 72,
+    enabled: true,
+    leaderOnly: true,
+    cardEligible: true,
+  } satisfies RosaryStep,
+  ...standardSteps.slice(7),
+  {
+    id: "leader-closing-thanks",
+    type: "leader-note",
+    title: "Thank the group",
+    text: "After the final Sign of the Cross, thank participants and mention the next walk if one is scheduled.",
+    order: 115,
+    enabled: true,
+    leaderOnly: true,
+    cardEligible: true,
+  } satisfies RosaryStep,
+].sort((a, b) => a.order - b.order);
+
+export const rosaryTemplates: RosaryTemplate[] = [
+  {
+    id: "standard-rosary",
+    name: "Standard Rosary",
+    description: "A normal beginner-friendly five-decade Rosary structure.",
+    steps: standardSteps,
+    defaultMysterySetId: "joyful",
+    mysterySetMode: "today",
+    availableOptionalClosingPrayers: closingPrayerIds,
+  },
+  {
+    id: "rosary-walk-leader",
+    name: "Rosary Walk Leader Version",
+    description: "A standard Rosary with outdoor group leader notes and transitions.",
+    steps: leaderSteps,
+    defaultMysterySetId: "joyful",
+    mysterySetMode: "today",
+    availableOptionalClosingPrayers: closingPrayerIds,
+  },
+];
+
+export const rosaryTemplatesById = Object.fromEntries(
+  rosaryTemplates.map((template) => [template.id, template]),
+) as Record<string, RosaryTemplate>;
+
+export function getRosaryTemplate(templateId: string): RosaryTemplate {
+  return rosaryTemplatesById[templateId] ?? rosaryTemplates[0];
+}

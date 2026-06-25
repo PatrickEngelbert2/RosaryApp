@@ -75,6 +75,14 @@ $env:NO_OPEN="1"; npm start
 - `/printables` - Placeholder printable metadata
 - `/resources` - Beginner-friendly Rosary resources
 
+## Project And Contact
+
+Walk the Rosary is designed for individual prayer, parish groups, and outdoor rosary walks. The homepage focuses on the current core actions: praying a saved guide, building a guide, printing guide cards, leading a walk, and learning the prayers.
+
+For questions, corrections, or parish use, contact `patrickengelbert2@gmail.com`.
+
+Creator site: [patrickengelbert.com](https://patrickengelbert.com)
+
 ## Content And Architecture
 
 Long-form prayer and Rosary content should stay in structured files:

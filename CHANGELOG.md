@@ -12,10 +12,16 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Updated site metadata, browser tab title, README, changelog, AGENTS instructions, and public-facing copy.
 - Added a new original SVG favicon/icon concept for the Walk the Rosary brand.
 - Updated package metadata and manifest metadata for the new brand.
+- Tightened homepage spacing and focused the landing page around praying, building guides, printing guide cards, leading walks, and learning.
+- Replaced the generic homepage rhythm card with a Today's Rosary card powered by the existing mystery schedule helper.
+- Expanded the footer with useful navigation, contact information, creator attribution, and a permissions reminder.
+- Added dependency-free inline SVG icons to the homepage Explore cards.
+- Updated README project/contact details to match the polished public site.
 
 ### Fixed
 
 - Replaced remaining prototype/default branding where appropriate while keeping localStorage keys stable.
+- Removed placeholder printable language from the homepage Explore section.
 
 ## 0.3.0 - 2026-06-24
 

@@ -4,6 +4,8 @@ Walk the Rosary is a Catholic website for praying the Rosary, leading rosary wal
 
 The app is static and local-first. It has no backend, database, authentication, CMS, analytics, payments, or account layer.
 
+Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.vercel.app/)
+
 ## Core Features
 
 - Pray the Rosary from the website.
@@ -96,6 +98,12 @@ Long-form prayer and Rosary content should stay in structured files:
 Rosary transformation logic lives under `src/lib/rosary`. Pages should render structured data instead of hardcoding long prayer flows.
 
 Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. Existing localStorage keys intentionally remain stable to avoid breaking saved guides.
+
+## Guide Card Workflow
+
+Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates compact front/back pocket cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
+
+The print view at `/cards/print` uses browser print / Save as PDF with four cards per US Letter page. Persistence is still browser-local; no guide or card data is uploaded.
 
 ## Scripture Readings
 

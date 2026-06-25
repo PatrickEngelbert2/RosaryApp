@@ -21,6 +21,10 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added site-wide motion-aware interaction polish for buttons, navigation links, footer links, clickable cards, builder controls, guide card controls, and prayer page controls.
 - Added a subtle header brand hover interaction with lift, icon tilt, and accent underline.
 - Added reduced-motion support for the new interaction transitions.
+- Revamped the Guide Cards workflow to generate pocket guide cards from saved rosary guides instead of the confusing Master Card editor.
+- Added generated front/back card previews that reflect selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
+- Updated the print layout to render generated 4-up front/back cards while preserving variable card count printing and invisible blank slots for alignment.
+- Documented the current Vercel deployment and generated guide card workflow in the README.
 
 ### Fixed
 

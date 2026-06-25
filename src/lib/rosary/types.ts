@@ -207,3 +207,38 @@ export type RosaryCardSet = {
   cardSlots: CardSlot[];
   sourceRosaryConfigId?: string;
 };
+
+export type GuideCardSection = {
+  id: string;
+  heading: string;
+  lines: string[];
+  body?: string;
+  compact?: boolean;
+  leaderOnly?: boolean;
+};
+
+export type GuideCardSide = {
+  title: string;
+  subtitle?: string;
+  sections: GuideCardSection[];
+};
+
+export type GeneratedGuideCard = {
+  id: string;
+  cardNumber: number;
+  front: GuideCardSide;
+  back: GuideCardSide;
+};
+
+export type GeneratedGuideCardSet = {
+  id: string;
+  name: string;
+  sourceRosaryConfigId: string;
+  sourceRosaryConfigName: string;
+  cardCount: number;
+  mysterySetTitle: string;
+  mysterySetModeLabel: string;
+  generatedAt: string;
+  cards: GeneratedGuideCard[];
+  warnings: string[];
+};

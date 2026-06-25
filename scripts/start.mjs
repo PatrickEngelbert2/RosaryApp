@@ -40,7 +40,7 @@ if (shouldOpen) {
   setTimeout(() => openBrowser(url), openDelayMs);
 }
 
-console.log(`Starting Catholic Rosary Walks at ${url}`);
+console.log(`Starting Walk the Rosary at ${url}`);
 console.log("Set NO_OPEN=1 to start without opening a browser.");
 
 function stop() {

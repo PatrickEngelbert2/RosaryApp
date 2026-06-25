@@ -157,7 +157,7 @@ export function RosaryBuilder() {
       baseTemplateId: templateId,
       updatedAt: now,
       createdAt: config.createdAt || now,
-      name: config.name.trim() || "My Rosary Walk",
+      name: config.name.trim() || "My Walk the Rosary Guide",
     });
 
     saveRosaryConfig(savedConfig);
@@ -282,7 +282,7 @@ export function RosaryBuilder() {
               setConfig((current) => ({ ...current, name: event.target.value }))
             }
             className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
-            placeholder="My Rosary Walk"
+            placeholder="My Walk the Rosary Guide"
           />
 
           <fieldset className="mt-5">

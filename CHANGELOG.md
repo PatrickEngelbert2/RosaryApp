@@ -1,8 +1,21 @@
 # Changelog
 
-All notable changes to Catholic Rosary Walks are documented here.
+All notable changes to Walk the Rosary are documented here.
 
 This project is currently pre-1.0. Version dates use the local project timeline.
+
+## Unreleased
+
+### Changed
+
+- Rebranded the project to Walk the Rosary.
+- Updated site metadata, browser tab title, README, changelog, AGENTS instructions, and public-facing copy.
+- Added a new original SVG favicon/icon concept for the Walk the Rosary brand.
+- Updated package metadata and manifest metadata for the new brand.
+
+### Fixed
+
+- Replaced remaining prototype/default branding where appropriate while keeping localStorage keys stable.
 
 ## 0.3.0 - 2026-06-24
 
@@ -32,7 +45,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Replaced hardcoded closing-prayer rendering with saved configuration data.
 - Cleaned up custom prayer page spacing, controls, focus states, mystery presentation, and section dividers.
 - Updated localStorage handling to normalize older saved configuration shapes defensively.
-- Updated navigation and homepage copy around the Rosary Walk Toolkit flow.
+- Updated navigation and homepage copy around the prayer, guide, and card flow.
 
 ### Fixed
 
@@ -55,7 +68,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 ### Added
 
 - Added the Rosary Builder route at `/builder`.
-- Added structured Rosary templates for a Standard Rosary and Rosary Walk Leader Version.
+- Added structured Rosary templates for a Standard Rosary and walk leader guide.
 - Added localStorage persistence for custom Rosary configurations and printable card sets.
 - Added editable guide card content, card count controls, and print layout helpers.
 - Added reusable card, prayer, mystery, and builder components.
@@ -73,7 +86,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added static pages for:
   - Home
   - Pray the Rosary
-  - Lead a Rosary Walk
+  - Lead a Walk
   - Prayers
   - Mysteries
   - Printables

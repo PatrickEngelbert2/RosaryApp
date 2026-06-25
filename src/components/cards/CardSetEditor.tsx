@@ -62,7 +62,7 @@ export function CardSetEditor() {
     const next = ensureCardSlots({
       ...cardSet,
       updatedAt: new Date().toISOString(),
-      name: cardSet.name.trim() || "Rosary Walk Guide Cards",
+      name: cardSet.name.trim() || "Walk the Rosary Guide Cards",
     });
     saveCardSet(next);
     setCardSet(next);

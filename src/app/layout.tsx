@@ -3,10 +3,30 @@ import "./globals.css";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 
+const description =
+  "Walk the Rosary helps individuals and groups pray the Rosary, lead rosary walks, customize prayer guides, and print simple guide cards.";
+
 export const metadata: Metadata = {
-  title: "Catholic Rosary Walks",
-  description:
-    "A calm, beginner-friendly Catholic Rosary site for personal prayer and group rosary walks.",
+  applicationName: "Walk the Rosary",
+  title: {
+    default: "Walk the Rosary",
+    template: "%s | Walk the Rosary",
+  },
+  description,
+  icons: {
+    icon: "/favicon.svg",
+  },
+  openGraph: {
+    title: "Walk the Rosary",
+    description,
+    siteName: "Walk the Rosary",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Walk the Rosary",
+    description,
+  },
 };
 
 export const viewport: Viewport = {

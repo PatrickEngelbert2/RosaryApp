@@ -169,7 +169,7 @@ export const rosaryTemplates: RosaryTemplate[] = [
   },
   {
     id: "rosary-walk-leader",
-    name: "Rosary Walk Leader Version",
+    name: "Walk Leader Guide",
     description: "A standard Rosary with outdoor group leader notes and transitions.",
     steps: leaderSteps,
     defaultMysterySetId: "joyful",

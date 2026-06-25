@@ -2,7 +2,9 @@
 
 ## Project Purpose
 
-This is a Catholic Rosary website for helping people pray the Rosary individually and lead group rosary walks. Keep the experience reverent, calm, fast, readable, mobile-first, and beginner-friendly.
+This is Walk the Rosary, a Catholic Rosary website for helping people pray the Rosary individually and lead group rosary walks. Keep the experience reverent, calm, fast, readable, mobile-first, and beginner-friendly.
+
+`RosaryApp` may remain an internal local folder name. Public-facing UI, metadata, README, changelog, and browser surfaces should use the official brand name: Walk the Rosary.
 
 ## Technical Direction
 
@@ -36,3 +38,11 @@ This is a Catholic Rosary website for helping people pray the Rosary individuall
 - Use a warm light background, deep blue accents, generous spacing, simple cards and buttons, and high contrast text.
 - Avoid flashy animation or visual clutter.
 - Prioritize calm navigation and beginner-friendly labels.
+
+## Documentation Requirements
+
+- Update `CHANGELOG.md` for every meaningful feature, fix, polish pass, rebrand, or architecture change.
+- Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
+- Mention whether lint, build, and relevant tests were run in the final response.
+- Keep documentation professional and accurate.
+- Do not claim features are complete unless they were implemented and tested.

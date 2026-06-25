@@ -19,7 +19,7 @@ export function createDefaultUserConfigFromTemplate(
 
   return {
     id: createId("rosary-config"),
-    name: template.id === "rosary-walk-leader" ? "My Rosary Walk" : "My Rosary",
+    name: template.id === "rosary-walk-leader" ? "My Walk the Rosary Guide" : "My Rosary",
     baseTemplateId: template.id,
     createdAt: now,
     updatedAt: now,

@@ -3,7 +3,7 @@ import { createCardSlot, DEFAULT_CARD_COUNT } from "@/lib/rosary/cardUtils";
 import type { RosaryCardContent, RosaryCardSet, UserRosaryConfig } from "@/lib/rosary/types";
 
 export const defaultMasterCard: RosaryCardContent = {
-  title: "Rosary Walk Guide",
+  title: "Walk the Rosary Guide",
   subtitle: "Pray and walk together with Mary toward Christ",
   front: {
     heading: "How to follow",
@@ -59,7 +59,7 @@ export function createDefaultCardSetFromRosaryConfig(
 
   return {
     id: createId("card-set"),
-    name: config ? `${config.name} Guide Cards` : "Rosary Walk Guide Cards",
+    name: config ? `${config.name} Guide Cards` : "Walk the Rosary Guide Cards",
     createdAt: now,
     updatedAt: now,
     cardCount: DEFAULT_CARD_COUNT,
@@ -74,7 +74,7 @@ export function makeLeaderCardContent(content: RosaryCardContent): RosaryCardCon
 
   return {
     ...copy,
-    title: "Leader Rosary Walk Card",
+    title: "Walk the Rosary Leader Card",
     subtitle: "Prompts for leading the group outdoors",
     front: {
       ...copy.front,

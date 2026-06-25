@@ -1,17 +1,26 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Walk the Rosary | Pray, Lead, and Print Rosary Guides",
+  },
+  description:
+    "Walk the Rosary helps individuals and groups pray the Rosary, lead rosary walks, customize prayer guides, and print simple guide cards.",
+};
 
 const primaryLinks = [
   {
     href: "/builder",
-    title: "Build My Rosary",
-    description: "Choose a template, closing prayers, leader notes, and custom guidance.",
+    title: "Build a Guide",
+    description: "Choose mysteries, closing prayers, leader notes, and custom guidance.",
   },
   {
     href: "/pray/custom",
-    title: "Pray My Rosary",
-    description: "Follow your saved Rosary style with collapsible, readable prayers.",
+    title: "Pray",
+    description: "Follow a saved guide with collapsible, readable prayers.",
   },
   {
     href: "/cards",
@@ -25,7 +34,7 @@ const primaryLinks = [
   },
   {
     href: "/lead",
-    title: "Lead a Rosary Walk",
+    title: "Lead a Walk",
     description: "Use practical guidance for opening, pacing, transitions, and closing.",
   },
   {
@@ -56,20 +65,19 @@ export default function HomePage() {
       <section className="grid gap-8 py-8 md:grid-cols-[1.15fr_0.85fr] md:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
-            Catholic Rosary Walks
+            Walk the Rosary
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight text-blue-900 sm:text-5xl">
-            A calm guide for praying the Rosary, alone or walking with others.
+            Walk the Rosary with confidence.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-            Prepare a group rosary walk with less friction. Build your preferred
-            prayer order, follow it on your phone, and print simple guide cards
-            for leaders and participants.
+            Build a rosary guide, pray from your phone, and print simple cards
+            for your group.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button href="/builder">Build my Rosary</Button>
-            <Button href="/pray/custom" variant="secondary">
-              Pray my Rosary
+            <Button href="/pray/custom">Pray Now</Button>
+            <Button href="/builder" variant="secondary">
+              Build a Guide
             </Button>
           </div>
         </div>
@@ -81,12 +89,12 @@ export default function HomePage() {
           </p>
           <dl className="mt-6 grid gap-4 text-sm text-slate-700">
             <div>
-              <dt className="font-semibold text-blue-900">Website-first</dt>
-              <dd>Fast, readable pages using static local content.</dd>
+              <dt className="font-semibold text-blue-900">Pray simply</dt>
+              <dd>Readable prayer flows for phones and small groups.</dd>
             </div>
             <div>
-              <dt className="font-semibold text-blue-900">Walk-ready</dt>
-              <dd>Guidance that works for a parish path, sidewalk, or park.</dd>
+              <dt className="font-semibold text-blue-900">Print lightly</dt>
+              <dd>Make only the guide cards your group actually needs.</dd>
             </div>
           </dl>
         </Card>
@@ -94,7 +102,7 @@ export default function HomePage() {
 
       <section aria-labelledby="toolkit-flow" className="py-8">
         <h2 id="toolkit-flow" className="text-2xl font-bold text-blue-900">
-          Rosary Walk Toolkit
+          Pray, lead, and print
         </h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[

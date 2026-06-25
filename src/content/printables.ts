@@ -11,7 +11,7 @@ export const printables: PrintableResource[] = [
   },
   {
     id: "rosary-walk-leader-card",
-    title: "Rosary Walk Leader Card",
+    title: "Walk the Rosary Leader Card",
     description: "A quick outdoor leadership card with openings, transitions, and closing notes.",
     audience: "Group leaders",
     format: "PDF",

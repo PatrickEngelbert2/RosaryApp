@@ -9,6 +9,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 ## Core Features
 
 - Pray the Rosary from the website.
+- Create a saved guide quickly with the Easy Guide Builder wizard.
 - Build custom rosary guides.
 - Choose today's mysteries or manually select a mystery set.
 - Customize closing prayers.
@@ -68,7 +69,7 @@ $env:NO_OPEN="1"; npm start
 ## Important Routes
 
 - `/` - Home
-- `/builder` - Build and save a custom Rosary guide
+- `/builder` - Build and save a custom Rosary guide with the easy wizard or advanced builder
 - `/pray` - Static default Rosary flow
 - `/pray/custom` - Pray a saved custom Rosary
 - `/cards` - Build printable guide cards
@@ -100,6 +101,15 @@ Long-form prayer and Rosary content should stay in structured files:
 Rosary transformation logic lives under `src/lib/rosary`. Pages should render structured data instead of hardcoding long prayer flows.
 
 Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. Existing localStorage keys intentionally remain stable to avoid breaking saved guides.
+
+## Guide Building Workflow
+
+The Build a Guide page supports two paths:
+
+- Easy Guide Builder: a low-friction wizard for beginners who want to answer a few simple questions and get a usable saved guide.
+- Advanced Builder: the detailed editor for changing mysteries, closing prayers, saint invocations, custom guidance, leader notes, and preferences directly.
+
+Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by the advanced builder. Guides created in the wizard immediately work with `/pray/custom`, `/cards`, and `/cards/print`; no separate easy-guide format or backend is used.
 
 ## Guide Card Workflow
 

@@ -32,6 +32,12 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added guide-card layout orientation options for Pocket 4-up, Tall 3-up, Wide 3-up, Tall 2-up, Wide 2-up, and Full page 1-up printing.
 - Centralized guide-card layout definitions so print grid rows, columns, cards per page, labels, descriptions, and fit estimates share one configuration source.
 - Clarified that Number of cards needed controls generated card slots while browser print Copies controls duplicate printed sets.
+- Added the Easy Guide Builder wizard on the Build a Guide page for low-friction guide creation.
+- Added a beginner-friendly one-question-at-a-time flow for purpose, mysteries, help level, closing prayers, saint invocations, print intent, and guide name.
+- Added accessible info popovers for mysteries, closing prayers, full-prayer choices, saint invocations, and guide cards.
+- Added tasteful modal, progress, step, and option-card interactions with reduced-motion support.
+- Saved Easy Guide Builder output as normal rosary guide configs that work with custom prayer, guide cards, print cards, and advanced editing.
+- Linked completion actions to Pray this guide, Make guide cards, and Edit advanced settings.
 
 ### Fixed
 

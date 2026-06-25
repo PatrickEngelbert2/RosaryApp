@@ -156,6 +156,52 @@ a {
   box-shadow: 0 0 0 3px rgb(16 42 86 / 0.12);
 }
 
+@keyframes easy-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes easy-panel {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes easy-step {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-easy-fade {
+  animation: easy-fade 180ms ease-out;
+}
+
+.animate-easy-panel {
+  animation: easy-panel 220ms ease-out;
+}
+
+.animate-easy-step {
+  animation: easy-step 180ms ease-out;
+}
+
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .interactive-button:hover,
   .interactive-card-link:hover,
@@ -194,8 +240,12 @@ a {
   .interactive-brand,
   .interactive-brand .brand-mark,
   .interactive-brand .brand-title,
-  .interactive-field {
+  .interactive-field,
+  .animate-easy-fade,
+  .animate-easy-panel,
+  .animate-easy-step {
     transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
     transform: none !important;
   }
 }

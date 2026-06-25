@@ -112,7 +112,7 @@ export function CardSetEditor() {
               onChange={(event) =>
                 setCardSet((current) => ({ ...current, name: event.target.value }))
               }
-              className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
             />
           </div>
           <div>
@@ -123,7 +123,7 @@ export function CardSetEditor() {
               id="saved-card-set"
               value={cardSet.id}
               onChange={(event) => selectCardSet(event.target.value)}
-              className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
             >
               <option value={cardSet.id}>{cardSet.name}</option>
               {cardSets
@@ -147,7 +147,7 @@ export function CardSetEditor() {
           max={24}
           value={cardSet.cardCount}
           onChange={(event) => updateCardCount(Number(event.target.value))}
-          className="mt-2 w-full max-w-xs rounded-md border border-blue-900/20 px-3 py-3 text-base"
+          className="interactive-field mt-2 w-full max-w-xs rounded-md border border-blue-900/20 px-3 py-3 text-base"
         />
         <p className="mt-2 text-sm leading-6 text-slate-700">
           Cards print four per letter-size sheet. Only the selected number of cards will be visible.
@@ -177,7 +177,7 @@ export function CardSetEditor() {
           <button
             type="button"
             onClick={makeCardOneLeader}
-            className="rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
+            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Make Card 1 a leader card
           </button>
@@ -209,14 +209,14 @@ export function CardSetEditor() {
           <button
             type="button"
             onClick={saveCurrentCardSet}
-            className="rounded-md bg-blue-900 px-5 py-3 font-semibold text-white hover:bg-blue-800"
+            className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Save card set
           </button>
           <Link
             href="/cards/print"
             onClick={() => saveCardSet(ensureCardSlots(cardSet))}
-            className="inline-flex items-center justify-center rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900"
+            className="interactive-button interactive-button-secondary inline-flex items-center justify-center rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Print / Save as PDF
           </Link>

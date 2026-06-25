@@ -27,6 +27,179 @@ a {
   text-underline-offset: 0.2em;
 }
 
+.interactive-button,
+.interactive-link,
+.interactive-card-link,
+.interactive-nav-link,
+.interactive-brand {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    text-decoration-color 180ms ease,
+    transform 180ms ease;
+}
+
+.interactive-button,
+.interactive-card-link,
+.interactive-nav-link,
+.interactive-brand {
+  cursor: pointer;
+}
+
+.interactive-button {
+  box-shadow: 0 1px 2px rgb(16 42 86 / 0.08);
+}
+
+.interactive-button-primary:hover {
+  background-color: #153b75;
+  box-shadow: 0 10px 22px rgb(16 42 86 / 0.16);
+}
+
+.interactive-button-secondary:hover {
+  border-color: rgb(16 42 86 / 0.38);
+  background-color: #fffaf0;
+  box-shadow: 0 8px 18px rgb(16 42 86 / 0.1);
+}
+
+.interactive-link {
+  text-decoration-color: rgb(185 137 40 / 0.35);
+}
+
+.interactive-link:hover {
+  color: #153b75;
+  text-decoration-color: #b98928;
+}
+
+.interactive-nav-link {
+  position: relative;
+}
+
+.interactive-nav-link::after {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.25rem;
+  left: 0.75rem;
+  height: 2px;
+  content: "";
+  border-radius: 999px;
+  background: #b98928;
+  opacity: 0;
+  transform: scaleX(0.35);
+  transform-origin: center;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.interactive-nav-link:hover,
+.interactive-nav-link:focus-visible {
+  background-color: rgb(255 255 255 / 0.78);
+  color: #153b75;
+}
+
+.interactive-nav-link:hover::after,
+.interactive-nav-link:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.interactive-brand .brand-mark {
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.interactive-brand .brand-title {
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.24em;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease;
+}
+
+.interactive-brand:hover .brand-mark,
+.interactive-brand:focus-visible .brand-mark {
+  box-shadow: 0 8px 18px rgb(16 42 86 / 0.18);
+}
+
+.interactive-brand:hover .brand-title,
+.interactive-brand:focus-visible .brand-title {
+  color: #153b75;
+  text-decoration-color: #b98928;
+}
+
+.interactive-card-link:hover {
+  border-color: rgb(16 42 86 / 0.55);
+  box-shadow: 0 12px 24px rgb(16 42 86 / 0.12);
+}
+
+.interactive-card-link:hover .card-link-icon {
+  color: #153b75;
+  background-color: rgb(185 137 40 / 0.13);
+}
+
+.interactive-field {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.interactive-field:focus,
+.interactive-field:focus-visible {
+  outline: none;
+  border-color: rgb(16 42 86 / 0.5);
+  box-shadow: 0 0 0 3px rgb(16 42 86 / 0.12);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .interactive-button:hover,
+  .interactive-card-link:hover,
+  .interactive-brand:hover {
+    transform: translateY(-1px);
+  }
+
+  .interactive-button:active,
+  .interactive-card-link:active,
+  .interactive-brand:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .interactive-brand:hover .brand-mark {
+    transform: rotate(-4deg) scale(1.04);
+  }
+
+  .interactive-card-link:hover .card-link-icon {
+    transform: translateY(-1px) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .interactive-button,
+  .interactive-link,
+  .interactive-card-link,
+  .interactive-card-link .card-link-icon,
+  .interactive-nav-link,
+  .interactive-nav-link::after,
+  .interactive-brand,
+  .interactive-brand .brand-mark,
+  .interactive-brand .brand-title,
+  .interactive-field {
+    transition-duration: 1ms !important;
+    transform: none !important;
+  }
+}
+
 .print-document {
   background: white;
 }

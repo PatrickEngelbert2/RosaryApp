@@ -4,10 +4,10 @@ export function Logo() {
   return (
     <Link
       href="/"
-      className="inline-flex items-center gap-3 text-xl font-bold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+      className="interactive-brand inline-flex items-center gap-3 rounded-md text-xl font-bold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
       aria-label="Walk the Rosary home"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900" aria-hidden="true">
+      <span className="brand-mark flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900" aria-hidden="true">
         <svg viewBox="0 0 64 64" className="h-7 w-7">
           <path
             d="M17 39c7-16 20-20 32-15"
@@ -28,7 +28,7 @@ export function Logo() {
           />
         </svg>
       </span>
-      <span>Walk the Rosary</span>
+      <span className="brand-title">Walk the Rosary</span>
     </Link>
   );
 }

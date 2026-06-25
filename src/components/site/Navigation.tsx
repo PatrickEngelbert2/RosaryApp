@@ -12,12 +12,12 @@ const navItems = [
 export function Navigation() {
   return (
     <nav aria-label="Main navigation">
-      <ul className="flex flex-wrap gap-2">
+      <ul className="flex flex-wrap gap-x-2 gap-y-1">
         {navItems.map((item) => (
           <li key={item.href}>
             <Link
               href={item.href}
-              className="inline-flex rounded-full px-3 py-2 text-sm font-medium text-blue-900 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+              className="interactive-nav-link inline-flex rounded-full px-3 py-1.5 text-sm font-medium text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
             >
               {item.label}
             </Link>

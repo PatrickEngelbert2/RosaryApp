@@ -148,7 +148,7 @@ export function PrayRosaryClient() {
               id="saved-rosary"
               value={selectedConfigId}
               onChange={(event) => selectConfig(event.target.value)}
-              className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-2.5 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-2.5 text-base"
             >
               {configs.length === 0 ? <option value="default">Default Standard Rosary</option> : null}
               {configs.map((config) => (
@@ -160,7 +160,7 @@ export function PrayRosaryClient() {
             {configs.length === 0 ? (
               <p className="mt-3 text-sm leading-6 text-slate-700">
                 No saved Rosary styles yet. You can pray the default or{" "}
-                <Link className="font-semibold text-blue-900 underline" href="/builder">
+                <Link className="interactive-link font-semibold text-blue-900 underline" href="/builder">
                   build your own
                 </Link>
                 .
@@ -168,7 +168,7 @@ export function PrayRosaryClient() {
             ) : null}
             {configs.length > 0 ? (
               <details className="mt-3 text-sm">
-                <summary className="cursor-pointer font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50">
+                <summary className="interactive-link cursor-pointer rounded-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50">
                   Manage saved guides
                 </summary>
                 <ul className="mt-2 space-y-2">
@@ -178,7 +178,7 @@ export function PrayRosaryClient() {
                       <button
                         type="button"
                         onClick={() => deleteGuide(config.id)}
-                        className="font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+                        className="interactive-link font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                       >
                         Delete
                       </button>
@@ -192,14 +192,14 @@ export function PrayRosaryClient() {
             <button
               type="button"
               onClick={handleExpandAll}
-              className="rounded-full border border-blue-900/20 bg-white px-3 py-2 text-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+              className="interactive-button interactive-button-secondary rounded-full border border-blue-900/20 bg-white px-3 py-2 text-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
             >
               Expand all
             </button>
             <button
               type="button"
               onClick={handleCollapseAll}
-              className="rounded-full border border-blue-900/20 bg-white px-3 py-2 text-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+              className="interactive-button interactive-button-secondary rounded-full border border-blue-900/20 bg-white px-3 py-2 text-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
             >
               Collapse all
             </button>

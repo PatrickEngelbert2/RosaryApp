@@ -1,15 +1,20 @@
-import type { GuideCardSection, GuideCardSide } from "@/lib/rosary/types";
+import type { GuideCardBlock, GuideCardSide, GuideCardSize } from "@/lib/rosary/types";
 
 type GeneratedGuideCardPreviewProps = {
-  front: GuideCardSide;
-  back: GuideCardSide;
+  sides: GuideCardSide[];
+  cardSize: GuideCardSize;
 };
 
-export function GeneratedGuideCardPreview({ front, back }: GeneratedGuideCardPreviewProps) {
+export function GeneratedGuideCardPreview({ sides, cardSize }: GeneratedGuideCardPreviewProps) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <GeneratedGuideCardSide side={front} label="Front side preview" />
-      <GeneratedGuideCardSide side={back} label="Back side preview" />
+    <div className={cardSize === "pocket" ? "grid gap-4 lg:grid-cols-2" : "grid gap-4"}>
+      {sides.map((side, index) => (
+        <GeneratedGuideCardSide
+          key={side.id}
+          side={side}
+          label={index === 0 ? "Preview: Front" : index === 1 ? "Preview: Back" : `Preview: Extra side ${index - 1}`}
+        />
+      ))}
     </div>
   );
 }
@@ -27,24 +32,35 @@ export function GeneratedGuideCardSide({
       <h2 className="mt-2 text-xl font-bold text-blue-900">{side.title}</h2>
       {side.subtitle ? <p className="text-sm leading-6 text-slate-700">{side.subtitle}</p> : null}
       <div className="mt-4 space-y-3">
-        {side.sections.map((section) => (
-          <GeneratedGuideCardSection key={section.id} section={section} />
+        {side.blocks.map((block) => (
+          <GeneratedGuideCardBlock key={block.id} block={block} />
         ))}
       </div>
+      {side.overflowWarnings?.map((warning) => (
+        <p key={warning} className="mt-3 rounded-md bg-cream-100 px-3 py-2 text-xs font-medium text-slate-700">
+          {warning}
+        </p>
+      ))}
     </article>
   );
 }
 
-function GeneratedGuideCardSection({ section }: { section: GuideCardSection }) {
+function GeneratedGuideCardBlock({ block }: { block: GuideCardBlock }) {
+  if (block.type === "heading") {
+    return <h3 className="text-sm font-semibold text-blue-900">{block.heading}</h3>;
+  }
+
   return (
-    <section className={section.leaderOnly ? "border-l-4 border-gold-500 pl-3" : ""}>
-      <h3 className="text-sm font-semibold text-blue-900">{section.heading}</h3>
-      {section.body ? (
-        <p className="mt-1 text-sm leading-6 text-slate-700">{section.body}</p>
+    <section className={block.leaderOnly ? "border-l-4 border-gold-500 pl-3" : ""}>
+      {block.heading ? <h3 className="text-sm font-semibold text-blue-900">{block.heading}</h3> : null}
+      {block.body ? (
+        <p className={`mt-1 whitespace-pre-line text-slate-700 ${block.compact ? "text-xs leading-5" : "text-sm leading-6"}`}>
+          {block.body}
+        </p>
       ) : null}
-      {section.lines.length > 0 ? (
-        <ul className={`mt-1 space-y-1 text-slate-700 ${section.compact ? "text-xs leading-5" : "text-sm leading-6"}`}>
-          {section.lines.map((line) => (
+      {block.lines && block.lines.length > 0 ? (
+        <ul className={`mt-1 space-y-1 text-slate-700 ${block.compact ? "text-xs leading-5" : "text-sm leading-6"}`}>
+          {block.lines.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>

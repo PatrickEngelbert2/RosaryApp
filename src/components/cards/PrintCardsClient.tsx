@@ -3,31 +3,38 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PrintCardPage } from "@/components/cards/PrintCardPage";
-import { clampCardCount } from "@/lib/rosary/cardUtils";
+import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import {
   chunkCardsForPrint,
   createDefaultGeneratedGuideConfig,
   generateGuideCardsFromConfig,
 } from "@/lib/rosary/generateGuideCards";
-import { getActiveRosaryConfig, getSavedRosaryConfigs } from "@/lib/rosary/storage";
-import type { UserRosaryConfig } from "@/lib/rosary/types";
+import {
+  getActiveRosaryConfig,
+  getGuideCardLayoutOptions,
+  getGuideCardSelectedGuideId,
+  getSavedRosaryConfigs,
+} from "@/lib/rosary/storage";
+import type { GuideCardLayoutOptions, UserRosaryConfig } from "@/lib/rosary/types";
 
 const DEFAULT_GUIDE_ID = "default-guide";
 
 export function PrintCardsClient() {
   const [guide, setGuide] = useState<UserRosaryConfig>(() => createDefaultGeneratedGuideConfig());
-  const [cardCount, setCardCount] = useState(4);
+  const [layoutOptions, setLayoutOptions] = useState<GuideCardLayoutOptions>(() =>
+    normalizeGuideCardLayoutOptions({}),
+  );
   const [usedFallback, setUsedFallback] = useState(true);
 
   useEffect(() => {
     queueMicrotask(() => {
       const params = new URLSearchParams(window.location.search);
-      const guideId = params.get("guide");
-      const count = clampCardCount(Number(params.get("count") ?? 4));
       const savedGuides = getSavedRosaryConfigs();
+      const storedOptions = getGuideCardLayoutOptions();
+      const guideId = params.get("guide") ?? getGuideCardSelectedGuideId();
       const wantsDefaultGuide = guideId === DEFAULT_GUIDE_ID;
 
-      setCardCount(count);
+      setLayoutOptions(storedOptions);
 
       if (wantsDefaultGuide) {
         setGuide(createDefaultGeneratedGuideConfig());
@@ -52,13 +59,15 @@ export function PrintCardsClient() {
   }, []);
 
   const generatedCardSet = useMemo(
-    () => generateGuideCardsFromConfig(guide, cardCount),
-    [cardCount, guide],
+    () => generateGuideCardsFromConfig(guide, layoutOptions),
+    [guide, layoutOptions],
   );
   const printGroups = useMemo(
-    () => chunkCardsForPrint(generatedCardSet.cards),
-    [generatedCardSet.cards],
+    () => chunkCardsForPrint(generatedCardSet.cards, generatedCardSet.cardsPerPage),
+    [generatedCardSet.cards, generatedCardSet.cardsPerPage],
   );
+  const extraSideCount = generatedCardSet.cards[0]?.extraSides?.length ?? 0;
+  const cardSizeLabel = generatedCardSet.layoutOptions.cardSize.replace("-", " ");
 
   return (
     <>
@@ -71,18 +80,26 @@ export function PrintCardsClient() {
             {generatedCardSet.sourceRosaryConfigName}
           </h1>
           <p className="mt-3 leading-7 text-slate-700">
-            This print view renders {generatedCardSet.cardCount} generated pocket{" "}
+            This print view renders {generatedCardSet.cardCount} generated {cardSizeLabel}{" "}
             {generatedCardSet.cardCount === 1 ? "card" : "cards"} from the selected guide. Use
             your browser print dialog to print or save as PDF. For double-sided printing, try flip
             on long edge first; if backs are upside down, try flip on short edge.
           </p>
           <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
-            {generatedCardSet.mysterySetTitle} - front and back pages preserve matching grid slots.
+            {generatedCardSet.mysterySetTitle} - {generatedCardSet.cardsPerPage} per page with
+            matching front/back grid slots.
           </p>
           {usedFallback ? (
             <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
               No saved guide was found, so this page is showing a default generated guide.
             </p>
+          ) : null}
+          {generatedCardSet.warnings.length > 0 ? (
+            <div className="mt-3 space-y-2 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
+              {generatedCardSet.warnings.map((warning) => (
+                <p key={warning}>{warning}</p>
+              ))}
+            </div>
           ) : null}
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button
@@ -109,12 +126,27 @@ export function PrintCardsClient() {
               cards={cards}
               side="front"
               pageLabel={`Sheet ${index + 1} fronts`}
+              cardsPerPage={generatedCardSet.cardsPerPage}
+              cardSize={generatedCardSet.layoutOptions.cardSize}
             />
             <PrintCardPage
               cards={cards}
               side="back"
               pageLabel={`Sheet ${index + 1} backs`}
+              cardsPerPage={generatedCardSet.cardsPerPage}
+              cardSize={generatedCardSet.layoutOptions.cardSize}
             />
+            {Array.from({ length: extraSideCount }, (_, extraIndex) => (
+              <PrintCardPage
+                key={`extra-${extraIndex}`}
+                cards={cards}
+                side="back"
+                extraSideIndex={extraIndex}
+                pageLabel={`Sheet ${index + 1} extra side ${extraIndex + 1}`}
+                cardsPerPage={generatedCardSet.cardsPerPage}
+                cardSize={generatedCardSet.layoutOptions.cardSize}
+              />
+            ))}
           </div>
         ))}
       </div>

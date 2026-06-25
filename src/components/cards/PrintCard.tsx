@@ -1,33 +1,53 @@
-import type { GeneratedGuideCard, GuideCardSection, GuideCardSide } from "@/lib/rosary/types";
+import type {
+  GeneratedGuideCard,
+  GuideCardBlock,
+  GuideCardSide,
+  GuideCardSize,
+} from "@/lib/rosary/types";
 
 type PrintCardProps = {
   card: GeneratedGuideCard;
   side: "front" | "back";
+  extraSideIndex?: number;
 };
 
-export function PrintCard({ card, side }: PrintCardProps) {
-  const cardSide: GuideCardSide = card[side];
+export function PrintCard({ card, side, extraSideIndex }: PrintCardProps) {
+  const cardSide: GuideCardSide =
+    typeof extraSideIndex === "number" ? card.extraSides?.[extraSideIndex] ?? card.back : card[side];
 
   return (
-    <article className="print-card">
-      <p className="print-card-number">Card {card.cardNumber}</p>
+    <article className={`print-card print-card-${card.layoutOptions.cardSize}`}>
       <h2>{cardSide.title}</h2>
       {cardSide.subtitle ? <p className="print-card-subtitle">{cardSide.subtitle}</p> : null}
-      {cardSide.sections.map((section) => (
-        <PrintCardSection key={section.id} section={section} />
+      {cardSide.blocks.map((block) => (
+        <PrintCardBlock key={block.id} block={block} cardSize={card.layoutOptions.cardSize} />
       ))}
     </article>
   );
 }
 
-function PrintCardSection({ section }: { section: GuideCardSection }) {
+function PrintCardBlock({
+  block,
+  cardSize,
+}: {
+  block: GuideCardBlock;
+  cardSize: GuideCardSize;
+}) {
+  if (block.type === "heading") {
+    return <h3>{block.heading}</h3>;
+  }
+
   return (
-    <section className={section.leaderOnly ? "leader-section" : undefined}>
-      <h3>{section.heading}</h3>
-      {section.body ? <p className={section.compact ? "compact" : undefined}>{section.body}</p> : null}
-      {section.lines.length > 0 ? (
-        <ul className={section.compact ? "compact" : undefined}>
-          {section.lines.map((line) => (
+    <section className={block.leaderOnly ? "leader-section" : undefined}>
+      {block.heading ? <h3>{block.heading}</h3> : null}
+      {block.body ? (
+        <p className={`${block.compact ? "compact" : ""} ${cardSize === "full-page" ? "full-page-prayer" : ""}`.trim()}>
+          {block.body}
+        </p>
+      ) : null}
+      {block.lines && block.lines.length > 0 ? (
+        <ul className={block.compact ? "compact" : undefined}>
+          {block.lines.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>

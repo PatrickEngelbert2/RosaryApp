@@ -11,8 +11,8 @@ export default function CardsPage() {
           Guide Cards
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-700">
-          Choose a saved rosary guide and print simple pocket cards for your group. The cards are
-          generated from the prayers, mysteries, and options in the selected guide.
+          Choose a saved rosary guide, card size, and prayer text options for your group. The
+          cards are generated from the prayers, mysteries, and options in the selected guide.
         </p>
       </header>
       <CardSetEditor />

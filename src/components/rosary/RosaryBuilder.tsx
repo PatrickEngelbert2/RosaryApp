@@ -15,6 +15,7 @@ import {
 import { rosaryTemplates } from "@/lib/rosary/defaultTemplates";
 import {
   deleteRosaryConfig,
+  getActiveRosaryConfig,
   getSavedRosaryConfigs,
   saveRosaryConfig,
   setActiveRosaryConfig,
@@ -52,7 +53,32 @@ export function RosaryBuilder() {
     queueMicrotask(() => {
       const saved = getSavedRosaryConfigs();
       setSavedConfigs(saved);
+      const active = getActiveRosaryConfig();
+
+      if (active) {
+        const normalized = normalizeRosaryConfig(active);
+        setConfig(normalized);
+        setTemplateId(normalized.baseTemplateId);
+      }
     });
+  }, []);
+
+  useEffect(() => {
+    function refreshFromEasyGuide() {
+      const saved = getSavedRosaryConfigs();
+      const active = getActiveRosaryConfig();
+      setSavedConfigs(saved);
+
+      if (active) {
+        const normalized = normalizeRosaryConfig(active);
+        setConfig(normalized);
+        setTemplateId(normalized.baseTemplateId);
+        setSaveMessage("Saved from Easy Guide Builder.");
+      }
+    }
+
+    window.addEventListener("easy-guide-created", refreshFromEasyGuide);
+    return () => window.removeEventListener("easy-guide-created", refreshFromEasyGuide);
   }, []);
 
   const selectedClosingPrayers = useMemo(

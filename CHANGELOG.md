@@ -18,6 +18,9 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added dependency-free inline SVG icons to the homepage Explore cards.
 - Updated README project/contact details to match the polished public site.
 - Tightened homepage/header vertical spacing so the hero begins closer to the navigation and the landing page rhythm is less loose.
+- Added site-wide motion-aware interaction polish for buttons, navigation links, footer links, clickable cards, builder controls, guide card controls, and prayer page controls.
+- Added a subtle header brand hover interaction with lift, icon tilt, and accent underline.
+- Added reduced-motion support for the new interaction transitions.
 
 ### Fixed
 

@@ -34,7 +34,7 @@ export function CollapsiblePrayer({
     <article className="rounded-lg border border-blue-900/10 bg-white/95 p-3 shadow-sm sm:p-4">
       <button
         type="button"
-        className="flex w-full items-start gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+        className="interactive-button group flex w-full items-start gap-3 rounded-md text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
         aria-expanded={isExpanded}
         aria-controls={contentId}
         onClick={() => setExpanded((current) => !current)}
@@ -59,7 +59,7 @@ export function CollapsiblePrayer({
             <span className="mt-1 block text-sm leading-6 text-slate-700">{prayer.incipit}</span>
           ) : null}
         </span>
-        <span className="rounded-full bg-cream-100 px-3 py-1 text-xs font-semibold text-blue-900">
+        <span className="rounded-full bg-cream-100 px-3 py-1 text-xs font-semibold text-blue-900 transition group-hover:bg-gold-500/10">
           {isExpanded ? "Hide" : "Show"}
         </span>
       </button>

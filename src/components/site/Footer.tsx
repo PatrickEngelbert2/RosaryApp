@@ -28,7 +28,7 @@ export function Footer() {
           <ul className="mt-3 grid gap-2">
             {links.map((link) => (
               <li key={link.href}>
-                <Link className="hover:text-blue-900" href={link.href}>
+                <Link className="interactive-link font-medium" href={link.href}>
                   {link.label}
                 </Link>
               </li>
@@ -41,13 +41,13 @@ export function Footer() {
           <p className="mt-3">
             Questions, corrections, or parish use:
             <br />
-            <a className="font-medium text-blue-900" href="mailto:patrickengelbert2@gmail.com">
+            <a className="interactive-link font-medium text-blue-900 underline" href="mailto:patrickengelbert2@gmail.com">
               patrickengelbert2@gmail.com
             </a>
           </p>
           <p className="mt-4">
             Created by{" "}
-            <a className="font-medium text-blue-900" href="https://patrickengelbert.com">
+            <a className="interactive-link font-medium text-blue-900 underline" href="https://patrickengelbert.com">
               patrickengelbert.com
             </a>
           </p>

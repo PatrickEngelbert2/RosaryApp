@@ -62,7 +62,7 @@ export function CardContentEditor({
           <input
             value={content.title}
             onChange={(event) => onChange({ ...content, title: event.target.value })}
-            className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
           />
         </label>
         <label className="block text-sm font-semibold text-blue-900">
@@ -70,7 +70,7 @@ export function CardContentEditor({
           <input
             value={content.subtitle}
             onChange={(event) => onChange({ ...content, subtitle: event.target.value })}
-            className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
           />
         </label>
       </div>
@@ -87,7 +87,7 @@ export function CardContentEditor({
                   [side]: { ...content[side], heading: event.target.value },
                 })
               }
-              className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
             />
           </label>
           <div className="mt-4 space-y-4">
@@ -100,7 +100,7 @@ export function CardContentEditor({
                     onChange={(event) =>
                       updateSection(side, section.id, { heading: event.target.value })
                     }
-                    className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                    className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
                   />
                 </label>
                 <label className="mt-3 block text-sm font-semibold text-blue-900">
@@ -111,7 +111,7 @@ export function CardContentEditor({
                       updateSection(side, section.id, { body: event.target.value })
                     }
                     rows={3}
-                    className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                    className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
                   />
                 </label>
                 <div className="mt-3 flex flex-wrap gap-3">
@@ -138,7 +138,7 @@ export function CardContentEditor({
                   <button
                     type="button"
                     onClick={() => removeSection(side, section.id)}
-                    className="text-sm font-semibold text-blue-900 underline"
+                    className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                   >
                     Remove
                   </button>
@@ -149,7 +149,7 @@ export function CardContentEditor({
           <button
             type="button"
             onClick={() => addSection(side)}
-            className="mt-4 rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900"
+            className="interactive-button interactive-button-secondary mt-4 rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Add {side} section
           </button>

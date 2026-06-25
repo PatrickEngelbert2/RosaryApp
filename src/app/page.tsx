@@ -122,7 +122,7 @@ function FeatureIcon({ name }: { name: IconName }) {
   };
 
   return (
-    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-900/5 text-blue-900">
+    <span className="card-link-icon flex h-11 w-11 items-center justify-center rounded-full bg-blue-900/5 text-blue-900 transition">
       <svg aria-hidden="true" {...commonProps}>
         {paths[name]}
       </svg>
@@ -221,8 +221,8 @@ export default function HomePage() {
         </h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {primaryLinks.map((item) => (
-            <Link key={item.href} href={item.href} className="group block">
-              <Card className="h-full transition group-hover:border-blue-800 group-hover:shadow-md">
+            <Link key={item.href} href={item.href} className="group block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50">
+              <Card className="interactive-card-link h-full">
                 <FeatureIcon name={item.icon} />
                 <h3 className="mt-4 text-lg font-semibold text-blue-900">
                   {item.title}

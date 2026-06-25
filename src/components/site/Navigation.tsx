@@ -17,7 +17,7 @@ export function Navigation() {
           <li key={item.href}>
             <Link
               href={item.href}
-              className="inline-flex rounded-full px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+              className="interactive-nav-link inline-flex rounded-full px-3 py-1.5 text-sm font-medium text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
             >
               {item.label}
             </Link>

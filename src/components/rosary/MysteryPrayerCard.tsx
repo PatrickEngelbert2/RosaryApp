@@ -36,7 +36,7 @@ export function MysteryPrayerCard({ mystery }: MysteryPrayerCardProps) {
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={() => setExpanded((current) => !current)}
-          className="mt-3 rounded-full border border-blue-900/15 bg-cream-50 px-3 py-1.5 text-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+          className="interactive-button interactive-button-secondary mt-3 rounded-full border border-blue-900/15 bg-cream-50 px-3 py-1.5 text-sm font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
         >
           {expanded ? "Hide reading" : "Show reading"}
         </button>

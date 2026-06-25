@@ -103,6 +103,10 @@ The app is prepared for RSV-2CE Scripture readings through optional mystery fiel
 
 Do not add long RSV-2CE passages unless the text is licensed or explicitly provided with permission. Until then, mystery cards show the Scripture reference and a simple `Read: [reference]` prompt.
 
+## Interaction And Accessibility
+
+Walk the Rosary uses subtle CSS-based hover, focus, and active states for buttons, navigation, links, and action cards. These interactions are intentionally restrained for a prayer-focused site and include reduced-motion support through `prefers-reduced-motion`.
+
 ## Documentation Discipline
 
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.

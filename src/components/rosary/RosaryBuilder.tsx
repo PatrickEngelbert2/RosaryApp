@@ -218,7 +218,7 @@ export function RosaryBuilder() {
                 id="saved-guide"
                 value={savedConfigs.some((guide) => guide.id === config.id) ? config.id : ""}
                 onChange={(event) => selectSavedGuide(event.target.value)}
-                className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+                className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
               >
                 <option value="">Select a saved guide</option>
                 {savedConfigs.map((guide) => (
@@ -234,7 +234,7 @@ export function RosaryBuilder() {
                     <button
                       type="button"
                       onClick={() => deleteSavedGuide(guide.id)}
-                      className="font-semibold text-blue-900 underline"
+                      className="interactive-link font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                     >
                       Delete
                     </button>
@@ -250,7 +250,7 @@ export function RosaryBuilder() {
             id="template"
             value={templateId}
             onChange={(event) => changeTemplate(event.target.value)}
-            className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base text-slate-900"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base text-slate-900"
           >
             {rosaryTemplates.map((template) => (
               <option key={template.id} value={template.id}>
@@ -264,7 +264,7 @@ export function RosaryBuilder() {
           <button
             type="button"
             onClick={startNewGuide}
-            className="mt-4 rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900"
+            className="interactive-button interactive-button-secondary mt-4 rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Start a new guide
           </button>
@@ -281,7 +281,7 @@ export function RosaryBuilder() {
             onChange={(event) =>
               setConfig((current) => ({ ...current, name: event.target.value }))
             }
-            className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
             placeholder="My Walk the Rosary Guide"
           />
 
@@ -325,7 +325,7 @@ export function RosaryBuilder() {
                 selectedMysterySetId: event.target.value as UserRosaryConfig["selectedMysterySetId"],
               }))
             }
-            className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
           >
             {mysterySets.map((set) => (
               <option key={set.id} value={set.id}>
@@ -393,13 +393,13 @@ export function RosaryBuilder() {
                     id="saint-name"
                     value={saintName}
                     onChange={(event) => setSaintName(event.target.value)}
-                    className="w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                    className="interactive-field w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
                     placeholder="Saint Joseph"
                   />
                   <button
                     type="button"
                     onClick={addSaintInvocation}
-                    className="rounded-md bg-blue-900 px-4 py-3 font-semibold text-white"
+                    className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                   >
                     Add
                   </button>
@@ -412,7 +412,7 @@ export function RosaryBuilder() {
                         <button
                           type="button"
                           onClick={() => removeSaintInvocation(saint)}
-                          className="text-sm font-semibold text-blue-900 underline"
+                          className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                         >
                           Remove
                         </button>
@@ -434,7 +434,7 @@ export function RosaryBuilder() {
             id="custom-title"
             value={customTitle}
             onChange={(event) => setCustomTitle(event.target.value)}
-            className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
           />
           <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-body">
             Body
@@ -444,7 +444,7 @@ export function RosaryBuilder() {
             value={customBody}
             onChange={(event) => setCustomBody(event.target.value)}
             rows={4}
-            className="mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
           />
           <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-type">
             Type
@@ -453,7 +453,7 @@ export function RosaryBuilder() {
             id="custom-type"
             value={customType}
             onChange={(event) => setCustomType(event.target.value as RosaryStepType)}
-            className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
           >
             <option value="instruction">Normal instruction</option>
             <option value="leader-note">Leader note</option>
@@ -468,7 +468,7 @@ export function RosaryBuilder() {
             onChange={(event) =>
               setCustomInsertionPoint(event.target.value as CustomGuidanceInsertionPoint)
             }
-            className="mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
           >
             <option value="beginning">At the beginning</option>
             <option value="before-opening">Before the opening prayers</option>
@@ -483,7 +483,7 @@ export function RosaryBuilder() {
           <button
             type="button"
             onClick={addCustomStep}
-            className="mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white hover:bg-blue-800"
+            className="interactive-button interactive-button-primary mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Add to flow
           </button>
@@ -497,7 +497,7 @@ export function RosaryBuilder() {
                   <button
                     type="button"
                     onClick={() => removeCustomStep(step.id)}
-                    className="text-sm font-semibold text-blue-900 underline"
+                    className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                   >
                     Remove
                   </button>
@@ -534,16 +534,16 @@ export function RosaryBuilder() {
           <button
             type="button"
             onClick={saveConfig}
-            className="mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white hover:bg-blue-800"
+            className="interactive-button interactive-button-primary mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Save my Rosary
           </button>
           {saveMessage ? <p className="mt-3 font-semibold text-blue-900">{saveMessage}</p> : null}
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Link className="font-semibold text-blue-900 underline" href="/pray/custom">
+            <Link className="interactive-link font-semibold text-blue-900 underline" href="/pray/custom">
               Pray this Rosary
             </Link>
-            <Link className="font-semibold text-blue-900 underline" href="/cards">
+            <Link className="interactive-link font-semibold text-blue-900 underline" href="/cards">
               Make Guide Cards
             </Link>
           </div>

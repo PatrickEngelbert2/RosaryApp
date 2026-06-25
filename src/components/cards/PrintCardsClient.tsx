@@ -51,13 +51,13 @@ export function PrintCardsClient() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="rounded-md bg-blue-900 px-5 py-3 font-semibold text-white hover:bg-blue-800"
+              className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
             >
               Print / Save as PDF
             </button>
             <Link
               href="/cards"
-              className="inline-flex items-center justify-center rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900"
+              className="interactive-button interactive-button-secondary inline-flex items-center justify-center rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
             >
               Back to card builder
             </Link>

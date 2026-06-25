@@ -16,7 +16,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Follow prayers with collapsible text.
 - Group repeated Hail Marys or show them individually.
 - Generate printable front/back guide cards.
-- Choose Pocket, Large, or Full page guide-card layouts.
+- Choose Pocket, Tall, Wide, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
 - Save current guides locally in the browser.
 
@@ -105,11 +105,24 @@ Custom Rosary guides and card sets are saved in browser localStorage. They are n
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, and which prayers print in full. Supported layouts are Pocket cards with four per US Letter page, Large cards with two per page, and Full page guides with one per page. Blank print slots remain invisible so front/back alignment is preserved.
+Users can choose the card count, card size, and which prayers print in full. Supported layouts are:
 
-Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, moves whole blocks to later sides when needed, and warns when a selected card size or full-prayer combination may be too dense. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
+- Pocket - 4 per page: 2 columns by 2 rows.
+- Tall - 3 per page: 3 columns by 1 row.
+- Wide - 3 per page: 1 column by 3 rows.
+- Tall - 2 per page: 2 columns by 1 row.
+- Wide - 2 per page: 1 column by 2 rows.
+- Full page - 1 per page: 1 column by 1 row.
 
-The print view at `/cards/print` uses browser print / Save as PDF. Persistence is still browser-local; no guide or card data is uploaded.
+The Number of cards needed field controls how many card slots the site generates. It does not control duplicate print copies; use the browser print dialog's Copies setting to print more sets. When a layout changes, the card count auto-adjusts to that layout's cards-per-page default only if the current count still appears to be the previous layout default. If the user has typed a custom count, the app preserves that count. Blank print slots remain invisible so front/back alignment is preserved.
+
+Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`.
+
+Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, balances ordered guide blocks across card faces when a second side is needed, and warns when a selected card size or full-prayer combination may be too dense. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
+
+The print view at `/cards/print` uses browser print / Save as PDF. The browser print dialog handles copy count; the site only renders the selected number of card slots. Persistence is still browser-local; no guide or card data is uploaded.
+
+Custom user-defined card dimensions are not implemented yet. The current system intentionally uses a small set of tested US Letter layouts.
 
 ## Scripture Readings
 

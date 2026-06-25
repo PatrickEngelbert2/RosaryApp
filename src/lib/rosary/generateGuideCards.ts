@@ -6,6 +6,12 @@ import {
   normalizeGuideCardLayoutOptions,
 } from "@/lib/rosary/cardUtils";
 import { createDefaultUserConfigFromTemplate, normalizeRosaryConfig } from "@/lib/rosary/configUtils";
+import {
+  getCompactPrayerText,
+  getFullPrayerTextForCards,
+  normalizePrayerTextForCards,
+} from "@/lib/rosary/prayerText";
+import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import type {
   CustomGuidanceInsertionPoint,
   GeneratedGuideCard,
@@ -60,12 +66,6 @@ const guidancePointsForBack: CustomGuidanceInsertionPoint[] = [
   "end",
 ];
 
-const sideCapacity: Record<GuideCardLayoutOptions["cardSize"], number> = {
-  pocket: 29,
-  large: 50,
-  "full-page": 82,
-};
-
 export function createDefaultGeneratedGuideConfig(): UserRosaryConfig {
   return normalizeRosaryConfig(createDefaultUserConfigFromTemplate("standard-rosary"));
 }
@@ -89,7 +89,14 @@ export function generateGuideCardsFromConfig(
   const cardCount = clampCardCount(layoutOptions.cardCount);
   const mysterySet = getMysterySetForConfig(config, date);
   const warnings: string[] = [];
-  const { front, back, extraSides } = buildGuideCardSides(config, mysterySet, layoutOptions, warnings);
+  const blocks = buildOrderedGuideBlocks(config, mysterySet, layoutOptions, warnings);
+  const { front, back, extraSides } = layoutBlocksAcrossSides(
+    blocks,
+    config.name?.trim() || "Rosary Walk Guide",
+    mysterySet.title,
+    layoutOptions,
+    warnings,
+  );
   const cards = Array.from({ length: cardCount }, (_, index) =>
     buildGeneratedGuideCard(index + 1, front, back, extraSides, layoutOptions),
   );
@@ -105,7 +112,7 @@ export function generateGuideCardsFromConfig(
       config.mysterySetMode === "today" ? "Today's mysteries" : "Manually selected mysteries",
     generatedAt: new Date().toISOString(),
     cards,
-    warnings,
+    warnings: [...new Set(warnings)],
     layoutOptions: { ...layoutOptions, cardCount },
     cardsPerPage: getCardsPerPage(layoutOptions.cardSize),
   };
@@ -152,7 +159,7 @@ export function chunkCardsForPrint<T>(cards: T[], cardsPerPage: number): T[][] {
 function buildGeneratedGuideCard(
   cardNumber: number,
   front: GuideCardSide,
-  back: GuideCardSide,
+  back: GuideCardSide | undefined,
   extraSides: GuideCardSide[],
   layoutOptions: GuideCardLayoutOptions,
 ): GeneratedGuideCard {
@@ -166,169 +173,180 @@ function buildGeneratedGuideCard(
   };
 }
 
-function buildGuideCardSides(
-  config: UserRosaryConfig,
-  mysterySet: MysterySet,
-  options: GuideCardLayoutOptions,
-  warnings: string[],
-): { front: GuideCardSide; back: GuideCardSide; extraSides: GuideCardSide[] } {
-  const title = config.name?.trim() || "Rosary Walk Guide";
-  const frontBlocks = buildFrontBlocks(config, mysterySet, options, warnings);
-  const backBlocks = buildBackBlocks(config, options, warnings);
-  const capacity = sideCapacity[options.cardSize];
-  const front = createSide("front", title, `${mysterySet.title} guide`, frontBlocks);
-  const back = createSide("back", title, "Closing prayers and leader reminders", backBlocks);
-
-  rebalanceFrontToBack(front, back, capacity, warnings, options);
-  const extraSides = moveOverflowToExtraSides(back, title, capacity, warnings, options);
-
-  if (options.includeOverflowWarnings) {
-    addDensityWarnings(front, back, extraSides, capacity, warnings, options);
-  }
-
-  return { front, back, extraSides };
-}
-
-function buildFrontBlocks(
+function buildOrderedGuideBlocks(
   config: UserRosaryConfig,
   mysterySet: MysterySet,
   options: GuideCardLayoutOptions,
   warnings: string[],
 ): GuideCardBlock[] {
-  return [
-    headingBlock("opening-heading", "Opening"),
-    ...buildOpeningPrayerBlocks(config, options),
-    instructionBlock("intentions", "Intentions", [
+  const closingLines = buildClosingSummary(config, options);
+  const saintBlock = buildSaintInvocationBlock(config);
+  const guidanceLines = buildConciseGuidance(config, guidancePointsForBack, warnings);
+  const leaderLines = buildLeaderNoteSummary(config, warnings);
+
+  const blocks: GuideCardBlock[] = [
+    sectionBlock("opening", "Opening", buildOpeningSummary(config, options), "prayer"),
+    sectionBlock("intentions", "Intentions", [
       "At this time, please offer your intentions.",
       "[pause]",
       ...buildConciseGuidance(config, guidancePointsForFront, warnings),
     ]),
-    instructionBlock("each-decade", "Each Decade", buildDecadeSummary(config)),
+    sectionBlock("each-decade", "Each Decade", buildDecadeSummary(config)),
     {
       id: "mystery-set",
       type: "mystery-list",
       heading: mysterySet.title,
       lines: buildMysterySummary(mysterySet),
-      estimatedWeight: estimateLines(buildMysterySummary(mysterySet), 42) + 3,
+      estimatedWeight: estimateLines(buildMysterySummary(mysterySet), 44) + 2,
       keepTogether: true,
       priority: "required",
-    },
-  ];
-}
-
-function buildBackBlocks(
-  config: UserRosaryConfig,
-  options: GuideCardLayoutOptions,
-  warnings: string[],
-): GuideCardBlock[] {
-  const closingBlocks = buildClosingPrayerBlocks(config, options);
-  const saintBlock = buildSaintInvocationBlock(config);
-  const guidanceLines = buildConciseGuidance(config, guidancePointsForBack, warnings);
-  const leaderLines = buildLeaderNoteSummary(config, warnings);
-
-  return [
-    headingBlock("closing-heading", "Closing"),
-    ...(closingBlocks.length > 0
-      ? closingBlocks
-      : [instructionBlock("closing-empty", undefined, ["Conclude with the Sign of the Cross."])]),
-    instructionBlock("holy-father-intentions", "Holy Father's Intentions", [
+      sectionGroup: "mysteries",
+    } satisfies GuideCardBlock,
+    ...(closingLines.length > 0
+      ? [sectionBlock("closing", "Closing", closingLines, "prayer")]
+      : []),
+    sectionBlock("holy-father-intentions", "Holy Father's Intentions", [
       compactPrayerText("our-father"),
       compactPrayerText("hail-mary"),
       compactPrayerText("glory-be"),
     ]),
     ...(saintBlock ? [saintBlock] : []),
     ...(guidanceLines.length > 0
-      ? [instructionBlock("custom-guidance", "Guide Notes", guidanceLines, "custom-guidance")]
+      ? [sectionBlock("custom-guidance", "Guide Notes", guidanceLines, "custom-guidance", true)]
       : []),
     ...(leaderLines.length > 0
-      ? [instructionBlock("leader-notes", "Leader Notes", leaderLines, "custom-guidance", true)]
+      ? [sectionBlock("leader-notes", "Leader Notes", leaderLines, "custom-guidance", true, true)]
       : []),
-    prayerBlock("final-sign", "sign-of-the-cross", false),
+    sectionBlock("final-sign", "Final", [compactPrayerText("sign-of-the-cross")], "prayer"),
   ];
+
+  return blocks.filter((block) => block.lines?.length || block.body);
 }
 
-function buildOpeningPrayerBlocks(
-  config: UserRosaryConfig,
+function layoutBlocksAcrossSides(
+  blocks: GuideCardBlock[],
+  title: string,
+  mysterySetTitle: string,
   options: GuideCardLayoutOptions,
-): GuideCardBlock[] {
-  const firstDecadeOrder =
-    config.steps
-      .filter((step) => step.enabled !== false && step.type === "decade")
-      .map((step) => step.order)
-      .sort((a, b) => a - b)[0] ?? Number.POSITIVE_INFINITY;
-  const openingSteps = config.steps
-    .filter((step) => step.enabled !== false)
-    .filter((step) => step.order < firstDecadeOrder)
-    .filter((step) => step.type === "prayer" || step.type === "prayer-group")
-    .filter((step) => step.prayerId && openingPrayerIds.includes(step.prayerId))
-    .sort((a, b) => a.order - b.order);
-  const steps = openingSteps.length > 0 ? openingSteps : fallbackOpeningSteps();
+  warnings: string[],
+): { front: GuideCardSide; back?: GuideCardSide; extraSides: GuideCardSide[] } {
+  const layout = getGuideCardLayout(options.cardSize);
+  const capacity = layout.capacity;
+  const totalWeight = blocks.reduce((total, block) => total + block.estimatedWeight, 0);
 
-  return steps.map((step) => {
-    if (step.prayerId === "hail-mary" && (step.repeatCount ?? step.repeat ?? 1) === 3) {
-      return instructionBlock("opening-three-hail-marys", undefined, [
-        "Three Hail Marys for faith, hope, and charity",
-      ]);
+  blocks
+    .filter((block) => block.estimatedWeight > capacity)
+    .forEach((block) => {
+      warnings.push(
+        `${block.heading ?? "A section"} may be too large for one ${layout.shortLabel} card face. It is kept together to avoid awkward splits.`,
+      );
+    });
+
+  if (totalWeight <= capacity) {
+    return {
+      front: createSide("front", title, `${mysterySetTitle} guide`, blocks),
+      extraSides: [],
+    };
+  }
+
+  if (totalWeight <= capacity * 2) {
+    const splitIndex = findBalancedSplitIndex(blocks, capacity);
+    const frontBlocks = blocks.slice(0, splitIndex);
+    const backBlocks = blocks.slice(splitIndex);
+    addSideDensityWarnings(frontBlocks, backBlocks, capacity, options, warnings);
+
+    return {
+      front: createSide("front", title, `${mysterySetTitle} guide`, frontBlocks),
+      back: createSide("back", title, "Continued", backBlocks),
+      extraSides: [],
+    };
+  }
+
+  warnings.push(
+    `This ${layout.shortLabel} layout is too dense for two sides. Choose a larger card size or print fewer prayers in full.`,
+  );
+
+  const sides = packBlocksIntoSides(blocks, capacity);
+  const [frontBlocks, backBlocks, ...extraBlockGroups] = sides;
+
+  return {
+    front: createSide("front", title, `${mysterySetTitle} guide`, frontBlocks ?? []),
+    back: backBlocks?.length ? createSide("back", title, "Continued", backBlocks) : undefined,
+    extraSides: extraBlockGroups.map((extraBlocks, index) =>
+      createSide(`extra-${index + 1}`, title, "Continued", extraBlocks),
+    ),
+  };
+}
+
+function findBalancedSplitIndex(blocks: GuideCardBlock[], capacity: number): number {
+  const totalWeight = blocks.reduce((total, block) => total + block.estimatedWeight, 0);
+  let bestIndex = 1;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (let index = 1; index < blocks.length; index += 1) {
+    const frontWeight = blocks.slice(0, index).reduce((total, block) => total + block.estimatedWeight, 0);
+    const backWeight = totalWeight - frontWeight;
+    const overflowPenalty =
+      Math.max(0, frontWeight - capacity) * 20 + Math.max(0, backWeight - capacity) * 20;
+    const balancePenalty = Math.abs(frontWeight - totalWeight / 2);
+    const score = overflowPenalty + balancePenalty;
+
+    if (score < bestScore) {
+      bestScore = score;
+      bestIndex = index;
+    }
+  }
+
+  return bestIndex;
+}
+
+function packBlocksIntoSides(blocks: GuideCardBlock[], capacity: number): GuideCardBlock[][] {
+  const sides: GuideCardBlock[][] = [];
+  let current: GuideCardBlock[] = [];
+  let currentWeight = 0;
+
+  blocks.forEach((block) => {
+    if (current.length > 0 && currentWeight + block.estimatedWeight > capacity) {
+      sides.push(current);
+      current = [];
+      currentWeight = 0;
     }
 
-    if (step.prayerId) {
-      return prayerBlock(`opening-${step.prayerId}`, step.prayerId, options.fullPrayerIds.includes(step.prayerId));
-    }
-
-    return instructionBlock(step.id, undefined, [step.title]);
+    current.push(block);
+    currentWeight += block.estimatedWeight;
   });
+
+  if (current.length > 0) {
+    sides.push(current);
+  }
+
+  return sides;
 }
 
-function buildClosingPrayerBlocks(
-  config: UserRosaryConfig,
+function addSideDensityWarnings(
+  frontBlocks: GuideCardBlock[],
+  backBlocks: GuideCardBlock[],
+  capacity: number,
   options: GuideCardLayoutOptions,
-): GuideCardBlock[] {
-  return closingOrder
-    .filter((prayerId) => config.selectedClosingPrayerIds.includes(prayerId))
-    .map((prayerId) =>
-      prayerBlock(`closing-${prayerId}`, prayerId, options.fullPrayerIds.includes(prayerId)),
+  warnings: string[],
+) {
+  const layout = getGuideCardLayout(options.cardSize);
+  const frontWeight = frontBlocks.reduce((total, block) => total + block.estimatedWeight, 0);
+  const backWeight = backBlocks.reduce((total, block) => total + block.estimatedWeight, 0);
+
+  if (frontWeight > capacity || backWeight > capacity) {
+    warnings.push(
+      `This ${layout.shortLabel} layout is dense. Choose a larger card size or print fewer prayers in full if readability matters.`,
     );
+  }
 }
 
-function prayerBlock(id: string, prayerId: PrayerId, full: boolean): GuideCardBlock {
-  const prayer = prayersById[prayerId];
-  const body = full ? prayer.text : compactPrayerText(prayerId);
-
-  return {
-    id,
-    type: "prayer",
-    heading: full ? prayer.title : undefined,
-    body,
-    prayerId,
-    printMode: full ? "full" : "short",
-    estimatedWeight: estimateText(body, full ? 58 : 42) + (full ? 2 : 0),
-    keepTogether: true,
-    priority: "required",
-    compact: !full,
-  };
-}
-
-function compactPrayerText(prayerId: PrayerId): string {
-  const prayer = prayersById[prayerId];
-  return `${prayer.title}...`;
-}
-
-function headingBlock(id: string, heading: string): GuideCardBlock {
-  return {
-    id,
-    type: "heading",
-    heading,
-    estimatedWeight: 1.2,
-    keepTogether: true,
-    priority: "required",
-  };
-}
-
-function instructionBlock(
+function sectionBlock(
   id: string,
-  heading: string | undefined,
+  heading: string,
   lines: string[],
   type: GuideCardBlock["type"] = "instruction",
+  compact = true,
   leaderOnly = false,
 ): GuideCardBlock {
   return {
@@ -336,34 +354,12 @@ function instructionBlock(
     type,
     heading,
     lines,
-    estimatedWeight: estimateLines(lines, 48) + (heading ? 1.4 : 0),
+    estimatedWeight: estimateLines(lines, compact ? 50 : 58) + 1.6,
     keepTogether: true,
     priority: type === "custom-guidance" ? "optional" : "required",
-    compact: true,
+    compact,
     leaderOnly,
-  };
-}
-
-function buildSaintInvocationBlock(config: UserRosaryConfig): GuideCardBlock | undefined {
-  if (!config.saintInvocations.enabled) {
-    return undefined;
-  }
-
-  const saints = config.saintInvocations.saints.map((saint) => saint.trim()).filter(Boolean);
-
-  if (saints.length === 0) {
-    return undefined;
-  }
-
-  return {
-    id: "saint-invocations",
-    type: "invocation-list",
-    heading: "Saint Invocations",
-    lines: saints.map((saint) => `${saint}, pray for us.`),
-    estimatedWeight: estimateLines(saints, 26) + 1.5,
-    keepTogether: true,
-    priority: "required",
-    compact: true,
+    sectionGroup: id,
   };
 }
 
@@ -382,144 +378,57 @@ function createSide(
   };
 }
 
-function rebalanceFrontToBack(
-  front: GuideCardSide,
-  back: GuideCardSide,
-  capacity: number,
-  warnings: string[],
-  options: GuideCardLayoutOptions,
-) {
-  while (sideWeight(front) > capacity) {
-    const movableIndex = findMovableFrontBlockIndex(front.blocks);
+function buildOpeningSummary(
+  config: UserRosaryConfig,
+  options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
+): string[] {
+  const firstDecadeOrder =
+    config.steps
+      .filter((step) => step.enabled !== false && step.type === "decade")
+      .map((step) => step.order)
+      .sort((a, b) => a - b)[0] ?? Number.POSITIVE_INFINITY;
+  const openingSteps = config.steps
+    .filter((step) => step.enabled !== false)
+    .filter((step) => step.order < firstDecadeOrder)
+    .filter((step) => step.type === "prayer" || step.type === "prayer-group")
+    .filter((step) => step.prayerId && openingPrayerIds.includes(step.prayerId))
+    .sort((a, b) => a.order - b.order);
+  const steps = openingSteps.length > 0 ? openingSteps : fallbackOpeningSteps();
 
-    if (movableIndex < 0) {
-      warnings.push("This guide may be too dense for the front side. Choose Large cards or reduce full prayer text.");
-      front.overflowWarnings?.push("Front side may be too dense for the selected card size.");
-      return;
-    }
-
-    const [movedBlock] = front.blocks.splice(movableIndex, 1);
-    back.blocks.splice(1, 0, movedBlock);
-    trimTrailingHeading(front.blocks);
-
-    if (options.includeOverflowWarnings) {
-      warnings.push(`${movedBlock.heading ?? blockLabel(movedBlock)} was moved to the back to keep the front readable.`);
-    }
-  }
+  return steps.map((step) => formatOpeningStep(step, options));
 }
 
-function moveOverflowToExtraSides(
-  back: GuideCardSide,
-  title: string,
-  capacity: number,
-  warnings: string[],
-  options: GuideCardLayoutOptions,
-): GuideCardSide[] {
-  const extraSides: GuideCardSide[] = [];
-
-  while (sideWeight(back) > capacity) {
-    const movableIndex = findMovableBackBlockIndex(back.blocks);
-
-    if (movableIndex < 0) {
-      back.overflowWarnings?.push("Back side may be too dense for the selected card size.");
-      warnings.push("Some content may require a larger card size. No required content was dropped.");
-      break;
-    }
-
-    const movedBlocks = back.blocks.splice(movableIndex);
-    trimTrailingHeading(back.blocks);
-    const extraSide = createSide(
-      `extra-${extraSides.length + 1}`,
-      title,
-      `Overflow notes ${extraSides.length + 1}`,
-      movedBlocks,
-    );
-    extraSides.push(extraSide);
-
-    if (options.includeOverflowWarnings) {
-      warnings.push("Some closing or note content moved to an extra side to avoid crowding.");
-    }
-
-    if (sideWeight(extraSide) > capacity) {
-      extraSide.overflowWarnings?.push("This extra side is still dense. Choose a larger card size if possible.");
-      warnings.push("Some content may still be dense on an extra side. Large or Full page cards are recommended.");
-      break;
-    }
+function formatOpeningStep(step: RosaryStep, options: GuideCardLayoutOptions): string {
+  if (step.prayerId === "hail-mary" && (step.repeatCount ?? step.repeat ?? 1) === 3) {
+    return "Three Hail Marys for faith, hope, and charity";
   }
 
-  return extraSides;
-}
-
-function addDensityWarnings(
-  front: GuideCardSide,
-  back: GuideCardSide,
-  extraSides: GuideCardSide[],
-  capacity: number,
-  warnings: string[],
-  options: GuideCardLayoutOptions,
-) {
-  const denseLimit = capacity * 0.92;
-  const sides = [front, back, ...extraSides];
-
-  if (sides.some((side) => sideWeight(side) > denseLimit)) {
-    warnings.push(
-      `This ${options.cardSize.replace("-", " ")} layout is dense. Choose a larger card size or print fewer prayers in full if readability matters.`,
-    );
-  }
-}
-
-function findMovableFrontBlockIndex(blocks: GuideCardBlock[]): number {
-  for (let index = blocks.length - 1; index >= 0; index -= 1) {
-    if (blocks[index].type !== "heading") {
-      return index;
-    }
+  if (step.prayerId) {
+    return formatPrayerForCard(step.prayerId, options.fullPrayerIds.includes(step.prayerId));
   }
 
-  return -1;
+  return step.title;
 }
 
-function findMovableBackBlockIndex(blocks: GuideCardBlock[]): number {
-  for (let index = blocks.length - 1; index >= 0; index -= 1) {
-    if (blocks[index].type !== "heading") {
-      return index;
-    }
-  }
-
-  return -1;
-}
-
-function trimTrailingHeading(blocks: GuideCardBlock[]) {
-  while (blocks.at(-1)?.type === "heading") {
-    blocks.pop();
-  }
-}
-
-function sideWeight(side: GuideCardSide): number {
-  return side.blocks.reduce((total, block) => total + block.estimatedWeight, 0);
-}
-
-function blockLabel(block: GuideCardBlock): string {
-  if (block.prayerId) {
-    return prayersById[block.prayerId].title;
-  }
-
-  return block.lines?.[0] ?? "A card section";
+function buildClosingSummary(
+  config: UserRosaryConfig,
+  options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
+): string[] {
+  return closingOrder
+    .filter((prayerId) => config.selectedClosingPrayerIds.includes(prayerId))
+    .map((prayerId) => formatPrayerForCard(prayerId, options.fullPrayerIds.includes(prayerId)));
 }
 
 export function buildMysterySummary(mysterySet: MysterySet): string[] {
+  const setName = mysterySet.title.replace(" Mysteries", "");
+
   return mysterySet.mysteries.map((mystery) => {
     const fruit = mystery.fruitOfMystery
-      ? ` Fruit: ${mystery.fruitOfMystery}.`
+      ? ` The fruit of this mystery is ${mystery.fruitOfMystery}.`
       : "";
 
-    return `${mystery.number}. ${mystery.title}.${fruit}`;
+    return `${mystery.number}. The ${ordinalWord(mystery.number)} ${setName} Mystery is ${mystery.title}.${fruit}`;
   });
-}
-
-export function buildOpeningSummary(config: UserRosaryConfig): string[] {
-  return buildOpeningPrayerBlocks(config, normalizeGuideCardLayoutOptions({})).map((block) =>
-    block.body ?? block.lines?.join(" ") ?? block.heading ?? "",
-  );
 }
 
 export function buildDecadeSummary(config: UserRosaryConfig): string[] {
@@ -532,10 +441,37 @@ export function buildDecadeSummary(config: UserRosaryConfig): string[] {
   ];
 }
 
-export function buildClosingSummary(config: UserRosaryConfig): string[] {
-  return closingOrder
-    .filter((prayerId) => config.selectedClosingPrayerIds.includes(prayerId))
-    .map((prayerId) => compactPrayerText(prayerId));
+function formatPrayerForCard(prayerId: PrayerId, full: boolean): string {
+  const prayer = prayersById[prayerId];
+
+  if (!full) {
+    return compactPrayerText(prayerId);
+  }
+
+  return `${prayer.title}: ${getFullPrayerTextForCards(prayer)}`;
+}
+
+function compactPrayerText(prayerId: PrayerId): string {
+  return getCompactPrayerText(prayersById[prayerId]);
+}
+
+function buildSaintInvocationBlock(config: UserRosaryConfig): GuideCardBlock | undefined {
+  if (!config.saintInvocations.enabled) {
+    return undefined;
+  }
+
+  const saints = config.saintInvocations.saints.map((saint) => saint.trim()).filter(Boolean);
+
+  if (saints.length === 0) {
+    return undefined;
+  }
+
+  return sectionBlock(
+    "saint-invocations",
+    "Saint Invocations",
+    saints.map((saint) => `${saint}, pray for us.`),
+    "invocation-list",
+  );
 }
 
 function buildConciseGuidance(
@@ -584,7 +520,7 @@ function hasFatimaPrayer(config: UserRosaryConfig): boolean {
 }
 
 function truncateForCard(text: string, warnings: string[], label: string): string {
-  const cleaned = text.replace(/\s+/g, " ").trim();
+  const cleaned = normalizePrayerTextForCards(text);
 
   if (cleaned.length <= 160) {
     return cleaned;
@@ -599,5 +535,14 @@ function estimateLines(lines: string[], charsPerWeight: number): number {
 }
 
 function estimateText(text: string, charsPerWeight: number): number {
-  return Math.max(1, Math.ceil(text.replace(/\s+/g, " ").trim().length / charsPerWeight));
+  return Math.max(1, Math.ceil(normalizePrayerTextForCards(text).length / charsPerWeight));
+}
+
+function ordinalWord(value: number): string {
+  if (value === 1) return "First";
+  if (value === 2) return "Second";
+  if (value === 3) return "Third";
+  if (value === 4) return "Fourth";
+  if (value === 5) return "Fifth";
+  return `${value}th`;
 }

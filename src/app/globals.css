@@ -214,17 +214,32 @@ a {
   padding: 0.25in;
 }
 
-.print-page-pocket {
+.print-page-pocket-4 {
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
 }
 
-.print-page-large {
+.print-page-tall-3 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+}
+
+.print-page-wide-3 {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.print-page-tall-2 {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr;
+}
+
+.print-page-wide-2 {
   grid-template-columns: 1fr;
   grid-template-rows: repeat(2, 1fr);
 }
 
-.print-page-full-page {
+.print-page-full-1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
 }
@@ -239,11 +254,23 @@ a {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.print-card-large {
+.print-card-wide-2 {
   padding: 0.22in;
 }
 
-.print-card-full-page {
+.print-card-wide-3 {
+  padding: 0.18in;
+}
+
+.print-card-tall-3 {
+  padding: 0.13in;
+}
+
+.print-card-tall-2 {
+  padding: 0.2in;
+}
+
+.print-card-full-1 {
   padding: 0.35in;
 }
 
@@ -253,11 +280,23 @@ a {
   line-height: 1.1;
 }
 
-.print-card-large h2 {
+.print-card-wide-2 h2 {
   font-size: 16pt;
 }
 
-.print-card-full-page h2 {
+.print-card-wide-3 h2 {
+  font-size: 14.5pt;
+}
+
+.print-card-tall-3 h2 {
+  font-size: 12pt;
+}
+
+.print-card-tall-2 h2 {
+  font-size: 14pt;
+}
+
+.print-card-full-1 h2 {
   font-size: 21pt;
 }
 
@@ -269,12 +308,27 @@ a {
   font-weight: 700;
 }
 
-.print-card-large h3 {
+.print-card-wide-2 h3 {
   margin-top: 0.1in;
   font-size: 11pt;
 }
 
-.print-card-full-page h3 {
+.print-card-wide-3 h3 {
+  margin-top: 0.08in;
+  font-size: 10pt;
+}
+
+.print-card-tall-3 h3 {
+  margin-top: 0.06in;
+  font-size: 8.5pt;
+}
+
+.print-card-tall-2 h3 {
+  margin-top: 0.08in;
+  font-size: 10pt;
+}
+
+.print-card-full-1 h3 {
   margin-top: 0.14in;
   font-size: 14pt;
 }
@@ -286,14 +340,32 @@ a {
   line-height: 1.16;
 }
 
-.print-card-large p,
-.print-card-large li {
+.print-card-wide-2 p,
+.print-card-wide-2 li {
   font-size: 9.4pt;
   line-height: 1.25;
 }
 
-.print-card-full-page p,
-.print-card-full-page li {
+.print-card-wide-3 p,
+.print-card-wide-3 li {
+  font-size: 8pt;
+  line-height: 1.18;
+}
+
+.print-card-tall-3 p,
+.print-card-tall-3 li {
+  font-size: 6.6pt;
+  line-height: 1.12;
+}
+
+.print-card-tall-2 p,
+.print-card-tall-2 li {
+  font-size: 8.3pt;
+  line-height: 1.2;
+}
+
+.print-card-full-1 p,
+.print-card-full-1 li {
   font-size: 12pt;
   line-height: 1.35;
 }
@@ -303,12 +375,27 @@ a {
   line-height: 1.12;
 }
 
-.print-card-large .compact {
+.print-card-wide-2 .compact {
   font-size: 8.6pt;
   line-height: 1.2;
 }
 
-.print-card-full-page .compact {
+.print-card-wide-3 .compact {
+  font-size: 7.4pt;
+  line-height: 1.14;
+}
+
+.print-card-tall-3 .compact {
+  font-size: 6.3pt;
+  line-height: 1.1;
+}
+
+.print-card-tall-2 .compact {
+  font-size: 7.8pt;
+  line-height: 1.16;
+}
+
+.print-card-full-1 .compact {
   font-size: 10.5pt;
   line-height: 1.3;
 }
@@ -317,11 +404,23 @@ a {
   font-size: 6.8pt;
 }
 
-.print-card-large .print-card-subtitle {
+.print-card-wide-2 .print-card-subtitle {
   font-size: 8pt;
 }
 
-.print-card-full-page .print-card-subtitle {
+.print-card-wide-3 .print-card-subtitle {
+  font-size: 7.2pt;
+}
+
+.print-card-tall-3 .print-card-subtitle {
+  font-size: 6.2pt;
+}
+
+.print-card-tall-2 .print-card-subtitle {
+  font-size: 7.4pt;
+}
+
+.print-card-full-1 .print-card-subtitle {
   font-size: 11pt;
 }
 
@@ -330,8 +429,10 @@ a {
   padding-left: 0.11in;
 }
 
-.print-card-large ul,
-.print-card-full-page ul {
+.print-card-wide-3 ul,
+.print-card-wide-2 ul,
+.print-card-tall-2 ul,
+.print-card-full-1 ul {
   padding-left: 0.16in;
 }
 
@@ -339,11 +440,23 @@ a {
   margin-top: 0.035in;
 }
 
-.print-card-large section {
+.print-card-wide-2 section {
   margin-top: 0.05in;
 }
 
-.print-card-full-page section {
+.print-card-wide-3 section {
+  margin-top: 0.04in;
+}
+
+.print-card-tall-3 section {
+  margin-top: 0.03in;
+}
+
+.print-card-tall-2 section {
+  margin-top: 0.04in;
+}
+
+.print-card-full-1 section {
   margin-top: 0.08in;
 }
 

@@ -28,6 +28,10 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added Guide Card Layout Engine v1 with block-based print layout, short/full prayer controls, adaptive Pocket/Large/Full page card sizes, and estimate-based overflow warnings.
 - Removed useless printed card labels so final cards no longer waste space on Card 1/Card 2/Card 3/Card 4.
 - Updated guide-card print rendering so cards per page, preview layout, blank slots, and front/back alignment adapt to the selected card size.
+- Added Guide Card Layout Engine v2 fixes with compact card-specific prayer text normalization, incipit-based short prayer labels, clearer full-prayer checkbox labels, balanced ordered-block front/back layout, one-sided printing when a back is not needed, and a Tall 3-cards-per-page layout.
+- Added guide-card layout orientation options for Pocket 4-up, Tall 3-up, Wide 3-up, Tall 2-up, Wide 2-up, and Full page 1-up printing.
+- Centralized guide-card layout definitions so print grid rows, columns, cards per page, labels, descriptions, and fit estimates share one configuration source.
+- Clarified that Number of cards needed controls generated card slots while browser print Copies controls duplicate printed sets.
 
 ### Fixed
 
@@ -35,6 +39,8 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Removed placeholder printable language from the homepage Explore section.
 - Reduced excessive whitespace above the homepage hero and between the hero and next section.
 - Improved guide-card overflow behavior by moving whole blocks to later sides where possible and warning when selected content is too dense.
+- Removed the hardcoded back-side "Closing prayers and leader reminders" assumption and corrected Large/Full page print behavior so those layouts do not duplicate old 4-up card output by default.
+- Preserved custom card counts when switching guide-card layouts, while still auto-adjusting the count when it appears to be the previous layout default.
 
 ## 0.3.0 - 2026-06-24
 

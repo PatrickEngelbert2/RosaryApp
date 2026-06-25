@@ -60,9 +60,9 @@ export const prayers: Prayer[] = [
   {
     id: "closing-prayer",
     title: "Closing Prayer",
-    incipit: "O God, whose only begotten Son...",
+    incipit: "O God, whose Only Begotten Son...",
     text: "O God, whose only begotten Son, by his life, death, and resurrection, has purchased for us the rewards of eternal life, grant, we beseech thee, that while meditating on these mysteries of the most holy Rosary of the Blessed Virgin Mary, we may imitate what they contain and obtain what they promise, through the same Christ our Lord. Amen.",
-    shortText: "O God, whose only begotten Son, by his life, death, and resurrection...",
+    shortText: "O God, whose Only Begotten Son...",
     category: "closing",
   },
   {

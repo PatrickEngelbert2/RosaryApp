@@ -7,7 +7,7 @@ type GeneratedGuideCardPreviewProps = {
 
 export function GeneratedGuideCardPreview({ sides, cardSize }: GeneratedGuideCardPreviewProps) {
   return (
-    <div className={cardSize === "pocket" ? "grid gap-4 lg:grid-cols-2" : "grid gap-4"}>
+    <div className={cardSize === "pocket-4" ? "grid gap-4 lg:grid-cols-2" : "grid gap-4"}>
       {sides.map((side, index) => (
         <GeneratedGuideCardSide
           key={side.id}

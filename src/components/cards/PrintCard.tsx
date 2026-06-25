@@ -41,7 +41,7 @@ function PrintCardBlock({
     <section className={block.leaderOnly ? "leader-section" : undefined}>
       {block.heading ? <h3>{block.heading}</h3> : null}
       {block.body ? (
-        <p className={`${block.compact ? "compact" : ""} ${cardSize === "full-page" ? "full-page-prayer" : ""}`.trim()}>
+        <p className={`${block.compact ? "compact" : ""} ${cardSize === "full-1" ? "full-page-prayer" : ""}`.trim()}>
           {block.body}
         </p>
       ) : null}

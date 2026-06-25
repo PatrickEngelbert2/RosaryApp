@@ -9,6 +9,7 @@ import {
   createDefaultGeneratedGuideConfig,
   generateGuideCardsFromConfig,
 } from "@/lib/rosary/generateGuideCards";
+import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import {
   getActiveRosaryConfig,
   getGuideCardLayoutOptions,
@@ -68,7 +69,7 @@ export function PrintCardsClient() {
   );
   const hasBackSide = Boolean(generatedCardSet.cards[0]?.back);
   const extraSideCount = generatedCardSet.cards[0]?.extraSides?.length ?? 0;
-  const cardSizeLabel = generatedCardSet.layoutOptions.cardSize.replace("-", " ");
+  const cardSizeLabel = getGuideCardLayout(generatedCardSet.layoutOptions.cardSize).shortLabel;
 
   return (
     <>

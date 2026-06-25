@@ -13,6 +13,7 @@ import {
   getCardsPerPage,
   normalizeGuideCardLayoutOptions,
 } from "@/lib/rosary/cardUtils";
+import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import {
   createDefaultGeneratedGuideConfig,
   generateGuideCardsFromConfig,
@@ -89,6 +90,7 @@ export function CardSetEditor() {
     () => generateGuideCardsFromConfig(selectedGuide, sanitizedLayoutOptions),
     [sanitizedLayoutOptions, selectedGuide],
   );
+  const currentLayout = getGuideCardLayout(sanitizedLayoutOptions.cardSize);
   const previewCard = generatedCardSet.cards[0];
   const previewSides = previewCard
     ? [previewCard.front, ...(previewCard.back ? [previewCard.back] : []), ...(previewCard.extraSides ?? [])]
@@ -112,7 +114,21 @@ export function CardSetEditor() {
   }
 
   function handleCardSizeChange(cardSize: GuideCardLayoutOptions["cardSize"]) {
-    updateLayoutOptions({ cardSize, cardCount: getCardsPerPage(cardSize) });
+    setLayoutOptions((current) => {
+      const currentDefaultCount = getCardsPerPage(current.cardSize);
+      const nextDefaultCount = getCardsPerPage(cardSize);
+      const shouldUseLayoutDefault = current.cardCount === currentDefaultCount;
+
+      return normalizeGuideCardLayoutOptions({
+        ...current,
+        cardSize,
+        cardCount: shouldUseLayoutDefault ? nextDefaultCount : current.cardCount,
+      });
+    });
+  }
+
+  function handleCardCountChange(cardCount: number) {
+    updateLayoutOptions({ cardCount: clampCardCount(cardCount) });
   }
 
   function toggleFullPrayer(prayerId: PrayerId, checked: boolean) {
@@ -143,7 +159,7 @@ export function CardSetEditor() {
             <p className="mt-1 text-lg font-semibold text-slate-900">{selectedGuide.name}</p>
             <p className="mt-1 text-sm text-slate-700">{generatedCardSet.mysterySetTitle}</p>
             <p className="mt-2 text-sm text-slate-700">
-              {generatedCardSet.cardsPerPage} per page - {generatedCardSet.layoutOptions.cardSize.replace("-", " ")}
+              {generatedCardSet.cardsPerPage} per page - {currentLayout.label}
             </p>
             <p className="mt-2 text-sm text-slate-700">
               {hasBackSide ? "Uses front and back." : "Fits on one side with these settings."}
@@ -197,11 +213,13 @@ export function CardSetEditor() {
               min={MIN_CARD_COUNT}
               max={MAX_CARD_COUNT}
               value={layoutOptions.cardCount}
-              onChange={(event) => updateLayoutOptions({ cardCount: clampCardCount(Number(event.target.value)) })}
+              onChange={(event) => handleCardCountChange(Number(event.target.value))}
               className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
             />
             <p className="mt-3 text-sm leading-6 text-slate-700">
-              Blank slots stay invisible so front and back alignment is preserved.
+              This controls how many cards are generated. Use your print dialog&apos;s Copies
+              setting to print more sets. Blank slots stay invisible so front and back alignment is
+              preserved.
             </p>
           </div>
 
@@ -217,12 +235,12 @@ export function CardSetEditor() {
             >
               {GUIDE_CARD_SIZE_OPTIONS.map((option) => (
                 <option key={option.id} value={option.id}>
-                  {option.label} - {option.cardsPerPage} per page
+                  {option.label}
                 </option>
               ))}
             </select>
             <p className="mt-3 text-sm leading-6 text-slate-700">
-              {GUIDE_CARD_SIZE_OPTIONS.find((option) => option.id === layoutOptions.cardSize)?.description}
+              Choose how cards are arranged on each sheet. {currentLayout.description}
             </p>
           </div>
         </div>

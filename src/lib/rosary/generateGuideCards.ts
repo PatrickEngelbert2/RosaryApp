@@ -11,6 +11,7 @@ import {
   getFullPrayerTextForCards,
   normalizePrayerTextForCards,
 } from "@/lib/rosary/prayerText";
+import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import type {
   CustomGuidanceInsertionPoint,
   GeneratedGuideCard,
@@ -64,13 +65,6 @@ const guidancePointsForBack: CustomGuidanceInsertionPoint[] = [
   "after-closing",
   "end",
 ];
-
-const sideCapacity: Record<GuideCardLayoutOptions["cardSize"], number> = {
-  pocket: 29,
-  tall: 38,
-  large: 50,
-  "full-page": 82,
-};
 
 export function createDefaultGeneratedGuideConfig(): UserRosaryConfig {
   return normalizeRosaryConfig(createDefaultUserConfigFromTemplate("standard-rosary"));
@@ -236,14 +230,15 @@ function layoutBlocksAcrossSides(
   options: GuideCardLayoutOptions,
   warnings: string[],
 ): { front: GuideCardSide; back?: GuideCardSide; extraSides: GuideCardSide[] } {
-  const capacity = sideCapacity[options.cardSize];
+  const layout = getGuideCardLayout(options.cardSize);
+  const capacity = layout.capacity;
   const totalWeight = blocks.reduce((total, block) => total + block.estimatedWeight, 0);
 
   blocks
     .filter((block) => block.estimatedWeight > capacity)
     .forEach((block) => {
       warnings.push(
-        `${block.heading ?? "A section"} may be too large for one ${options.cardSize.replace("-", " ")} card face. It is kept together to avoid awkward splits.`,
+        `${block.heading ?? "A section"} may be too large for one ${layout.shortLabel} card face. It is kept together to avoid awkward splits.`,
       );
     });
 
@@ -268,7 +263,7 @@ function layoutBlocksAcrossSides(
   }
 
   warnings.push(
-    `This ${options.cardSize.replace("-", " ")} layout is too dense for two sides. Choose a larger card size or print fewer prayers in full.`,
+    `This ${layout.shortLabel} layout is too dense for two sides. Choose a larger card size or print fewer prayers in full.`,
   );
 
   const sides = packBlocksIntoSides(blocks, capacity);
@@ -335,12 +330,13 @@ function addSideDensityWarnings(
   options: GuideCardLayoutOptions,
   warnings: string[],
 ) {
+  const layout = getGuideCardLayout(options.cardSize);
   const frontWeight = frontBlocks.reduce((total, block) => total + block.estimatedWeight, 0);
   const backWeight = backBlocks.reduce((total, block) => total + block.estimatedWeight, 0);
 
   if (frontWeight > capacity || backWeight > capacity) {
     warnings.push(
-      `This ${options.cardSize.replace("-", " ")} layout is dense. Choose a larger card size or print fewer prayers in full if readability matters.`,
+      `This ${layout.shortLabel} layout is dense. Choose a larger card size or print fewer prayers in full if readability matters.`,
     );
   }
 }

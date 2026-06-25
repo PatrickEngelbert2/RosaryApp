@@ -5,56 +5,31 @@ import type {
   RosaryCardContent,
   RosaryCardSet,
 } from "@/lib/rosary/types";
+import {
+  GUIDE_CARD_LAYOUTS,
+  getGuideCardLayout,
+  normalizeGuideCardSize,
+} from "@/lib/rosary/guideCardLayouts";
 
 export const DEFAULT_CARD_COUNT = 4;
 export const MIN_CARD_COUNT = 1;
 export const MAX_CARD_COUNT = 24;
 export const CARDS_PER_PRINT_PAGE = 4;
-export const DEFAULT_GUIDE_CARD_SIZE: GuideCardSize = "pocket";
+export const DEFAULT_GUIDE_CARD_SIZE: GuideCardSize = "pocket-4";
 export const DEFAULT_FULL_PRAYER_IDS = ["apostles-creed"] as const;
 
-export const GUIDE_CARD_SIZE_OPTIONS: Array<{
-  id: GuideCardSize;
-  label: string;
-  description: string;
-  cardsPerPage: number;
-}> = [
-  {
-    id: "pocket",
-    label: "Pocket",
-    description: "4 per page, best for compact walk guides",
-    cardsPerPage: 4,
-  },
-  {
-    id: "tall",
-    label: "Tall",
-    description: "3 per page, taller cards with more vertical room",
-    cardsPerPage: 3,
-  },
-  {
-    id: "large",
-    label: "Large",
-    description: "2 per page, more room for full prayers",
-    cardsPerPage: 2,
-  },
-  {
-    id: "full-page",
-    label: "Full page",
-    description: "1 per page, best for full text",
-    cardsPerPage: 1,
-  },
-];
+export const GUIDE_CARD_SIZE_OPTIONS = GUIDE_CARD_LAYOUTS;
 
 export function clampCardCount(count: number): number {
   return Math.min(MAX_CARD_COUNT, Math.max(MIN_CARD_COUNT, Math.round(count)));
 }
 
 export function getCardsPerPage(cardSize: GuideCardSize): number {
-  return GUIDE_CARD_SIZE_OPTIONS.find((option) => option.id === cardSize)?.cardsPerPage ?? 4;
+  return getGuideCardLayout(cardSize).cardsPerPage;
 }
 
 export function isGuideCardSize(value: string | null | undefined): value is GuideCardSize {
-  return value === "pocket" || value === "tall" || value === "large" || value === "full-page";
+  return Boolean(value && normalizeGuideCardSize(value) === value);
 }
 
 export function createDefaultGuideCardLayoutOptions(): GuideCardLayoutOptions {
@@ -73,7 +48,7 @@ export function normalizeGuideCardLayoutOptions(
   const fullPrayerIds = Array.isArray(options?.fullPrayerIds) ? options.fullPrayerIds : defaults.fullPrayerIds;
 
   return {
-    cardSize: isGuideCardSize(options?.cardSize) ? options.cardSize : defaults.cardSize,
+    cardSize: normalizeGuideCardSize(options?.cardSize),
     cardCount: clampCardCount(Number(options?.cardCount ?? defaults.cardCount)),
     fullPrayerIds: [...new Set(fullPrayerIds)],
     includeOverflowWarnings: options?.includeOverflowWarnings ?? defaults.includeOverflowWarnings,

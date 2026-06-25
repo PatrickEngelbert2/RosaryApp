@@ -217,7 +217,7 @@ export type GuideCardSection = {
   leaderOnly?: boolean;
 };
 
-export type GuideCardSize = "pocket" | "tall" | "large" | "full-page";
+export type GuideCardSize = "pocket-4" | "tall-3" | "wide-3" | "tall-2" | "wide-2" | "full-1";
 
 export type GuideCardLayoutOptions = {
   cardSize: GuideCardSize;

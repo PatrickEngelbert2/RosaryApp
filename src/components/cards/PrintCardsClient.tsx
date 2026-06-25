@@ -66,6 +66,7 @@ export function PrintCardsClient() {
     () => chunkCardsForPrint(generatedCardSet.cards, generatedCardSet.cardsPerPage),
     [generatedCardSet.cards, generatedCardSet.cardsPerPage],
   );
+  const hasBackSide = Boolean(generatedCardSet.cards[0]?.back);
   const extraSideCount = generatedCardSet.cards[0]?.extraSides?.length ?? 0;
   const cardSizeLabel = generatedCardSet.layoutOptions.cardSize.replace("-", " ");
 
@@ -87,7 +88,7 @@ export function PrintCardsClient() {
           </p>
           <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
             {generatedCardSet.mysterySetTitle} - {generatedCardSet.cardsPerPage} per page with
-            matching front/back grid slots.
+            {hasBackSide ? " matching front/back grid slots." : " front-only cards for these settings."}
           </p>
           {usedFallback ? (
             <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
@@ -129,13 +130,15 @@ export function PrintCardsClient() {
               cardsPerPage={generatedCardSet.cardsPerPage}
               cardSize={generatedCardSet.layoutOptions.cardSize}
             />
-            <PrintCardPage
-              cards={cards}
-              side="back"
-              pageLabel={`Sheet ${index + 1} backs`}
-              cardsPerPage={generatedCardSet.cardsPerPage}
-              cardSize={generatedCardSet.layoutOptions.cardSize}
-            />
+            {hasBackSide ? (
+              <PrintCardPage
+                cards={cards}
+                side="back"
+                pageLabel={`Sheet ${index + 1} backs`}
+                cardsPerPage={generatedCardSet.cardsPerPage}
+                cardSize={generatedCardSet.layoutOptions.cardSize}
+              />
+            ) : null}
             {Array.from({ length: extraSideCount }, (_, extraIndex) => (
               <PrintCardPage
                 key={`extra-${extraIndex}`}

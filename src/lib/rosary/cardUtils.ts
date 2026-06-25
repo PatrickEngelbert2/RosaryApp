@@ -26,6 +26,12 @@ export const GUIDE_CARD_SIZE_OPTIONS: Array<{
     cardsPerPage: 4,
   },
   {
+    id: "tall",
+    label: "Tall",
+    description: "3 per page, taller cards with more vertical room",
+    cardsPerPage: 3,
+  },
+  {
     id: "large",
     label: "Large",
     description: "2 per page, more room for full prayers",
@@ -48,7 +54,7 @@ export function getCardsPerPage(cardSize: GuideCardSize): number {
 }
 
 export function isGuideCardSize(value: string | null | undefined): value is GuideCardSize {
-  return value === "pocket" || value === "large" || value === "full-page";
+  return value === "pocket" || value === "tall" || value === "large" || value === "full-page";
 }
 
 export function createDefaultGuideCardLayoutOptions(): GuideCardLayoutOptions {

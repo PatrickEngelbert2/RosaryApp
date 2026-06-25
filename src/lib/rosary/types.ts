@@ -217,7 +217,7 @@ export type GuideCardSection = {
   leaderOnly?: boolean;
 };
 
-export type GuideCardSize = "pocket" | "large" | "full-page";
+export type GuideCardSize = "pocket" | "tall" | "large" | "full-page";
 
 export type GuideCardLayoutOptions = {
   cardSize: GuideCardSize;
@@ -245,6 +245,7 @@ export type GuideCardBlock = {
   priority?: "required" | "optional";
   compact?: boolean;
   leaderOnly?: boolean;
+  sectionGroup?: string;
 };
 
 export type GuideCardSide = {
@@ -259,7 +260,7 @@ export type GeneratedGuideCard = {
   id: string;
   cardNumber: number;
   front: GuideCardSide;
-  back: GuideCardSide;
+  back?: GuideCardSide;
   extraSides?: GuideCardSide[];
   layoutOptions: GuideCardLayoutOptions;
 };

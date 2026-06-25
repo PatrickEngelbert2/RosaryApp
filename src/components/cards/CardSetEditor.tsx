@@ -10,6 +10,7 @@ import {
   MIN_CARD_COUNT,
   clampCardCount,
   createDefaultGuideCardLayoutOptions,
+  getCardsPerPage,
   normalizeGuideCardLayoutOptions,
 } from "@/lib/rosary/cardUtils";
 import {
@@ -26,6 +27,7 @@ import {
   saveGuideCardSelectedGuideId,
   setActiveRosaryConfig,
 } from "@/lib/rosary/storage";
+import { getPrayerIncipit } from "@/lib/rosary/prayerText";
 import type { GuideCardLayoutOptions, PrayerId, UserRosaryConfig } from "@/lib/rosary/types";
 
 const DEFAULT_GUIDE_ID = "default-guide";
@@ -89,8 +91,9 @@ export function CardSetEditor() {
   );
   const previewCard = generatedCardSet.cards[0];
   const previewSides = previewCard
-    ? [previewCard.front, previewCard.back, ...(previewCard.extraSides ?? [])]
+    ? [previewCard.front, ...(previewCard.back ? [previewCard.back] : []), ...(previewCard.extraSides ?? [])]
     : [];
+  const hasBackSide = Boolean(previewCard?.back);
   const selectedGuideIsSaved = savedGuides.some((guide) => guide.id === selectedGuide.id);
   const printHref = `/cards/print?guide=${encodeURIComponent(
     selectedGuideIsSaved ? selectedGuide.id : DEFAULT_GUIDE_ID,
@@ -106,6 +109,10 @@ export function CardSetEditor() {
 
   function updateLayoutOptions(nextOptions: Partial<GuideCardLayoutOptions>) {
     setLayoutOptions((current) => normalizeGuideCardLayoutOptions({ ...current, ...nextOptions }));
+  }
+
+  function handleCardSizeChange(cardSize: GuideCardLayoutOptions["cardSize"]) {
+    updateLayoutOptions({ cardSize, cardCount: getCardsPerPage(cardSize) });
   }
 
   function toggleFullPrayer(prayerId: PrayerId, checked: boolean) {
@@ -137,6 +144,9 @@ export function CardSetEditor() {
             <p className="mt-1 text-sm text-slate-700">{generatedCardSet.mysterySetTitle}</p>
             <p className="mt-2 text-sm text-slate-700">
               {generatedCardSet.cardsPerPage} per page - {generatedCardSet.layoutOptions.cardSize.replace("-", " ")}
+            </p>
+            <p className="mt-2 text-sm text-slate-700">
+              {hasBackSide ? "Uses front and back." : "Fits on one side with these settings."}
             </p>
           </div>
         </div>
@@ -202,7 +212,7 @@ export function CardSetEditor() {
             <select
               id="card-size"
               value={layoutOptions.cardSize}
-              onChange={(event) => updateLayoutOptions({ cardSize: event.target.value as GuideCardLayoutOptions["cardSize"] })}
+              onChange={(event) => handleCardSizeChange(event.target.value as GuideCardLayoutOptions["cardSize"])}
               className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
             >
               {GUIDE_CARD_SIZE_OPTIONS.map((option) => (
@@ -242,7 +252,9 @@ export function CardSetEditor() {
                 <span>
                   <span className="block font-semibold text-blue-900">{prayer.title}</span>
                   <span className="block text-xs leading-5 text-slate-600">
-                    {prayer.text ? "Print full text when checked." : "No full text is available."}
+                    {prayer.text
+                      ? `${getPrayerIncipit(prayer)} Print full text when checked.`
+                      : "No full text is available."}
                   </span>
                 </span>
               </label>
@@ -281,6 +293,11 @@ export function CardSetEditor() {
           <p className="mt-2 leading-7 text-slate-700">
             Previewing card 1 of {generatedCardSet.cardCount}. The preview updates with guide,
             card count, card size, and full-prayer choices.
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            {hasBackSide
+              ? "This guide uses front and back with the current settings."
+              : "This guide fits on one side with the current settings; no back page will print."}
           </p>
         </div>
         {generatedCardSet.warnings.length > 0 ? (

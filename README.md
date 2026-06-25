@@ -16,7 +16,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Follow prayers with collapsible text.
 - Group repeated Hail Marys or show them individually.
 - Generate printable front/back guide cards.
-- Choose Pocket, Large, or Full page guide-card layouts.
+- Choose Pocket, Tall, Large, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
 - Save current guides locally in the browser.
 
@@ -105,11 +105,13 @@ Custom Rosary guides and card sets are saved in browser localStorage. They are n
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, and which prayers print in full. Supported layouts are Pocket cards with four per US Letter page, Large cards with two per page, and Full page guides with one per page. Blank print slots remain invisible so front/back alignment is preserved.
+Users can choose the card count, card size, and which prayers print in full. Supported layouts are Pocket cards with four per US Letter page, Tall cards with three per page, Large cards with two per page, and Full page guides with one per page. Blank print slots remain invisible so front/back alignment is preserved.
 
-Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, moves whole blocks to later sides when needed, and warns when a selected card size or full-prayer combination may be too dense. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
+Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`.
 
-The print view at `/cards/print` uses browser print / Save as PDF. Persistence is still browser-local; no guide or card data is uploaded.
+Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, balances ordered guide blocks across card faces when a second side is needed, and warns when a selected card size or full-prayer combination may be too dense. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
+
+The print view at `/cards/print` uses browser print / Save as PDF. The browser print dialog handles copy count; the site only renders the selected number of card slots. Persistence is still browser-local; no guide or card data is uploaded.
 
 ## Scripture Readings
 

@@ -13,7 +13,7 @@ type PrintCardProps = {
 
 export function PrintCard({ card, side, extraSideIndex }: PrintCardProps) {
   const cardSide: GuideCardSide =
-    typeof extraSideIndex === "number" ? card.extraSides?.[extraSideIndex] ?? card.back : card[side];
+    typeof extraSideIndex === "number" ? card.extraSides?.[extraSideIndex] ?? card.front : card[side] ?? card.front;
 
   return (
     <article className={`print-card print-card-${card.layoutOptions.cardSize}`}>

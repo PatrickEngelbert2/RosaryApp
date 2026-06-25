@@ -141,8 +141,8 @@ export default function HomePage() {
   }).format(today);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-6 lg:px-8">
-      <section className="grid gap-7 py-6 md:grid-cols-[1.15fr_0.85fr] md:items-center">
+    <div className="mx-auto w-full max-w-6xl px-5 pb-10 pt-8 sm:px-6 lg:px-8 lg:pt-10">
+      <section className="grid gap-8 pb-12 md:grid-cols-[1.15fr_0.85fr] md:items-start lg:gap-12 lg:pb-14">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
             Walk the Rosary
@@ -194,7 +194,7 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <section aria-labelledby="toolkit-flow" className="py-6">
+      <section aria-labelledby="toolkit-flow" className="pb-12 lg:pb-14">
         <h2 id="toolkit-flow" className="text-2xl font-bold text-blue-900">
           Pray, lead, and print
         </h2>
@@ -215,7 +215,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section aria-labelledby="site-sections" className="py-6">
+      <section aria-labelledby="site-sections" className="pb-6">
         <h2 id="site-sections" className="text-2xl font-bold text-blue-900">
           Explore the site
         </h2>

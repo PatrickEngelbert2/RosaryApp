@@ -17,11 +17,13 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Expanded the footer with useful navigation, contact information, creator attribution, and a permissions reminder.
 - Added dependency-free inline SVG icons to the homepage Explore cards.
 - Updated README project/contact details to match the polished public site.
+- Tightened homepage/header vertical spacing so the hero begins closer to the navigation and the landing page rhythm is less loose.
 
 ### Fixed
 
 - Replaced remaining prototype/default branding where appropriate while keeping localStorage keys stable.
 - Removed placeholder printable language from the homepage Explore section.
+- Reduced excessive whitespace above the homepage hero and between the hero and next section.
 
 ## 0.3.0 - 2026-06-24
 

@@ -1,10 +1,13 @@
-import type { RosaryCardSet, UserRosaryConfig } from "@/lib/rosary/types";
+import type { GuideCardLayoutOptions, RosaryCardSet, UserRosaryConfig } from "@/lib/rosary/types";
+import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import { normalizeRosaryConfig } from "@/lib/rosary/configUtils";
 
 const CONFIGS_KEY = "rosary-walks:rosary-configs:v1";
 const ACTIVE_CONFIG_KEY = "rosary-walks:active-config:v1";
 const CARD_SETS_KEY = "rosary-walks:card-sets:v1";
 const ACTIVE_CARD_SET_KEY = "rosary-walks:active-card-set:v1";
+const GUIDE_CARD_OPTIONS_KEY = "rosary-walks:guide-card-options:v1";
+const GUIDE_CARD_SELECTED_GUIDE_KEY = "rosary-walks:guide-card-selected-guide:v1";
 
 function canUseLocalStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -120,4 +123,20 @@ export function getActiveCardSet(): RosaryCardSet | undefined {
 
 export function setActiveCardSet(id: string): boolean {
   return writeJson(ACTIVE_CARD_SET_KEY, id);
+}
+
+export function getGuideCardLayoutOptions(): GuideCardLayoutOptions {
+  return normalizeGuideCardLayoutOptions(readJson<Partial<GuideCardLayoutOptions>>(GUIDE_CARD_OPTIONS_KEY, {}));
+}
+
+export function saveGuideCardLayoutOptions(options: GuideCardLayoutOptions): boolean {
+  return writeJson(GUIDE_CARD_OPTIONS_KEY, normalizeGuideCardLayoutOptions(options));
+}
+
+export function getGuideCardSelectedGuideId(): string | null {
+  return readJson<string | null>(GUIDE_CARD_SELECTED_GUIDE_KEY, null);
+}
+
+export function saveGuideCardSelectedGuideId(id: string): boolean {
+  return writeJson(GUIDE_CARD_SELECTED_GUIDE_KEY, id);
 }

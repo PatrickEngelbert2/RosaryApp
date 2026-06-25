@@ -21,12 +21,20 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added site-wide motion-aware interaction polish for buttons, navigation links, footer links, clickable cards, builder controls, guide card controls, and prayer page controls.
 - Added a subtle header brand hover interaction with lift, icon tilt, and accent underline.
 - Added reduced-motion support for the new interaction transitions.
+- Revamped the Guide Cards workflow to generate pocket guide cards from saved rosary guides instead of the confusing Master Card editor.
+- Added generated front/back card previews that reflect selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
+- Updated the print layout to render generated 4-up front/back cards while preserving variable card count printing and invisible blank slots for alignment.
+- Documented the current Vercel deployment and generated guide card workflow in the README.
+- Added Guide Card Layout Engine v1 with block-based print layout, short/full prayer controls, adaptive Pocket/Large/Full page card sizes, and estimate-based overflow warnings.
+- Removed useless printed card labels so final cards no longer waste space on Card 1/Card 2/Card 3/Card 4.
+- Updated guide-card print rendering so cards per page, preview layout, blank slots, and front/back alignment adapt to the selected card size.
 
 ### Fixed
 
 - Replaced remaining prototype/default branding where appropriate while keeping localStorage keys stable.
 - Removed placeholder printable language from the homepage Explore section.
 - Reduced excessive whitespace above the homepage hero and between the hero and next section.
+- Improved guide-card overflow behavior by moving whole blocks to later sides where possible and warning when selected content is too dense.
 
 ## 0.3.0 - 2026-06-24
 

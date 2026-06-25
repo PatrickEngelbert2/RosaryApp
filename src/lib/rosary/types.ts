@@ -207,3 +207,74 @@ export type RosaryCardSet = {
   cardSlots: CardSlot[];
   sourceRosaryConfigId?: string;
 };
+
+export type GuideCardSection = {
+  id: string;
+  heading: string;
+  lines: string[];
+  body?: string;
+  compact?: boolean;
+  leaderOnly?: boolean;
+};
+
+export type GuideCardSize = "pocket" | "large" | "full-page";
+
+export type GuideCardLayoutOptions = {
+  cardSize: GuideCardSize;
+  cardCount: number;
+  fullPrayerIds: PrayerId[];
+  includeOverflowWarnings: boolean;
+};
+
+export type GuideCardBlock = {
+  id: string;
+  type:
+    | "heading"
+    | "prayer"
+    | "instruction"
+    | "mystery-list"
+    | "invocation-list"
+    | "custom-guidance";
+  heading?: string;
+  lines?: string[];
+  body?: string;
+  prayerId?: PrayerId;
+  printMode?: "short" | "full";
+  estimatedWeight: number;
+  keepTogether?: boolean;
+  priority?: "required" | "optional";
+  compact?: boolean;
+  leaderOnly?: boolean;
+};
+
+export type GuideCardSide = {
+  title: string;
+  subtitle?: string;
+  id: string;
+  blocks: GuideCardBlock[];
+  overflowWarnings?: string[];
+};
+
+export type GeneratedGuideCard = {
+  id: string;
+  cardNumber: number;
+  front: GuideCardSide;
+  back: GuideCardSide;
+  extraSides?: GuideCardSide[];
+  layoutOptions: GuideCardLayoutOptions;
+};
+
+export type GeneratedGuideCardSet = {
+  id: string;
+  name: string;
+  sourceRosaryConfigId: string;
+  sourceRosaryConfigName: string;
+  cardCount: number;
+  mysterySetTitle: string;
+  mysterySetModeLabel: string;
+  generatedAt: string;
+  cards: GeneratedGuideCard[];
+  warnings: string[];
+  layoutOptions: GuideCardLayoutOptions;
+  cardsPerPage: number;
+};

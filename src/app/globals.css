@@ -209,11 +209,24 @@ a {
   display: grid;
   width: min(100%, 8.5in);
   min-height: 11in;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
   gap: 0.12in;
   background: white;
   padding: 0.25in;
+}
+
+.print-page-pocket {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.print-page-large {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.print-page-full-page {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
 }
 
 .print-card {
@@ -221,44 +234,117 @@ a {
   overflow: hidden;
   border: 1px solid #777;
   background: white;
-  padding: 0.18in;
+  padding: 0.16in;
   color: #111;
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.print-card-large {
+  padding: 0.22in;
+}
+
+.print-card-full-page {
+  padding: 0.35in;
+}
+
 .print-card h2 {
-  font-size: 16pt;
+  font-size: 13.5pt;
   font-weight: 700;
   line-height: 1.1;
 }
 
-.print-card h3 {
-  margin-top: 0.12in;
-  border-top: 1px solid #bbb;
-  padding-top: 0.08in;
-  font-size: 12pt;
-  font-weight: 700;
+.print-card-large h2 {
+  font-size: 16pt;
 }
 
-.print-card h4 {
-  margin-top: 0.09in;
+.print-card-full-page h2 {
+  font-size: 21pt;
+}
+
+.print-card h3 {
+  margin-top: 0.075in;
+  border-top: 1px solid #c7c7c7;
+  padding-top: 0.045in;
   font-size: 9.5pt;
   font-weight: 700;
 }
 
-.print-card p {
-  font-size: 9pt;
+.print-card-large h3 {
+  margin-top: 0.1in;
+  font-size: 11pt;
+}
+
+.print-card-full-page h3 {
+  margin-top: 0.14in;
+  font-size: 14pt;
+}
+
+.print-card p,
+.print-card li {
+  white-space: pre-line;
+  font-size: 7.5pt;
+  line-height: 1.16;
+}
+
+.print-card-large p,
+.print-card-large li {
+  font-size: 9.4pt;
   line-height: 1.25;
 }
 
+.print-card-full-page p,
+.print-card-full-page li {
+  font-size: 12pt;
+  line-height: 1.35;
+}
+
 .print-card .compact {
-  font-size: 8pt;
+  font-size: 7pt;
+  line-height: 1.12;
+}
+
+.print-card-large .compact {
+  font-size: 8.6pt;
   line-height: 1.2;
 }
 
-.print-card-subtitle,
-.print-card-number {
+.print-card-full-page .compact {
+  font-size: 10.5pt;
+  line-height: 1.3;
+}
+
+.print-card-subtitle {
+  font-size: 6.8pt;
+}
+
+.print-card-large .print-card-subtitle {
   font-size: 8pt;
+}
+
+.print-card-full-page .print-card-subtitle {
+  font-size: 11pt;
+}
+
+.print-card ul {
+  margin: 0.025in 0 0;
+  padding-left: 0.11in;
+}
+
+.print-card-large ul,
+.print-card-full-page ul {
+  padding-left: 0.16in;
+}
+
+.print-card section {
+  margin-top: 0.035in;
+}
+
+.print-card-large section {
+  margin-top: 0.05in;
+}
+
+.print-card-full-page section {
+  margin-top: 0.08in;
 }
 
 .leader-section {

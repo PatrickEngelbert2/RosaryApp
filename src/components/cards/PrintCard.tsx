@@ -1,26 +1,57 @@
-import type { RosaryCardContent, RosaryCardSide } from "@/lib/rosary/types";
+import type {
+  GeneratedGuideCard,
+  GuideCardBlock,
+  GuideCardSide,
+  GuideCardSize,
+} from "@/lib/rosary/types";
 
 type PrintCardProps = {
-  content: RosaryCardContent;
+  card: GeneratedGuideCard;
   side: "front" | "back";
-  cardNumber: number;
+  extraSideIndex?: number;
 };
 
-export function PrintCard({ content, side, cardNumber }: PrintCardProps) {
-  const cardSide: RosaryCardSide = content[side];
+export function PrintCard({ card, side, extraSideIndex }: PrintCardProps) {
+  const cardSide: GuideCardSide =
+    typeof extraSideIndex === "number" ? card.extraSides?.[extraSideIndex] ?? card.back : card[side];
 
   return (
-    <article className="print-card">
-      <p className="print-card-number">Card {cardNumber}</p>
-      <h2>{content.title}</h2>
-      <p className="print-card-subtitle">{content.subtitle}</p>
-      <h3>{cardSide.heading}</h3>
-      {cardSide.sections.map((section) => (
-        <section key={section.id} className={section.leaderOnly ? "leader-section" : undefined}>
-          <h4>{section.heading}</h4>
-          <p className={section.compact ? "compact" : undefined}>{section.body}</p>
-        </section>
+    <article className={`print-card print-card-${card.layoutOptions.cardSize}`}>
+      <h2>{cardSide.title}</h2>
+      {cardSide.subtitle ? <p className="print-card-subtitle">{cardSide.subtitle}</p> : null}
+      {cardSide.blocks.map((block) => (
+        <PrintCardBlock key={block.id} block={block} cardSize={card.layoutOptions.cardSize} />
       ))}
     </article>
+  );
+}
+
+function PrintCardBlock({
+  block,
+  cardSize,
+}: {
+  block: GuideCardBlock;
+  cardSize: GuideCardSize;
+}) {
+  if (block.type === "heading") {
+    return <h3>{block.heading}</h3>;
+  }
+
+  return (
+    <section className={block.leaderOnly ? "leader-section" : undefined}>
+      {block.heading ? <h3>{block.heading}</h3> : null}
+      {block.body ? (
+        <p className={`${block.compact ? "compact" : ""} ${cardSize === "full-page" ? "full-page-prayer" : ""}`.trim()}>
+          {block.body}
+        </p>
+      ) : null}
+      {block.lines && block.lines.length > 0 ? (
+        <ul className={block.compact ? "compact" : undefined}>
+          {block.lines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }

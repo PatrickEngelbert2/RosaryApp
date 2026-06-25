@@ -2,227 +2,301 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CardContentEditor } from "@/components/cards/CardContentEditor";
-import { CardPreview } from "@/components/cards/CardPreview";
-import { CardSlotEditor } from "@/components/cards/CardSlotEditor";
+import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
 import { Card } from "@/components/ui/Card";
-import { clampCardCount, ensureCardSlots, getVisibleCardSlots } from "@/lib/rosary/cardUtils";
-import { createDefaultCardSetFromRosaryConfig, makeLeaderCardContent } from "@/lib/rosary/defaultCards";
 import {
-  getSavedCardSets,
+  GUIDE_CARD_SIZE_OPTIONS,
+  MAX_CARD_COUNT,
+  MIN_CARD_COUNT,
+  clampCardCount,
+  createDefaultGuideCardLayoutOptions,
+  normalizeGuideCardLayoutOptions,
+} from "@/lib/rosary/cardUtils";
+import {
+  createDefaultGeneratedGuideConfig,
+  generateGuideCardsFromConfig,
+  getRelevantGuidePrayerOptions,
+} from "@/lib/rosary/generateGuideCards";
+import {
+  getActiveRosaryConfig,
+  getGuideCardLayoutOptions,
+  getGuideCardSelectedGuideId,
   getSavedRosaryConfigs,
-  saveCardSet,
-  setActiveCardSet,
+  saveGuideCardLayoutOptions,
+  saveGuideCardSelectedGuideId,
+  setActiveRosaryConfig,
 } from "@/lib/rosary/storage";
-import type { RosaryCardContent, RosaryCardSet } from "@/lib/rosary/types";
+import type { GuideCardLayoutOptions, PrayerId, UserRosaryConfig } from "@/lib/rosary/types";
+
+const DEFAULT_GUIDE_ID = "default-guide";
 
 export function CardSetEditor() {
-  const [cardSets, setCardSets] = useState<RosaryCardSet[]>([]);
-  const [cardSet, setCardSet] = useState<RosaryCardSet>(() =>
-    createDefaultCardSetFromRosaryConfig(),
+  const [savedGuides, setSavedGuides] = useState<UserRosaryConfig[]>([]);
+  const [selectedGuideId, setSelectedGuideId] = useState(DEFAULT_GUIDE_ID);
+  const [layoutOptions, setLayoutOptions] = useState<GuideCardLayoutOptions>(() =>
+    createDefaultGuideCardLayoutOptions(),
   );
-  const [saveMessage, setSaveMessage] = useState("");
+  const [hasLoadedOptions, setHasLoadedOptions] = useState(false);
+  const defaultGuide = useMemo(() => createDefaultGeneratedGuideConfig(), []);
 
   useEffect(() => {
     queueMicrotask(() => {
-      const savedCardSets = getSavedCardSets().map(ensureCardSlots);
-      setCardSets(savedCardSets);
-      if (savedCardSets[0]) {
-        setCardSet(savedCardSets[0]);
-        setActiveCardSet(savedCardSets[0].id);
-        return;
+      const guides = getSavedRosaryConfigs();
+      const selectedGuide = getGuideCardSelectedGuideId();
+      const activeGuide = getActiveRosaryConfig();
+      setSavedGuides(guides);
+      setLayoutOptions(getGuideCardLayoutOptions());
+
+      if (selectedGuide === DEFAULT_GUIDE_ID || guides.some((guide) => guide.id === selectedGuide)) {
+        setSelectedGuideId(selectedGuide ?? DEFAULT_GUIDE_ID);
+      } else if (activeGuide) {
+        setSelectedGuideId(activeGuide.id);
+      } else if (guides[0]) {
+        setSelectedGuideId(guides[0].id);
       }
 
-      const savedConfig = getSavedRosaryConfigs()[0];
-      setCardSet(createDefaultCardSetFromRosaryConfig(savedConfig));
+      setHasLoadedOptions(true);
     });
   }, []);
 
-  const visibleSlots = useMemo(() => getVisibleCardSlots(cardSet), [cardSet]);
+  useEffect(() => {
+    if (!hasLoadedOptions) {
+      return;
+    }
 
-  function updateCardCount(count: number) {
-    setCardSet((current) =>
-      ensureCardSlots({
-        ...current,
-        cardCount: clampCardCount(count),
-        updatedAt: new Date().toISOString(),
-      }),
-    );
-  }
+    saveGuideCardLayoutOptions(layoutOptions);
+    saveGuideCardSelectedGuideId(selectedGuideId);
+  }, [hasLoadedOptions, layoutOptions, selectedGuideId]);
 
-  function updateMasterCard(content: RosaryCardContent) {
-    setCardSet((current) => ({
-      ...current,
-      masterCard: content,
-      updatedAt: new Date().toISOString(),
-    }));
-  }
+  const selectedGuide =
+    savedGuides.find((guide) => guide.id === selectedGuideId) ?? defaultGuide;
+  const prayerOptions = useMemo(() => getRelevantGuidePrayerOptions(selectedGuide), [selectedGuide]);
+  const selectedPrayerIdKey = prayerOptions.map((prayer) => prayer.id).join("|");
+  const sanitizedLayoutOptions = useMemo(
+    () => {
+      const selectedPrayerIds = new Set(selectedPrayerIdKey.split("|").filter(Boolean));
 
-  function saveCurrentCardSet() {
-    const next = ensureCardSlots({
-      ...cardSet,
-      updatedAt: new Date().toISOString(),
-      name: cardSet.name.trim() || "Walk the Rosary Guide Cards",
-    });
-    saveCardSet(next);
-    setCardSet(next);
-    setCardSets((current) => [...current.filter((item) => item.id !== next.id), next]);
-    setSaveMessage("Guide card set saved on this device.");
-  }
+      return normalizeGuideCardLayoutOptions({
+        ...layoutOptions,
+        fullPrayerIds: layoutOptions.fullPrayerIds.filter((id) => selectedPrayerIds.has(id)),
+      });
+    },
+    [layoutOptions, selectedPrayerIdKey],
+  );
+  const generatedCardSet = useMemo(
+    () => generateGuideCardsFromConfig(selectedGuide, sanitizedLayoutOptions),
+    [sanitizedLayoutOptions, selectedGuide],
+  );
+  const previewCard = generatedCardSet.cards[0];
+  const previewSides = previewCard
+    ? [previewCard.front, previewCard.back, ...(previewCard.extraSides ?? [])]
+    : [];
+  const selectedGuideIsSaved = savedGuides.some((guide) => guide.id === selectedGuide.id);
+  const printHref = `/cards/print?guide=${encodeURIComponent(
+    selectedGuideIsSaved ? selectedGuide.id : DEFAULT_GUIDE_ID,
+  )}`;
 
-  function selectCardSet(id: string) {
-    const selected = cardSets.find((item) => item.id === id);
-    if (selected) {
-      const next = ensureCardSlots(selected);
-      setCardSet(next);
-      setActiveCardSet(next.id);
+  function handleGuideChange(id: string) {
+    setSelectedGuideId(id);
+    saveGuideCardSelectedGuideId(id);
+    if (id !== DEFAULT_GUIDE_ID) {
+      setActiveRosaryConfig(id);
     }
   }
 
-  function makeCardOneLeader() {
-    setCardSet((current) => {
-      const next = ensureCardSlots(current);
-      const slots = next.cardSlots.map((slot) => {
-        if (slot.cardNumber !== 1) {
-          return slot;
-        }
+  function updateLayoutOptions(nextOptions: Partial<GuideCardLayoutOptions>) {
+    setLayoutOptions((current) => normalizeGuideCardLayoutOptions({ ...current, ...nextOptions }));
+  }
 
-        return {
-          ...slot,
-          useMasterCard: false,
-          overrideContent: makeLeaderCardContent(slot.overrideContent ?? next.masterCard),
-        };
-      });
-
-      return { ...next, cardSlots: slots, updatedAt: new Date().toISOString() };
-    });
+  function toggleFullPrayer(prayerId: PrayerId, checked: boolean) {
+    const nextIds = checked
+      ? [...layoutOptions.fullPrayerIds, prayerId]
+      : layoutOptions.fullPrayerIds.filter((id) => id !== prayerId);
+    updateLayoutOptions({ fullPrayerIds: [...new Set(nextIds)] });
   }
 
   return (
     <div className="space-y-6">
       <Card>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-[1fr_0.6fr]">
           <div>
-            <label className="block text-sm font-semibold text-blue-900" htmlFor="card-set-name">
-              Card set name
-            </label>
-            <input
-              id="card-set-name"
-              value={cardSet.name}
-              onChange={(event) =>
-                setCardSet((current) => ({ ...current, name: event.target.value }))
-              }
-              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-blue-900" htmlFor="saved-card-set">
-              Saved card sets
-            </label>
-            <select
-              id="saved-card-set"
-              value={cardSet.id}
-              onChange={(event) => selectCardSet(event.target.value)}
-              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
-            >
-              <option value={cardSet.id}>{cardSet.name}</option>
-              {cardSets
-                .filter((item) => item.id !== cardSet.id)
-                .map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-
-        <label className="mt-5 block text-sm font-semibold text-blue-900" htmlFor="card-count">
-          Number of cards needed
-        </label>
-        <input
-          id="card-count"
-          type="number"
-          min={1}
-          max={24}
-          value={cardSet.cardCount}
-          onChange={(event) => updateCardCount(Number(event.target.value))}
-          className="interactive-field mt-2 w-full max-w-xs rounded-md border border-blue-900/20 px-3 py-3 text-base"
-        />
-        <p className="mt-2 text-sm leading-6 text-slate-700">
-          Cards print four per letter-size sheet. Only the selected number of cards will be visible.
-        </p>
-      </Card>
-
-      <Card>
-        <h2 className="text-2xl font-semibold text-blue-900">Master card</h2>
-        <p className="mt-3 leading-7 text-slate-700">
-          By default, all cards match the master card. Customize an individual card if you want one
-          card to include leader notes while the rest stay simple for participants.
-        </p>
-        <CardContentEditor content={cardSet.masterCard} onChange={updateMasterCard} />
-        <div className="mt-5">
-          <CardPreview content={cardSet.masterCard} label="Master card" />
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-blue-900">Individual cards</h2>
-            <p className="mt-2 leading-7 text-slate-700">
-              Linked cards follow the master. Customized cards keep their own front and back content.
+            <h2 className="text-2xl font-semibold text-blue-900">Generate from a saved guide</h2>
+            <p className="mt-3 leading-7 text-slate-700">
+              These cards are generated from your selected rosary guide. Choose the card size and
+              which prayers print in full; the layout engine will keep prayer blocks together and
+              warn when a guide is too dense.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Direct card editing will come later. This version focuses on practical cards that
+              match the guide you already built.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={makeCardOneLeader}
-            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-          >
-            Make Card 1 a leader card
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-5">
-          {visibleSlots.map((slot) => (
-            <CardSlotEditor
-              key={slot.id}
-              cardSet={cardSet}
-              slot={slot}
-              onChange={(nextSlot) =>
-                setCardSet((current) => ({
-                  ...current,
-                  cardSlots: ensureCardSlots(current).cardSlots.map((item) =>
-                    item.id === nextSlot.id ? nextSlot : item,
-                  ),
-                  updatedAt: new Date().toISOString(),
-                }))
-              }
-            />
-          ))}
+          <div className="rounded-lg bg-cream-50 p-4">
+            <p className="text-sm font-semibold text-blue-900">Selected guide</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">{selectedGuide.name}</p>
+            <p className="mt-1 text-sm text-slate-700">{generatedCardSet.mysterySetTitle}</p>
+            <p className="mt-2 text-sm text-slate-700">
+              {generatedCardSet.cardsPerPage} per page - {generatedCardSet.layoutOptions.cardSize.replace("-", " ")}
+            </p>
+          </div>
         </div>
       </Card>
 
       <Card>
-        <h2 className="text-2xl font-semibold text-blue-900">Save and print</h2>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={saveCurrentCardSet}
-            className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-          >
-            Save card set
-          </button>
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div>
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="guide-select">
+              Rosary guide
+            </label>
+            <select
+              id="guide-select"
+              value={selectedGuideId}
+              onChange={(event) => handleGuideChange(event.target.value)}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            >
+              {savedGuides.length === 0 ? (
+                <option value={DEFAULT_GUIDE_ID}>Default Standard Rosary</option>
+              ) : null}
+              {savedGuides.map((guide) => (
+                <option key={guide.id} value={guide.id}>
+                  {guide.name}
+                </option>
+              ))}
+              {savedGuides.length > 0 ? (
+                <option value={DEFAULT_GUIDE_ID}>Default Standard Rosary</option>
+              ) : null}
+            </select>
+            {savedGuides.length === 0 ? (
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                No saved guides were found, so this page is showing useful default cards. You can{" "}
+                <Link className="interactive-link font-semibold text-blue-900 underline" href="/builder">
+                  build and save a guide
+                </Link>{" "}
+                when you are ready.
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="card-count">
+              Number of cards needed
+            </label>
+            <input
+              id="card-count"
+              type="number"
+              min={MIN_CARD_COUNT}
+              max={MAX_CARD_COUNT}
+              value={layoutOptions.cardCount}
+              onChange={(event) => updateLayoutOptions({ cardCount: clampCardCount(Number(event.target.value)) })}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            />
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              Blank slots stay invisible so front and back alignment is preserved.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="card-size">
+              Card size
+            </label>
+            <select
+              id="card-size"
+              value={layoutOptions.cardSize}
+              onChange={(event) => updateLayoutOptions({ cardSize: event.target.value as GuideCardLayoutOptions["cardSize"] })}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            >
+              {GUIDE_CARD_SIZE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label} - {option.cardsPerPage} per page
+                </option>
+              ))}
+            </select>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              {GUIDE_CARD_SIZE_OPTIONS.find((option) => option.id === layoutOptions.cardSize)?.description}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-blue-900/10 pt-5">
+          <h3 className="text-lg font-semibold text-blue-900">Prayer text on cards</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            Choose which prayers should be printed in full. Other prayers use compact references to
+            save space.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {prayerOptions.map((prayer) => (
+              <label
+                key={prayer.id}
+                htmlFor={`full-prayer-${prayer.id}`}
+                className="flex gap-3 rounded-md border border-blue-900/10 bg-white px-3 py-3 text-sm text-slate-700"
+              >
+                <input
+                  id={`full-prayer-${prayer.id}`}
+                  type="checkbox"
+                  value={prayer.id}
+                  checked={sanitizedLayoutOptions.fullPrayerIds.includes(prayer.id)}
+                  disabled={!prayer.text}
+                  onChange={(event) => toggleFullPrayer(prayer.id, event.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  <span className="block font-semibold text-blue-900">{prayer.title}</span>
+                  <span className="block text-xs leading-5 text-slate-600">
+                    {prayer.text ? "Print full text when checked." : "No full text is available."}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/cards/print"
-            onClick={() => saveCardSet(ensureCardSlots(cardSet))}
-            className="interactive-button interactive-button-secondary inline-flex items-center justify-center rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+            href={printHref}
+            onClick={() => {
+              saveGuideCardLayoutOptions(sanitizedLayoutOptions);
+              saveGuideCardSelectedGuideId(selectedGuideId);
+              if (selectedGuideId !== DEFAULT_GUIDE_ID) {
+                setActiveRosaryConfig(selectedGuideId);
+              }
+            }}
+            className="interactive-button interactive-button-primary inline-flex items-center justify-center rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
             Print / Save as PDF
           </Link>
+          <Link
+            href="/builder"
+            className="interactive-button interactive-button-secondary inline-flex items-center justify-center rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+          >
+            Build or edit guide
+          </Link>
         </div>
-        {saveMessage ? <p className="mt-3 font-semibold text-blue-900">{saveMessage}</p> : null}
       </Card>
+
+      <section aria-labelledby="generated-card-preview">
+        <div className="mb-4">
+          <h2 id="generated-card-preview" className="text-2xl font-semibold text-blue-900">
+            Generated card preview
+          </h2>
+          <p className="mt-2 leading-7 text-slate-700">
+            Previewing card 1 of {generatedCardSet.cardCount}. The preview updates with guide,
+            card count, card size, and full-prayer choices.
+          </p>
+        </div>
+        {generatedCardSet.warnings.length > 0 ? (
+          <div className="mb-4 space-y-2 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
+            {generatedCardSet.warnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+          </div>
+        ) : null}
+        {previewSides.length > 0 ? (
+          <GeneratedGuideCardPreview
+            sides={previewSides}
+            cardSize={generatedCardSet.layoutOptions.cardSize}
+          />
+        ) : null}
+      </section>
     </div>
   );
 }

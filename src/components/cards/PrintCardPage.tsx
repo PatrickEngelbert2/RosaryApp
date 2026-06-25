@@ -1,27 +1,30 @@
 import { PrintCard } from "@/components/cards/PrintCard";
-import { resolveCardSlotContent } from "@/lib/rosary/cardUtils";
-import type { CardSlot, RosaryCardSet } from "@/lib/rosary/types";
+import type { GeneratedGuideCard, GuideCardSize } from "@/lib/rosary/types";
 
 type PrintCardPageProps = {
-  cardSet: RosaryCardSet;
-  slots: CardSlot[];
+  cards: GeneratedGuideCard[];
   side: "front" | "back";
   pageLabel: string;
+  cardsPerPage: number;
+  cardSize: GuideCardSize;
+  extraSideIndex?: number;
 };
 
-export function PrintCardPage({ cardSet, slots, side, pageLabel }: PrintCardPageProps) {
-  const gridSlots = Array.from({ length: 4 }, (_, index) => slots[index]);
+export function PrintCardPage({
+  cards,
+  side,
+  pageLabel,
+  cardsPerPage,
+  cardSize,
+  extraSideIndex,
+}: PrintCardPageProps) {
+  const gridSlots = Array.from({ length: cardsPerPage }, (_, index) => cards[index]);
 
   return (
-    <section className="print-page" aria-label={pageLabel}>
-      {gridSlots.map((slot, index) =>
-        slot ? (
-          <PrintCard
-            key={slot.id}
-            content={resolveCardSlotContent(cardSet, slot)}
-            side={side}
-            cardNumber={slot.cardNumber}
-          />
+    <section className={`print-page print-page-${cardSize}`} aria-label={pageLabel}>
+      {gridSlots.map((card, index) =>
+        card ? (
+          <PrintCard key={card.id} card={card} side={side} extraSideIndex={extraSideIndex} />
         ) : (
           <div key={`blank-${index}`} className="blank-print-slot" aria-hidden="true" />
         ),

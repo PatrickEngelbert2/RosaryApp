@@ -1,12 +1,77 @@
-import type { CardSlot, RosaryCardContent, RosaryCardSet } from "@/lib/rosary/types";
+import type {
+  CardSlot,
+  GuideCardLayoutOptions,
+  GuideCardSize,
+  RosaryCardContent,
+  RosaryCardSet,
+} from "@/lib/rosary/types";
 
 export const DEFAULT_CARD_COUNT = 4;
 export const MIN_CARD_COUNT = 1;
 export const MAX_CARD_COUNT = 24;
 export const CARDS_PER_PRINT_PAGE = 4;
+export const DEFAULT_GUIDE_CARD_SIZE: GuideCardSize = "pocket";
+export const DEFAULT_FULL_PRAYER_IDS = ["apostles-creed"] as const;
+
+export const GUIDE_CARD_SIZE_OPTIONS: Array<{
+  id: GuideCardSize;
+  label: string;
+  description: string;
+  cardsPerPage: number;
+}> = [
+  {
+    id: "pocket",
+    label: "Pocket",
+    description: "4 per page, best for compact walk guides",
+    cardsPerPage: 4,
+  },
+  {
+    id: "large",
+    label: "Large",
+    description: "2 per page, more room for full prayers",
+    cardsPerPage: 2,
+  },
+  {
+    id: "full-page",
+    label: "Full page",
+    description: "1 per page, best for full text",
+    cardsPerPage: 1,
+  },
+];
 
 export function clampCardCount(count: number): number {
   return Math.min(MAX_CARD_COUNT, Math.max(MIN_CARD_COUNT, Math.round(count)));
+}
+
+export function getCardsPerPage(cardSize: GuideCardSize): number {
+  return GUIDE_CARD_SIZE_OPTIONS.find((option) => option.id === cardSize)?.cardsPerPage ?? 4;
+}
+
+export function isGuideCardSize(value: string | null | undefined): value is GuideCardSize {
+  return value === "pocket" || value === "large" || value === "full-page";
+}
+
+export function createDefaultGuideCardLayoutOptions(): GuideCardLayoutOptions {
+  return {
+    cardSize: DEFAULT_GUIDE_CARD_SIZE,
+    cardCount: DEFAULT_CARD_COUNT,
+    fullPrayerIds: [...DEFAULT_FULL_PRAYER_IDS],
+    includeOverflowWarnings: true,
+  };
+}
+
+export function normalizeGuideCardLayoutOptions(
+  options: Partial<GuideCardLayoutOptions> | undefined,
+): GuideCardLayoutOptions {
+  const defaults = createDefaultGuideCardLayoutOptions();
+  const fullPrayerIds = Array.isArray(options?.fullPrayerIds) ? options.fullPrayerIds : defaults.fullPrayerIds;
+
+  return {
+    cardSize: isGuideCardSize(options?.cardSize) ? options.cardSize : defaults.cardSize,
+    cardCount: clampCardCount(Number(options?.cardCount ?? defaults.cardCount)),
+    fullPrayerIds: [...new Set(fullPrayerIds)],
+    includeOverflowWarnings: options?.includeOverflowWarnings ?? defaults.includeOverflowWarnings,
+  };
 }
 
 export function resolveCardSlotContent(

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Walk the Rosary Icon</title>
+  <desc id="desc">A polished navy and gold circular icon with a rosary descending from the top over a winding river-like path through distant hills.</desc>
+
+  <defs>
+    <linearGradient id="navyBg" x1="124" y1="58" x2="388" y2="462" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#123E72"/>
+      <stop offset="0.58" stop-color="#082B55"/>
+      <stop offset="1" stop-color="#061F3F"/>
+    </linearGradient>
+
+    <linearGradient id="goldMain" x1="147" y1="32" x2="370" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7D978"/>
+      <stop offset="0.48" stop-color="#D8A22D"/>
+      <stop offset="1" stop-color="#B67B13"/>
+    </linearGradient>
+
+    <linearGradient id="riverGold" x1="180" y1="326" x2="306" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE8A5"/>
+      <stop offset="0.38" stop-color="#E5B94D"/>
+      <stop offset="0.72" stop-color="#D8A22D"/>
+      <stop offset="1" stop-color="#B77C14"/>
+    </linearGradient>
+
+    <clipPath id="discClip">
+      <circle cx="256" cy="256" r="208"/>
+    </clipPath>
+  </defs>
+
+  <!-- Outer badge -->
+  <circle cx="256" cy="256" r="236" fill="url(#goldMain)"/>
+  <circle cx="256" cy="256" r="223" fill="#FFF8EA"/>
+  <circle cx="256" cy="256" r="208" fill="url(#navyBg)"/>
+
+  <g clip-path="url(#discClip)">
+    <!-- River/path silhouette. 
+         The far end narrows into the valley between the hills; the near end opens at the bottom.
+         It is drawn before the hills so the distant tip appears to pass into the background. -->
+    <path d="
+      M222 520
+      C221 493 231 466 251 444
+      C271 421 299 405 294 382
+      C291 368 276 357 263 348
+      C251 340 252 333 266 331
+      C287 328 318 342 328 363
+      C345 397 314 425 286 452
+      C265 473 257 494 271 520
+      Z"
+      fill="url(#riverGold)"/>
+
+    <!-- Inner river highlight: offset and tapered so the shape reads more like flowing water than a flame. -->
+    <path d="
+      M244 520
+      C240 493 250 468 272 445
+      C296 420 311 398 305 379
+      C301 367 288 357 274 348"
+      stroke="#FFF0BE"
+      stroke-width="6"
+      stroke-linecap="round"
+      fill="none"
+      opacity="0.58"/>
+
+    <!-- A small dark cutback creates a cleaner S-curve and prevents the river from reading as a single flame tongue. -->
+    <path d="
+      M300 520
+      C285 493 291 470 314 447
+      C331 431 339 410 332 389
+      C353 423 345 458 321 486
+      C312 497 307 508 309 520
+      Z"
+      fill="url(#navyBg)"
+      opacity="0.96"/>
+
+    <!-- Distant hills, drawn over the river tip so the river appears to enter them. -->
+    <path d="M-18 330C50 296 108 294 160 321C204 344 246 345 294 318C350 286 412 293 531 331"
+          stroke="#E7B84D"
+          stroke-width="13"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          fill="none"/>
+
+    <!-- Low horizon sweep / near bank -->
+    <path d="M-28 362C72 348 163 350 239 363C318 377 401 364 538 337"
+          stroke="#D4A031"
+          stroke-width="8"
+          stroke-linecap="round"
+          fill="none"
+          opacity="0.92"/>
+
+    <!-- Rosary enters from beyond the clipped top, suggesting more beads hidden above. -->
+    <path d="M171 36C180 96 213 136 256 148C299 136 332 96 341 36"
+          stroke="#D8A22D"
+          stroke-width="8"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+
+    <!-- Left rosary beads -->
+    <circle cx="172" cy="52" r="12" fill="#F7D978"/>
+    <circle cx="179" cy="82" r="11" fill="#E8B84B"/>
+    <circle cx="193" cy="108" r="10.5" fill="#F7D978"/>
+    <circle cx="214" cy="131" r="10" fill="#D8A22D"/>
+    <circle cx="237" cy="145" r="9.5" fill="#F2C861"/>
+
+    <!-- Right rosary beads -->
+    <circle cx="340" cy="52" r="12" fill="#F7D978"/>
+    <circle cx="333" cy="82" r="11" fill="#E8B84B"/>
+    <circle cx="319" cy="108" r="10.5" fill="#F7D978"/>
+    <circle cx="298" cy="131" r="10" fill="#D8A22D"/>
+    <circle cx="275" cy="145" r="9.5" fill="#F2C861"/>
+
+    <!-- Center bead -->
+    <circle cx="256" cy="150" r="17" fill="#F7D978"/>
+    <circle cx="256" cy="150" r="8" fill="#D8A22D" opacity="0.45"/>
+
+    <!-- Drop to cross -->
+    <path d="M256 167V205" stroke="#D8A22D" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="256" cy="199" r="8.5" fill="#F2C861"/>
+
+    <!-- Latin cross: taller vertical stem with a higher, shorter crossbar, so it reads as a t/cross rather than a plus. -->
+    <rect x="247" y="210" width="18" height="88" rx="5.5" fill="url(#goldMain)"/>
+    <rect x="228" y="237" width="56" height="17" rx="5.5" fill="url(#goldMain)"/>
+  </g>
+
+  <!-- Crisp rings for favicon readability -->
+  <circle cx="256" cy="256" r="209" stroke="#FFF8EA" stroke-width="5"/>
+  <circle cx="256" cy="256" r="236" stroke="#916511" stroke-width="2.5" opacity="0.55"/>
+</svg>

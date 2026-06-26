@@ -96,6 +96,21 @@ export function CardSetEditor() {
     ? [previewCard.front, ...(previewCard.back ? [previewCard.back] : []), ...(previewCard.extraSides ?? [])]
     : [];
   const hasBackSide = Boolean(previewCard?.back);
+  const extraSideCount = previewCard?.extraSides?.length ?? 0;
+  const sideUsageSummary =
+    extraSideCount > 0
+      ? `Needs front, back, and ${extraSideCount} extra ${extraSideCount === 1 ? "side" : "sides"}.`
+      : hasBackSide
+        ? "Uses front and back."
+        : "Fits on one side with these settings.";
+  const previewStatus =
+    extraSideCount > 0
+      ? `This guide needs front, back, and ${extraSideCount} extra ${
+          extraSideCount === 1 ? "side" : "sides"
+        } with the current settings.`
+      : hasBackSide
+        ? "This guide uses front and back with the current settings."
+        : "This guide fits on one side with the current settings; no back page will print.";
   const selectedGuideIsSaved = savedGuides.some((guide) => guide.id === selectedGuide.id);
   const printHref = `/cards/print?guide=${encodeURIComponent(
     selectedGuideIsSaved ? selectedGuide.id : DEFAULT_GUIDE_ID,
@@ -161,9 +176,7 @@ export function CardSetEditor() {
             <p className="mt-2 text-sm text-slate-700">
               {generatedCardSet.cardsPerPage} per page - {currentLayout.label}
             </p>
-            <p className="mt-2 text-sm text-slate-700">
-              {hasBackSide ? "Uses front and back." : "Fits on one side with these settings."}
-            </p>
+            <p className="mt-2 text-sm text-slate-700">{sideUsageSummary}</p>
           </div>
         </div>
       </Card>
@@ -312,11 +325,7 @@ export function CardSetEditor() {
             Previewing card 1 of {generatedCardSet.cardCount}. The preview updates with guide,
             card count, card size, and full-prayer choices.
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            {hasBackSide
-              ? "This guide uses front and back with the current settings."
-              : "This guide fits on one side with the current settings; no back page will print."}
-          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">{previewStatus}</p>
         </div>
         {generatedCardSet.warnings.length > 0 ? (
           <div className="mb-4 space-y-2 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">

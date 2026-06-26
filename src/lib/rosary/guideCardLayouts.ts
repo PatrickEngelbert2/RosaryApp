@@ -9,6 +9,10 @@ export type GuideCardLayoutDefinition = {
   gridColumns: number;
   gridRows: number;
   capacity: number;
+  bodyCharsPerLine: number;
+  compactCharsPerLine: number;
+  headingWeight: number;
+  sectionGapWeight: number;
 };
 
 export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
@@ -20,7 +24,11 @@ export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
     cardsPerPage: 4,
     gridColumns: 2,
     gridRows: 2,
-    capacity: 29,
+    capacity: 34,
+    bodyCharsPerLine: 64,
+    compactCharsPerLine: 72,
+    headingWeight: 1.1,
+    sectionGapWeight: 0.5,
   },
   {
     id: "tall-3",
@@ -30,7 +38,11 @@ export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
     cardsPerPage: 3,
     gridColumns: 3,
     gridRows: 1,
-    capacity: 33,
+    capacity: 66,
+    bodyCharsPerLine: 38,
+    compactCharsPerLine: 44,
+    headingWeight: 1,
+    sectionGapWeight: 0.45,
   },
   {
     id: "wide-3",
@@ -40,7 +52,11 @@ export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
     cardsPerPage: 3,
     gridColumns: 1,
     gridRows: 3,
-    capacity: 38,
+    capacity: 17,
+    bodyCharsPerLine: 72,
+    compactCharsPerLine: 84,
+    headingWeight: 1.2,
+    sectionGapWeight: 0.45,
   },
   {
     id: "tall-2",
@@ -50,7 +66,11 @@ export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
     cardsPerPage: 2,
     gridColumns: 2,
     gridRows: 1,
-    capacity: 46,
+    capacity: 82,
+    bodyCharsPerLine: 72,
+    compactCharsPerLine: 82,
+    headingWeight: 1.15,
+    sectionGapWeight: 0.5,
   },
   {
     id: "wide-2",
@@ -60,7 +80,11 @@ export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
     cardsPerPage: 2,
     gridColumns: 1,
     gridRows: 2,
-    capacity: 50,
+    capacity: 34,
+    bodyCharsPerLine: 82,
+    compactCharsPerLine: 96,
+    headingWeight: 1.3,
+    sectionGapWeight: 0.55,
   },
   {
     id: "full-1",
@@ -70,7 +94,11 @@ export const GUIDE_CARD_LAYOUTS: GuideCardLayoutDefinition[] = [
     cardsPerPage: 1,
     gridColumns: 1,
     gridRows: 1,
-    capacity: 82,
+    capacity: 54,
+    bodyCharsPerLine: 62,
+    compactCharsPerLine: 74,
+    headingWeight: 1.8,
+    sectionGapWeight: 0.8,
   },
 ];
 

@@ -38,6 +38,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added tasteful modal, progress, step, and option-card interactions with reduced-motion support.
 - Saved Easy Guide Builder output as normal rosary guide configs that work with custom prayer, guide cards, print cards, and advanced editing.
 - Linked completion actions to Pray this guide, Make guide cards, and Edit advanced settings.
+- Updated active favicon, manifest icon, and header brand mark to use the new brand SVG assets while preserving the old favicon as a backup.
 
 ### Fixed
 

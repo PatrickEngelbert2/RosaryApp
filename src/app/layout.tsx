@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   description,
   icons: {
-    icon: "/favicon.svg",
+    icon: "/faviconRiver.svg",
   },
   openGraph: {
     title: "Walk the Rosary",

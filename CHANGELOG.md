@@ -64,6 +64,11 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Corrected one-sided versus two-sided guide card layout decisions so backs are only generated when content exceeds the selected card face capacity.
 - Prevented mysteries and following sections from being pushed to the back side by balance splitting when they still fit on the front.
 - Recalibrated and centralized guide card capacity estimates with layout-specific wrap widths and side capacities while preserving structured blocks for future preview editing and reordering.
+- Fixed Guide Cards layout content loss by generating continuation faces instead of letting dense content disappear or clip.
+- Made Guide Cards layout generation non-destructive by laying out cloned source blocks and checking rendered source item IDs against generated source item IDs.
+- Improved front-first Guide Cards placement so sections move to the back or continuation faces only when they do not fit on the current face.
+- Added controlled Guide Cards section splitting at line boundaries when splitting preserves content and avoids unnecessary overflow.
+- Fixed full-prayer card toggles for Hail Mary and Fatima Prayer across preview and print output.
 
 ## 0.3.0 - 2026-06-24
 

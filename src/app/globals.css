@@ -225,22 +225,22 @@ a {
   }
 }
 
-@keyframes explore-pen-write {
+@keyframes explore-hammer-tap {
   0%,
   100% {
     transform: rotate(0deg) translate(0, 0);
   }
 
-  35% {
-    transform: rotate(-3deg) translate(-2px, 2px);
+  38% {
+    transform: rotate(9deg) translate(1px, -1px);
   }
 
-  62% {
-    transform: rotate(2deg) translate(2px, -1px);
+  58% {
+    transform: rotate(-11deg) translate(-1px, 2px);
   }
 
-  82% {
-    transform: rotate(-1deg) translate(-1px, 1px);
+  76% {
+    transform: rotate(4deg) translate(1px, -1px);
   }
 }
 
@@ -256,13 +256,16 @@ a {
   }
 }
 
-@keyframes explore-scribble-draw {
-  from {
-    stroke-dashoffset: 32;
+@keyframes explore-build-spark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
   }
 
-  to {
-    stroke-dashoffset: 0;
+  56% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -380,10 +383,10 @@ a {
   .explore-pray-cross,
   .explore-pray-hands,
   .explore-pray-rosary,
+  .explore-build-hammer,
   .explore-build-line,
   .explore-build-paper,
-  .explore-build-pen,
-  .explore-build-scribble,
+  .explore-build-spark,
   .explore-card-back,
   .explore-card-front,
   .explore-footstep-one,
@@ -406,9 +409,8 @@ a {
     stroke-dasharray: 42;
   }
 
-  .explore-build-scribble {
-    stroke-dasharray: 32;
-    stroke-dashoffset: 32;
+  .explore-build-spark {
+    opacity: 0;
   }
 
   .interactive-card-link:hover .explore-pray-hands,
@@ -432,10 +434,11 @@ a {
     animation: explore-cross-pulse 620ms ease-in-out both;
   }
 
-  .interactive-card-link:hover .explore-build-pen,
-  .group:focus-visible .interactive-card-link .explore-build-pen {
-    animation: explore-pen-write 900ms ease-in-out both;
-    transform-origin: center;
+  .interactive-card-link:hover .explore-build-hammer,
+  .group:focus-visible .interactive-card-link .explore-build-hammer {
+    animation: explore-hammer-tap 820ms ease-in-out both;
+    transform-box: view-box;
+    transform-origin: 51px 51px;
   }
 
   .interactive-card-link:hover .explore-build-paper,
@@ -448,9 +451,9 @@ a {
     animation: explore-build-lines 760ms ease-in-out both;
   }
 
-  .interactive-card-link:hover .explore-build-scribble,
-  .group:focus-visible .interactive-card-link .explore-build-scribble {
-    animation: explore-scribble-draw 900ms ease-out both;
+  .interactive-card-link:hover .explore-build-spark,
+  .group:focus-visible .interactive-card-link .explore-build-spark {
+    animation: explore-build-spark 820ms ease-in-out both;
   }
 
   .interactive-card-link:hover .explore-card-front,

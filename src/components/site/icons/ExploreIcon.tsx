@@ -61,16 +61,19 @@ export function ExploreIcon({ name }: ExploreIconProps) {
         <g className="explore-build-paper">
           <path className="fill-cream-50" d="M16 14h27l6 6v34H16Z" />
           <path d="M43 14v7h6" />
+          <path className="explore-build-line" d="M23 31h18" />
+          <path className="explore-build-line" d="M23 39h15" />
           <path className="explore-build-line" d="M23 47h11" />
-          <path className="explore-build-scribble text-gold-500" d="M24 39c4-3 8 3 12 0 3-2 6-1 9 1" />
         </g>
-        <g className="explore-build-pen text-gold-500">
-          <path className="fill-gold-500/20" d="M32 15 46 30 37 53H27L18 30Z" />
-          <path d="M32 15 46 30 37 53H27L18 30Z" />
-          <path d="M32 15v21" />
-          <circle className="fill-cream-50" cx="32" cy="35" r="3" />
-          <path d="M27 53 32 43l5 10" />
+        <g className="explore-build-hammer text-gold-500">
+          <path className="fill-gold-500/25" d="M15 19h26v9H15Z" />
+          <path d="M15 19h26v9H15Z" />
+          <path d="M15 19c-4 1-7 3-9 6" />
+          <path d="M15 28c-4-1-7-3-9-6" />
+          <path d="M35 28 51 51" strokeWidth="5" />
+          <path d="M48 52h8" strokeWidth="4" />
         </g>
+        <path className="explore-build-spark text-gold-500" d="M51 30l4-3M52 36h5" />
       </svg>
     ),
     cards: (

@@ -47,6 +47,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Refined the homepage Explore icon set with clearer Pray, Build a Guide, and Lead a Walk artwork.
 - Redesigned the Pray icon as a clear rosary loop with a hanging cross.
 - Redesigned the Build a Guide icon as a clearer hammer-and-document concept with a gentler hammer-tap animation.
+- Adjusted the Build a Guide hammer silhouette and tap direction so the hammer reads more clearly and strikes toward the document.
 - Improved the Lead a Walk icon to show footprints following a guided path toward a cross marker while preserving the path animation idea.
 - Preserved the Guide Cards and Resources icon concepts.
 

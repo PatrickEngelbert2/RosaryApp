@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import Image from "next/image";
+import {
+  ExploreIcon,
+  type ExploreIconName,
+} from "@/components/site/icons/ExploreIcon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
@@ -20,7 +24,7 @@ const primaryLinks = [
     href: "/pray/custom",
     title: "Pray",
     description: "Follow a saved guide with large, readable prayer text.",
-    icon: "beads",
+    icon: "pray",
   },
   {
     href: "/builder",
@@ -52,83 +56,12 @@ const primaryLinks = [
     description: "Find simple beginner-friendly help for praying and walking together.",
     icon: "resources",
   },
-];
-
-type IconName = (typeof primaryLinks)[number]["icon"];
-
-function FeatureIcon({ name }: { name: IconName }) {
-  const commonProps = {
-    className: "h-6 w-6",
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    strokeWidth: 1.8,
-    viewBox: "0 0 24 24",
-  };
-
-  const paths: Record<IconName, ReactNode> = {
-    beads: (
-      <>
-        <circle cx="7" cy="8" r="2" />
-        <circle cx="12" cy="6" r="2" />
-        <circle cx="17" cy="8" r="2" />
-        <circle cx="9" cy="14" r="2" />
-        <circle cx="15" cy="14" r="2" />
-        <path d="M12 16v5" />
-        <path d="M10 19h4" />
-      </>
-    ),
-    guide: (
-      <>
-        <path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3Z" />
-        <path d="M9 8h4" />
-        <path d="M9 12h6" />
-        <path d="M9 16h5" />
-      </>
-    ),
-    cards: (
-      <>
-        <path d="M7 5h10a2 2 0 0 1 2 2v10" />
-        <path d="M5 7h10a2 2 0 0 1 2 2v10H7a2 2 0 0 1-2-2Z" />
-        <path d="M9 12h4" />
-        <path d="M9 15h3" />
-      </>
-    ),
-    walk: (
-      <>
-        <circle cx="12" cy="5" r="2" />
-        <path d="M10 22l1.5-6" />
-        <path d="M17 22l-3-7" />
-        <path d="M9 10l3-2 3 3" />
-        <path d="M8 14l3-2" />
-      </>
-    ),
-    prayer: (
-      <>
-        <path d="M8 11V6a2 2 0 0 1 4 0v5" />
-        <path d="M12 11V5a2 2 0 0 1 4 0v9" />
-        <path d="M8 11 6.5 9.5a2 2 0 0 0-3 2.6L9 20h7a4 4 0 0 0 4-4v-5" />
-      </>
-    ),
-    resources: (
-      <>
-        <path d="M6 5h10a2 2 0 0 1 2 2v12H8a2 2 0 0 1-2-2Z" />
-        <path d="M9 9h6" />
-        <path d="M9 13h6" />
-        <path d="M9 17h3" />
-      </>
-    ),
-  };
-
-  return (
-    <span className="card-link-icon flex h-11 w-11 items-center justify-center rounded-full bg-blue-900/5 text-blue-900 transition">
-      <svg aria-hidden="true" {...commonProps}>
-        {paths[name]}
-      </svg>
-    </span>
-  );
-}
+] satisfies ReadonlyArray<{
+  href: string;
+  title: string;
+  description: string;
+  icon: ExploreIconName;
+}>;
 
 export default function HomePage() {
   const today = new Date();
@@ -162,9 +95,19 @@ export default function HomePage() {
           </div>
         </div>
         <Card className="bg-white/80">
-          <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
-            {formattedDate}
-          </p>
+          <div className="flex items-start gap-4">
+            <Image
+              src="/faviconRiver.svg"
+              alt=""
+              width={44}
+              height={44}
+              className="h-11 w-11 shrink-0 rounded-lg bg-blue-900 object-contain shadow-sm"
+              aria-hidden="true"
+            />
+            <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
+              {formattedDate}
+            </p>
+          </div>
           <h2 className="mt-2 text-2xl font-semibold text-blue-900">
             Today&apos;s Rosary
           </h2>
@@ -223,7 +166,7 @@ export default function HomePage() {
           {primaryLinks.map((item) => (
             <Link key={item.href} href={item.href} className="group block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50">
               <Card className="interactive-card-link h-full">
-                <FeatureIcon name={item.icon} />
+                <ExploreIcon name={item.icon} />
                 <h3 className="mt-4 text-lg font-semibold text-blue-900">
                   {item.title}
                 </h3>

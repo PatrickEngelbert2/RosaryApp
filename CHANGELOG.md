@@ -39,6 +39,11 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Saved Easy Guide Builder output as normal rosary guide configs that work with custom prayer, guide cards, print cards, and advanced editing.
 - Linked completion actions to Pray this guide, Make guide cards, and Edit advanced settings.
 - Updated active favicon, manifest icon, and header brand mark to use the new brand SVG assets while preserving the old favicon as a backup.
+- Set the active browser-tab favicon and web app manifest icon to `public/favicon.svg`.
+- Added tasteful `favicon.svg` and `faviconRiver.svg` usage across the header, homepage Today's Rosary panel, and footer.
+- Replaced the homepage Explore card artwork with cohesive handcrafted SVG icons for Pray, Build a Guide, Guide Cards, Lead a Walk, Prayers, and Resources.
+- Added card-triggered hover/focus icon animations, including a hammer-and-paper animation for Build a Guide.
+- Kept the homepage animation polish dependency-free and reduced-motion aware.
 
 ### Fixed
 

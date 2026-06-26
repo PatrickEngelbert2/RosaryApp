@@ -10,7 +10,7 @@ export function Logo() {
     >
       <span className="brand-mark flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-blue-900" aria-hidden="true">
         <Image
-          src="/faviconRiver.svg"
+          src="/favicon.svg"
           alt=""
           className="h-9 w-9 object-contain"
           width={36}

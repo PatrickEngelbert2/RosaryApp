@@ -13,10 +13,6 @@
   color-scheme: light;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   background: #fffaf0;
   color: #1d2433;
@@ -138,7 +134,17 @@ a {
   box-shadow: 0 12px 24px rgb(16 42 86 / 0.12);
 }
 
+.group:focus-visible .interactive-card-link {
+  border-color: rgb(16 42 86 / 0.55);
+  box-shadow: 0 12px 24px rgb(16 42 86 / 0.12);
+}
+
 .interactive-card-link:hover .card-link-icon {
+  color: #153b75;
+  background-color: rgb(185 137 40 / 0.13);
+}
+
+.group:focus-visible .interactive-card-link .card-link-icon {
   color: #153b75;
   background-color: rgb(185 137 40 / 0.13);
 }
@@ -190,6 +196,101 @@ a {
   }
 }
 
+@keyframes explore-pray-beads {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes explore-cross-pulse {
+  50% {
+    transform: translateY(1px) scale(1.08);
+  }
+}
+
+@keyframes explore-hammer-tap {
+  0%,
+  100% {
+    transform: rotate(0deg) translate(0, 0);
+  }
+
+  45% {
+    transform: rotate(-12deg) translate(-1px, -2px);
+  }
+
+  68% {
+    transform: rotate(8deg) translate(1px, 1px);
+  }
+}
+
+@keyframes explore-paper-react {
+  50% {
+    transform: translateY(1px) rotate(0.8deg);
+  }
+}
+
+@keyframes explore-card-fan {
+  50% {
+    transform: translate(2px, -3px) rotate(3deg);
+  }
+}
+
+@keyframes explore-card-slide {
+  50% {
+    transform: translate(-2px, 2px) rotate(-2deg);
+  }
+}
+
+@keyframes explore-path-draw {
+  from {
+    stroke-dashoffset: 42;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes explore-step-lift {
+  50% {
+    transform: translateY(-3px) rotate(-4deg);
+  }
+}
+
+@keyframes explore-page-turn {
+  50% {
+    transform: skewY(-4deg) translateX(2px);
+  }
+}
+
+@keyframes explore-line-reveal {
+  from {
+    stroke-dashoffset: 14;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes explore-needle-sweep {
+  50% {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes explore-star-glow {
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
 .animate-easy-fade {
   animation: easy-fade 180ms ease-out;
 }
@@ -224,6 +325,96 @@ a {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .explore-pray-bead,
+  .explore-pray-cross,
+  .explore-build-hammer,
+  .explore-build-paper,
+  .explore-card-back,
+  .explore-card-front,
+  .explore-footstep-one,
+  .explore-footstep-two,
+  .explore-prayer-page,
+  .explore-prayer-line,
+  .explore-compass-needle,
+  .explore-resource-star {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .explore-walk-path,
+  .explore-prayer-line {
+    stroke-dasharray: 42;
+  }
+
+  .interactive-card-link:hover .explore-pray-bead,
+  .group:focus-visible .interactive-card-link .explore-pray-bead {
+    animation: explore-pray-beads 780ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-pray-cross,
+  .group:focus-visible .interactive-card-link .explore-pray-cross {
+    animation: explore-cross-pulse 620ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-build-hammer,
+  .group:focus-visible .interactive-card-link .explore-build-hammer {
+    animation: explore-hammer-tap 760ms ease-in-out both;
+    transform-origin: 30% 25%;
+  }
+
+  .interactive-card-link:hover .explore-build-paper,
+  .group:focus-visible .interactive-card-link .explore-build-paper {
+    animation: explore-paper-react 760ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-card-front,
+  .group:focus-visible .interactive-card-link .explore-card-front {
+    animation: explore-card-fan 700ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-card-back,
+  .group:focus-visible .interactive-card-link .explore-card-back {
+    animation: explore-card-slide 700ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-walk-path,
+  .group:focus-visible .interactive-card-link .explore-walk-path {
+    animation: explore-path-draw 740ms ease-out both;
+  }
+
+  .interactive-card-link:hover .explore-footstep-one,
+  .group:focus-visible .interactive-card-link .explore-footstep-one {
+    animation: explore-step-lift 720ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-footstep-two,
+  .group:focus-visible .interactive-card-link .explore-footstep-two {
+    animation: explore-step-lift 720ms ease-in-out 90ms both;
+  }
+
+  .interactive-card-link:hover .explore-prayer-page,
+  .group:focus-visible .interactive-card-link .explore-prayer-page {
+    animation: explore-page-turn 720ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-prayer-line,
+  .group:focus-visible .interactive-card-link .explore-prayer-line {
+    animation: explore-line-reveal 680ms ease-out both;
+  }
+
+  .interactive-card-link:hover .explore-compass-needle,
+  .group:focus-visible .interactive-card-link .explore-compass-needle {
+    animation: explore-needle-sweep 760ms ease-in-out both;
+  }
+
+  .interactive-card-link:hover .explore-resource-star,
+  .group:focus-visible .interactive-card-link .explore-resource-star {
+    animation: explore-star-glow 700ms ease-in-out both;
+    opacity: 0.72;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -235,6 +426,7 @@ a {
   .interactive-link,
   .interactive-card-link,
   .interactive-card-link .card-link-icon,
+  .interactive-card-link .card-link-icon *,
   .interactive-nav-link,
   .interactive-nav-link::after,
   .interactive-brand,

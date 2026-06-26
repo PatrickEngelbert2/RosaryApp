@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   description,
   icons: {
-    icon: "/faviconRiver.svg",
+    icon: "/favicon.svg",
   },
   openGraph: {
     title: "Walk the Rosary",
@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en">
       <body className="min-h-screen bg-cream-50 text-ink-900 antialiased">
         <div className="flex min-h-screen flex-col">
           <Header />

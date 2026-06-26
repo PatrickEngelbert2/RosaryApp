@@ -59,6 +59,8 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Improved guide-card overflow behavior by moving whole blocks to later sides where possible and warning when selected content is too dense.
 - Removed the hardcoded back-side "Closing prayers and leader reminders" assumption and corrected Large/Full page print behavior so those layouts do not duplicate old 4-up card output by default.
 - Preserved custom card counts when switching guide-card layouts, while still auto-adjusting the count when it appears to be the previous layout default.
+- Fixed Easy Guide Builder info popovers being clipped by the modal scroll container by rendering them in a body-level portal with viewport-aware fixed positioning.
+- Added click-to-pin, close-button, click-away, and Escape-key closing behavior for Easy Guide Builder info popovers while preserving hover, focus, and mobile tap access.
 
 ## 0.3.0 - 2026-06-24
 

@@ -241,6 +241,8 @@ export type GuideCardBlock = {
   prayerId?: PrayerId;
   printMode?: "short" | "full";
   estimatedWeight: number;
+  sourceItemIds?: string[];
+  continuationOf?: string;
   keepTogether?: boolean;
   priority?: "required" | "optional";
   compact?: boolean;

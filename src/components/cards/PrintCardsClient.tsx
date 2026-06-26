@@ -70,6 +70,14 @@ export function PrintCardsClient() {
   const hasBackSide = Boolean(generatedCardSet.cards[0]?.back);
   const extraSideCount = generatedCardSet.cards[0]?.extraSides?.length ?? 0;
   const cardSizeLabel = getGuideCardLayout(generatedCardSet.layoutOptions.cardSize).shortLabel;
+  const printSideSummary =
+    extraSideCount > 0
+      ? `front/back grid slots plus ${extraSideCount} extra ${
+          extraSideCount === 1 ? "side" : "sides"
+        } for dense cards.`
+      : hasBackSide
+        ? "matching front/back grid slots."
+        : "front-only cards for these settings.";
 
   return (
     <>
@@ -89,7 +97,8 @@ export function PrintCardsClient() {
           </p>
           <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
             {generatedCardSet.mysterySetTitle} - {generatedCardSet.cardsPerPage} per page with
-            {hasBackSide ? " matching front/back grid slots." : " front-only cards for these settings."}
+            {" "}
+            {printSideSummary}
           </p>
           {usedFallback ? (
             <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">

@@ -42,12 +42,12 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Set the active browser-tab favicon and web app manifest icon to `public/favicon.svg`.
 - Added tasteful `favicon.svg` and `faviconRiver.svg` usage across the header, homepage Today's Rosary panel, and footer.
 - Replaced the homepage Explore card artwork with cohesive handcrafted SVG icons for Pray, Build a Guide, Guide Cards, Lead a Walk, Prayers, and Resources.
-- Added card-triggered hover/focus icon animations, including a hammer-and-paper animation for Build a Guide.
+- Added card-triggered hover/focus icon animations, including a pen-writing animation for Build a Guide.
 - Kept the homepage animation polish dependency-free and reduced-motion aware.
 - Refined the homepage Explore icon set with clearer Pray, Build a Guide, and Lead a Walk artwork.
 - Redesigned the Pray icon as a clear rosary loop with a hanging cross.
-- Redesigned the Build a Guide icon as a clearer hammer-and-document concept with a gentler hammer-tap animation.
-- Adjusted the Build a Guide hammer silhouette and tap direction so the hammer head reads clearly and swings into the document.
+- Redesigned the Build a Guide icon as a pen writing on a guide document.
+- Added a Build a Guide pen animation that draws a short scribble on the paper.
 - Improved the Lead a Walk icon to show footprints following a guided path toward a cross marker while preserving the path animation idea.
 - Preserved the Guide Cards and Resources icon concepts.
 

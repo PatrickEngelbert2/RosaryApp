@@ -237,8 +237,7 @@ function layoutBlocksAcrossSides(
 ): { front: GuideCardSide; back?: GuideCardSide; extraSides: GuideCardSide[] } {
   const layout = getGuideCardLayout(options.cardSize);
   const capacity = layout.capacity;
-  const totalWeight = blocks.reduce((total, block) => total + block.estimatedWeight, 0);
-  const sourceItemIds = collectSourceItemIds(blocks);
+  const sourceItemCounts = collectSourceItemCounts(blocks);
 
   blocks
     .filter((block) => block.estimatedWeight > capacity)
@@ -247,15 +246,6 @@ function layoutBlocksAcrossSides(
         `${block.heading ?? "A section"} may be too large for one ${layout.shortLabel} card face. It will continue on another face if needed.`,
       );
     });
-
-  if (totalWeight <= capacity) {
-    const result = {
-      front: createSide("front", title, `${mysterySetTitle} guide`, blocks),
-      extraSides: [],
-    };
-    warnIfSourceItemsMissing(sourceItemIds, [result.front], warnings);
-    return result;
-  }
 
   const sides = packBlocksIntoSides(blocks, layout, warnings);
   const [frontBlocks, backBlocks, ...extraBlockGroups] = sides;
@@ -275,11 +265,10 @@ function layoutBlocksAcrossSides(
     ),
   };
 
-  warnIfSourceItemsMissing(
-    sourceItemIds,
-    [result.front, ...(result.back ? [result.back] : []), ...result.extraSides],
-    warnings,
-  );
+  const renderedSides = [result.front, ...(result.back ? [result.back] : []), ...result.extraSides];
+
+  warnIfSourceItemsMissing(sourceItemCounts, renderedSides, warnings);
+  addDevelopmentLayoutInvariantWarnings(sourceItemCounts, renderedSides, layout, warnings);
 
   return result;
 }
@@ -299,13 +288,15 @@ function packBlocksIntoSides(
     const [block, ...rest] = queue;
     queue = rest;
 
-    if (block.estimatedWeight <= capacity - currentWeight) {
+    const remainingCapacity = capacity - currentWeight;
+
+    if (block.estimatedWeight <= remainingCapacity) {
       current = [...current, block];
       currentWeight += block.estimatedWeight;
       continue;
     }
 
-    const split = splitBlockForCapacity(block, capacity - currentWeight, layout);
+    const split = splitBlockForCapacity(block, remainingCapacity, layout);
 
     if (split && current.length > 0) {
       current = [...current, split.first];
@@ -412,7 +403,7 @@ function splitSingleLineBlock(
 
   return {
     first: createSplitBlock(block, [chunks[0]], "part-1", layout, false),
-    remainder: createSplitBlock(block, [chunks.slice(1).join(" ")], "continued", layout, true),
+    remainder: createSplitBlock(block, [chunks.slice(1).join(" ")], "continued", layout, true, []),
   };
 }
 
@@ -528,35 +519,39 @@ function makeLineSourceItemIds(blockId: string, lines: string[]): string[] {
   return lines.map((_, index) => `${blockId}:line-${index + 1}`);
 }
 
-function collectSourceItemIds(blocks: GuideCardBlock[]): Set<string> {
-  return new Set(
-    blocks.flatMap((block) =>
-      block.sourceItemIds && block.sourceItemIds.length > 0
-        ? block.sourceItemIds
-        : [`${block.id}:body`],
-    ),
-  );
+function collectSourceItemCounts(blocks: GuideCardBlock[]): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  blocks.forEach((block) => {
+    getBlockSourceItemIds(block).forEach((id) => {
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    });
+  });
+
+  return counts;
 }
 
-function collectRenderedItemIds(sides: GuideCardSide[]): Set<string> {
-  return new Set(
-    sides.flatMap((side) =>
-      side.blocks.flatMap((block) =>
-        block.sourceItemIds && block.sourceItemIds.length > 0
-          ? block.sourceItemIds
-          : [`${block.continuationOf ?? block.id}:body`],
-      ),
-    ),
-  );
+function collectRenderedItemCounts(sides: GuideCardSide[]): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  sides.forEach((side) => {
+    side.blocks.forEach((block) => {
+      getBlockSourceItemIds(block).forEach((id) => {
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+    });
+  });
+
+  return counts;
 }
 
 function warnIfSourceItemsMissing(
-  sourceItemIds: Set<string>,
+  sourceItemCounts: Map<string, number>,
   sides: GuideCardSide[],
   warnings: string[],
 ) {
-  const renderedItemIds = collectRenderedItemIds(sides);
-  const missingIds = [...sourceItemIds].filter((id) => !renderedItemIds.has(id));
+  const renderedItemCounts = collectRenderedItemCounts(sides);
+  const missingIds = [...sourceItemCounts.keys()].filter((id) => !renderedItemCounts.has(id));
 
   if (missingIds.length === 0) {
     return;
@@ -571,6 +566,132 @@ function warnIfSourceItemsMissing(
   if (process.env.NODE_ENV !== "production") {
     console.warn("Guide card layout missing generated item IDs:", missingIds);
   }
+}
+
+function addDevelopmentLayoutInvariantWarnings(
+  sourceItemCounts: Map<string, number>,
+  sides: GuideCardSide[],
+  layout: GuideCardLayoutDefinition,
+  warnings: string[],
+) {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  const invariantWarnings = [
+    ...findSourceItemCountWarnings(sourceItemCounts, sides),
+    ...findEmptyFaceWarnings(sides),
+    ...findFrontFirstPlacementWarnings(sides, layout),
+    ...findOrphanHeadingWarnings(sides),
+  ];
+
+  if (invariantWarnings.length === 0) {
+    return;
+  }
+
+  invariantWarnings.forEach((warning) => warnings.push(warning));
+  console.warn("Guide card layout invariant warnings:", invariantWarnings);
+}
+
+function findSourceItemCountWarnings(
+  sourceItemCounts: Map<string, number>,
+  sides: GuideCardSide[],
+): string[] {
+  const renderedItemCounts = collectRenderedItemCounts(sides);
+  const warnings: string[] = [];
+
+  sourceItemCounts.forEach((expectedCount, id) => {
+    const renderedCount = renderedItemCounts.get(id) ?? 0;
+
+    if (renderedCount !== expectedCount) {
+      warnings.push(
+        `Layout integrity warning: generated item ${id} rendered ${renderedCount} time(s), expected ${expectedCount}.`,
+      );
+    }
+  });
+
+  return warnings;
+}
+
+function findEmptyFaceWarnings(sides: GuideCardSide[]): string[] {
+  const firstNonEmptyAfterEmpty = sides.findIndex((side, index) =>
+    side.blocks.length > 0 && sides.slice(0, index).some((previousSide) => previousSide.blocks.length === 0),
+  );
+
+  if (firstNonEmptyAfterEmpty === -1) {
+    return [];
+  }
+
+  return ["Layout integrity warning: an empty guide-card face appears before a non-empty face."];
+}
+
+function findFrontFirstPlacementWarnings(
+  sides: GuideCardSide[],
+  layout: GuideCardLayoutDefinition,
+): string[] {
+  const warnings: string[] = [];
+
+  sides.forEach((side, sideIndex) => {
+    if (sideIndex === 0 || side.blocks.length === 0) {
+      return;
+    }
+
+    const firstRenderableWeight = getMinimumRenderableBlockWeight(side.blocks[0], layout);
+
+    sides.slice(0, sideIndex).forEach((previousSide, previousIndex) => {
+      const remainingCapacity = layout.capacity - getBlocksWeight(previousSide.blocks);
+
+      if (firstRenderableWeight <= remainingCapacity) {
+        warnings.push(
+          `Layout integrity warning: ${side.blocks[0].heading ?? "content"} appears on face ${
+            sideIndex + 1
+          } even though face ${previousIndex + 1} had estimated room for its next item.`,
+        );
+      }
+    });
+  });
+
+  return warnings;
+}
+
+function findOrphanHeadingWarnings(sides: GuideCardSide[]): string[] {
+  return sides.flatMap((side, sideIndex) => {
+    const lastBlock = side.blocks.at(-1);
+
+    if (!lastBlock?.heading) {
+      return [];
+    }
+
+    const hasRenderableContent =
+      Boolean(lastBlock.body?.trim()) || Boolean(lastBlock.lines && lastBlock.lines.length > 0);
+
+    return hasRenderableContent
+      ? []
+      : [`Layout integrity warning: ${lastBlock.heading} is orphaned at the end of face ${sideIndex + 1}.`];
+  });
+}
+
+function getBlockSourceItemIds(block: GuideCardBlock): string[] {
+  if (block.sourceItemIds && block.sourceItemIds.length > 0) {
+    return block.sourceItemIds;
+  }
+
+  return [`${block.continuationOf ?? block.id}:body`];
+}
+
+function getMinimumRenderableBlockWeight(
+  block: GuideCardBlock,
+  layout: GuideCardLayoutDefinition,
+): number {
+  if (block.lines && block.lines.length > 0) {
+    return estimateBlockWeight([block.lines[0]], layout, Boolean(block.compact));
+  }
+
+  if (block.body) {
+    return estimateBlockWeight([block.body], layout, Boolean(block.compact));
+  }
+
+  return block.estimatedWeight;
 }
 
 function buildOpeningSummary(

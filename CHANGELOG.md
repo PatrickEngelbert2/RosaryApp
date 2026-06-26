@@ -69,6 +69,10 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Improved front-first Guide Cards placement so sections move to the back or continuation faces only when they do not fit on the current face.
 - Added controlled Guide Cards section splitting at line boundaries when splitting preserves content and avoids unnecessary overflow.
 - Fixed full-prayer card toggles for Hail Mary and Fatima Prayer across preview and print output.
+- Fixed premature Guide Cards back-side and continuation placement by enforcing front-first packing across Pocket 4-up, Tall 3-up, Wide 3-up, Tall 2-up, Wide 2-up, and Full page layouts.
+- Softened Guide Cards section keep-together behavior so a section can split at sensible line boundaries instead of moving wholesale to the back or overflow when part of it still fits.
+- Added development-time Guide Cards layout safeguards for missing source items, duplicate source placement, empty faces before content, skipped earlier capacity, and orphan headings.
+- Recalibrated Guide Cards fit estimates for wide and full-page layouts so preview and print avoid obviously premature overflow while preserving shared layout decisions.
 
 ## 0.3.0 - 2026-06-24
 

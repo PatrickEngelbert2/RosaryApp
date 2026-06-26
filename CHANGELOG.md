@@ -59,16 +59,8 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Improved guide-card overflow behavior by moving whole blocks to later sides where possible and warning when selected content is too dense.
 - Removed the hardcoded back-side "Closing prayers and leader reminders" assumption and corrected Large/Full page print behavior so those layouts do not duplicate old 4-up card output by default.
 - Preserved custom card counts when switching guide-card layouts, while still auto-adjusting the count when it appears to be the previous layout default.
-- Fixed Guide Cards preview mystery text sizing by rendering preview and print card faces through the same shared component.
-- Improved Guide Cards preview/print parity by reusing print card typography, spacing, and block markup in the preview.
-- Corrected one-sided versus two-sided guide card layout decisions so backs are only generated when content exceeds the selected card face capacity.
-- Prevented mysteries and following sections from being pushed to the back side by balance splitting when they still fit on the front.
-- Recalibrated and centralized guide card capacity estimates with layout-specific wrap widths and side capacities while preserving structured blocks for future preview editing and reordering.
-- Fixed Guide Cards layout content loss by generating continuation faces instead of letting dense content disappear or clip.
-- Made Guide Cards layout generation non-destructive by laying out cloned source blocks and checking rendered source item IDs against generated source item IDs.
-- Improved front-first Guide Cards placement so sections move to the back or continuation faces only when they do not fit on the current face.
-- Added controlled Guide Cards section splitting at line boundaries when splitting preserves content and avoids unnecessary overflow.
-- Fixed full-prayer card toggles for Hail Mary and Fatima Prayer across preview and print output.
+- Fixed Easy Guide Builder info popovers being clipped by the modal scroll container by rendering them in a body-level portal with viewport-aware fixed positioning.
+- Added click-to-pin, close-button, click-away, and Escape-key closing behavior for Easy Guide Builder info popovers while preserving hover, focus, and mobile tap access.
 
 ## 0.3.0 - 2026-06-24
 

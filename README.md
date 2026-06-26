@@ -17,6 +17,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Follow prayers with collapsible text.
 - Group repeated Hail Marys or show them individually.
 - Generate printable front/back guide cards.
+- Customize guide card previews before printing.
 - Choose Pocket, Tall, Wide, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
 - Save current guides locally in the browser.
@@ -115,7 +116,9 @@ Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by 
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, and which prayers print in full. Supported layouts are:
+Users can choose the card count, card size, and which prayers print in full. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+
+Supported layouts are:
 
 - Pocket - 4 per page: 2 columns by 2 rows.
 - Tall - 3 per page: 3 columns by 1 row.
@@ -126,13 +129,13 @@ Users can choose the card count, card size, and which prayers print in full. Sup
 
 The Number of cards needed field controls how many card slots the site generates. It does not control duplicate print copies; use the browser print dialog's Copies setting to print more sets. When a layout changes, the card count auto-adjusts to that layout's cards-per-page default only if the current count still appears to be the previous layout default. If the user has typed a custom count, the app preserves that count. Blank print slots remain invisible so front/back alignment is preserved.
 
-Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`.
+Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Preview full/short toggles use the same canonical prayer IDs, which keeps the data model ready for later Latin or Spanish prayer variants without adding language selection in this pass.
 
 Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, balances ordered guide blocks across card faces when a second side is needed, and warns when a selected card size or full-prayer combination may be too dense. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
 
-The print view at `/cards/print` uses browser print / Save as PDF. The browser print dialog handles copy count; the site only renders the selected number of card slots. Persistence is still browser-local; no guide or card data is uploaded.
+The print view at `/cards/print` uses browser print / Save as PDF. The browser print dialog handles copy count; the site only renders the selected number of card slots. Customized preview content is applied to the print view, but preview controls never print. Persistence is still browser-local; no guide or card data is uploaded.
 
-Custom user-defined card dimensions are not implemented yet. The current system intentionally uses a small set of tested US Letter layouts.
+Custom user-defined card dimensions are not implemented yet. Saving card preview edits back into the underlying guide is also deferred; current preview edits are intentionally cards-only. The current system intentionally uses a small set of tested US Letter layouts.
 
 ## Scripture Readings
 

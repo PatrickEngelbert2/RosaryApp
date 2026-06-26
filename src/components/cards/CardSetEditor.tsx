@@ -21,15 +21,25 @@ import {
 } from "@/lib/rosary/generateGuideCards";
 import {
   getActiveRosaryConfig,
+  createEmptyGuideCardCustomization,
+  getGuideCardCustomization,
   getGuideCardLayoutOptions,
   getGuideCardSelectedGuideId,
   getSavedRosaryConfigs,
+  resetGuideCardCustomization,
+  saveGuideCardCustomization,
   saveGuideCardLayoutOptions,
   saveGuideCardSelectedGuideId,
   setActiveRosaryConfig,
 } from "@/lib/rosary/storage";
 import { getPrayerIncipit } from "@/lib/rosary/prayerText";
-import type { GuideCardLayoutOptions, PrayerId, UserRosaryConfig } from "@/lib/rosary/types";
+import type {
+  GuideCardCustomization,
+  GuideCardLayoutOptions,
+  GuideCardSide,
+  PrayerId,
+  UserRosaryConfig,
+} from "@/lib/rosary/types";
 
 const DEFAULT_GUIDE_ID = "default-guide";
 
@@ -39,6 +49,15 @@ export function CardSetEditor() {
   const [layoutOptions, setLayoutOptions] = useState<GuideCardLayoutOptions>(() =>
     createDefaultGuideCardLayoutOptions(),
   );
+  const [customization, setCustomization] = useState<GuideCardCustomization>(() =>
+    createEmptyGuideCardCustomization(DEFAULT_GUIDE_ID),
+  );
+  const [editingText, setEditingText] = useState<{
+    id: string;
+    label: string;
+    value: string;
+    multiline: boolean;
+  } | null>(null);
   const [hasLoadedOptions, setHasLoadedOptions] = useState(false);
   const defaultGuide = useMemo(() => createDefaultGeneratedGuideConfig(), []);
 
@@ -47,16 +66,21 @@ export function CardSetEditor() {
       const guides = getSavedRosaryConfigs();
       const selectedGuide = getGuideCardSelectedGuideId();
       const activeGuide = getActiveRosaryConfig();
+      const nextSelectedGuideId =
+        selectedGuide === DEFAULT_GUIDE_ID || guides.some((guide) => guide.id === selectedGuide)
+          ? selectedGuide ?? DEFAULT_GUIDE_ID
+          : activeGuide?.id ?? guides[0]?.id ?? DEFAULT_GUIDE_ID;
       setSavedGuides(guides);
       setLayoutOptions(getGuideCardLayoutOptions());
+      setSelectedGuideId(nextSelectedGuideId);
 
-      if (selectedGuide === DEFAULT_GUIDE_ID || guides.some((guide) => guide.id === selectedGuide)) {
-        setSelectedGuideId(selectedGuide ?? DEFAULT_GUIDE_ID);
-      } else if (activeGuide) {
-        setSelectedGuideId(activeGuide.id);
-      } else if (guides[0]) {
-        setSelectedGuideId(guides[0].id);
-      }
+      const nextGuide =
+        guides.find((guide) => guide.id === nextSelectedGuideId) ??
+        (nextSelectedGuideId === DEFAULT_GUIDE_ID ? createDefaultGeneratedGuideConfig() : undefined) ??
+        activeGuide ??
+        guides[0] ??
+        createDefaultGeneratedGuideConfig();
+      setCustomization(getGuideCardCustomization(nextGuide.id));
 
       setHasLoadedOptions(true);
     });
@@ -73,6 +97,10 @@ export function CardSetEditor() {
 
   const selectedGuide =
     savedGuides.find((guide) => guide.id === selectedGuideId) ?? defaultGuide;
+  const selectedCustomization =
+    customization.guideId === selectedGuide.id
+      ? customization
+      : createEmptyGuideCardCustomization(selectedGuide.id);
   const prayerOptions = useMemo(() => getRelevantGuidePrayerOptions(selectedGuide), [selectedGuide]);
   const selectedPrayerIdKey = prayerOptions.map((prayer) => prayer.id).join("|");
   const sanitizedLayoutOptions = useMemo(
@@ -86,15 +114,23 @@ export function CardSetEditor() {
     },
     [layoutOptions, selectedPrayerIdKey],
   );
+  const effectiveFullPrayerIds = useMemo(
+    () => applyFullPrayerOverridesForPreview(sanitizedLayoutOptions.fullPrayerIds, selectedCustomization),
+    [sanitizedLayoutOptions.fullPrayerIds, selectedCustomization],
+  );
   const generatedCardSet = useMemo(
-    () => generateGuideCardsFromConfig(selectedGuide, sanitizedLayoutOptions),
-    [sanitizedLayoutOptions, selectedGuide],
+    () => generateGuideCardsFromConfig(selectedGuide, sanitizedLayoutOptions, undefined, selectedCustomization),
+    [sanitizedLayoutOptions, selectedCustomization, selectedGuide],
   );
   const currentLayout = getGuideCardLayout(sanitizedLayoutOptions.cardSize);
   const previewCard = generatedCardSet.cards[0];
-  const previewSides = previewCard
-    ? [previewCard.front, ...(previewCard.back ? [previewCard.back] : []), ...(previewCard.extraSides ?? [])]
-    : [];
+  const previewSides = useMemo(
+    () =>
+      previewCard
+        ? [previewCard.front, ...(previewCard.back ? [previewCard.back] : []), ...(previewCard.extraSides ?? [])]
+        : [],
+    [previewCard],
+  );
   const hasBackSide = Boolean(previewCard?.back);
   const extraSideCount = previewCard?.extraSides?.length ?? 0;
   const sideUsageSummary =
@@ -115,10 +151,14 @@ export function CardSetEditor() {
   const printHref = `/cards/print?guide=${encodeURIComponent(
     selectedGuideIsSaved ? selectedGuide.id : DEFAULT_GUIDE_ID,
   )}`;
+  const visibleEditableItemIds = useMemo(() => getVisibleEditableItemIds(previewSides), [previewSides]);
+  const hasCardEdits = hasGuideCardCustomizationEdits(selectedCustomization);
 
   function handleGuideChange(id: string) {
     setSelectedGuideId(id);
     saveGuideCardSelectedGuideId(id);
+    const nextGuide = savedGuides.find((guide) => guide.id === id) ?? defaultGuide;
+    setCustomization(getGuideCardCustomization(nextGuide.id));
     if (id !== DEFAULT_GUIDE_ID) {
       setActiveRosaryConfig(id);
     }
@@ -151,6 +191,100 @@ export function CardSetEditor() {
       ? [...layoutOptions.fullPrayerIds, prayerId]
       : layoutOptions.fullPrayerIds.filter((id) => id !== prayerId);
     updateLayoutOptions({ fullPrayerIds: [...new Set(nextIds)] });
+    updateCustomization((current) => ({
+      ...current,
+      fullPrayerOverrides: omitPrayerOverride(current.fullPrayerOverrides, prayerId),
+    }));
+  }
+
+  function toggleFullPrayerFromPreview(prayerId: string | undefined, checked: boolean) {
+    if (!isPrayerId(prayerId)) {
+      return;
+    }
+
+    updateCustomization((current) => ({
+      ...current,
+      fullPrayerOverrides: {
+        ...current.fullPrayerOverrides,
+        [prayerId]: checked,
+      },
+    }));
+  }
+
+  function updateCustomization(
+    updater: (current: GuideCardCustomization) => GuideCardCustomization,
+  ) {
+    setCustomization((current) => {
+      const currentForGuide =
+        current.guideId === selectedGuide.id ? current : createEmptyGuideCardCustomization(selectedGuide.id);
+      const next = updater(currentForGuide);
+      saveGuideCardCustomization(next);
+      return next;
+    });
+  }
+
+  function handleDeleteItem(itemId: string) {
+    updateCustomization((current) => ({
+      ...current,
+      removedItemIds: [...new Set([...current.removedItemIds, itemId])],
+    }));
+  }
+
+  function handleMoveItem(itemId: string, direction: "up" | "down") {
+    const currentIndex = visibleEditableItemIds.indexOf(itemId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (currentIndex === -1 || targetIndex < 0 || targetIndex >= visibleEditableItemIds.length) {
+      return;
+    }
+
+    const nextOrder = [...visibleEditableItemIds];
+    const [item] = nextOrder.splice(currentIndex, 1);
+    nextOrder.splice(targetIndex, 0, item);
+    updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
+  }
+
+  function handleReorderItem(draggedItemId: string, targetItemId: string) {
+    const draggedIndex = visibleEditableItemIds.indexOf(draggedItemId);
+    const targetIndex = visibleEditableItemIds.indexOf(targetItemId);
+
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+      return;
+    }
+
+    const nextOrder = [...visibleEditableItemIds];
+    const [item] = nextOrder.splice(draggedIndex, 1);
+    nextOrder.splice(targetIndex, 0, item);
+    updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
+  }
+
+  function handleSaveEditedText() {
+    if (!editingText) {
+      return;
+    }
+
+    updateCustomization((current) => ({
+      ...current,
+      textOverrides: {
+        ...current.textOverrides,
+        [editingText.id]: editingText.value,
+      },
+    }));
+    setEditingText(null);
+  }
+
+  function handleResetCardEdits() {
+    resetGuideCardCustomization(selectedGuide.id);
+    setCustomization(createEmptyGuideCardCustomization(selectedGuide.id));
+  }
+
+  function persistPrintState() {
+    saveGuideCardLayoutOptions(sanitizedLayoutOptions);
+    saveGuideCardSelectedGuideId(selectedGuideId);
+    saveGuideCardCustomization(selectedCustomization);
+    if (selectedGuideId !== DEFAULT_GUIDE_ID) {
+      setActiveRosaryConfig(selectedGuideId);
+    }
   }
 
   return (
@@ -161,12 +295,11 @@ export function CardSetEditor() {
             <h2 className="text-2xl font-semibold text-blue-900">Generate from a saved guide</h2>
             <p className="mt-3 leading-7 text-slate-700">
               These cards are generated from your selected rosary guide. Choose the card size and
-              which prayers print in full; the layout engine will keep prayer blocks together and
-              warn when a guide is too dense.
+              which prayers print in full, then refine the preview before printing.
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Direct card editing will come later. This version focuses on practical cards that
-              match the guide you already built.
+              Card edits are stored locally as cards-only customizations, so your prayer guide
+              remains recoverable.
             </p>
           </div>
           <div className="rounded-lg bg-cream-50 p-4">
@@ -275,7 +408,7 @@ export function CardSetEditor() {
                   id={`full-prayer-${prayer.id}`}
                   type="checkbox"
                   value={prayer.id}
-                  checked={sanitizedLayoutOptions.fullPrayerIds.includes(prayer.id)}
+                  checked={effectiveFullPrayerIds.includes(prayer.id)}
                   disabled={!prayer.text}
                   onChange={(event) => toggleFullPrayer(prayer.id, event.target.checked)}
                   className="mt-1 h-4 w-4"
@@ -297,11 +430,7 @@ export function CardSetEditor() {
           <Link
             href={printHref}
             onClick={() => {
-              saveGuideCardLayoutOptions(sanitizedLayoutOptions);
-              saveGuideCardSelectedGuideId(selectedGuideId);
-              if (selectedGuideId !== DEFAULT_GUIDE_ID) {
-                setActiveRosaryConfig(selectedGuideId);
-              }
+              persistPrintState();
             }}
             className="interactive-button interactive-button-primary inline-flex items-center justify-center rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
@@ -325,6 +454,10 @@ export function CardSetEditor() {
             Previewing card 1 of {generatedCardSet.cardCount}. The preview updates with guide,
             card count, card size, and full-prayer choices.
           </p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            Hover over a card item to edit, remove, or reorder it. Changes affect these cards only
+            unless a future guide-save action is added.
+          </p>
           <p className="mt-2 text-sm leading-6 text-slate-700">{previewStatus}</p>
         </div>
         {generatedCardSet.warnings.length > 0 ? (
@@ -338,9 +471,182 @@ export function CardSetEditor() {
           <GeneratedGuideCardPreview
             sides={previewSides}
             cardSize={generatedCardSet.layoutOptions.cardSize}
+            editHandlers={{
+              onDeleteItem: handleDeleteItem,
+              onEditItem: (itemId, currentText) =>
+                setEditingText({ id: itemId, label: "Edit card item", value: currentText, multiline: true }),
+              onEditHeading: (sectionId, currentHeading) =>
+                setEditingText({
+                  id: `${sectionId}:heading`,
+                  label: "Edit section heading",
+                  value: currentHeading,
+                  multiline: false,
+                }),
+              onEditTitle: (field, currentText) =>
+                setEditingText({
+                  id: field === "title" ? "card:title" : "card:subtitle",
+                  label: field === "title" ? "Edit card title" : "Edit card subtitle",
+                  value: currentText,
+                  multiline: false,
+                }),
+              onMoveItem: handleMoveItem,
+              onReorderItem: handleReorderItem,
+              onToggleFullPrayer: toggleFullPrayerFromPreview,
+              canMoveItem: (itemId, direction) => {
+                const index = visibleEditableItemIds.indexOf(itemId);
+                return direction === "up"
+                  ? index > 0
+                  : index >= 0 && index < visibleEditableItemIds.length - 1;
+              },
+            }}
           />
         ) : null}
+        <div className="no-print mt-6 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-blue-900">Ready to print?</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">
+              Card edits are saved locally for these cards. Saving edits back to the guide is a
+              future step.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              disabled={!hasCardEdits}
+              onClick={handleResetCardEdits}
+              className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Reset card edits
+            </button>
+            <button
+              type="button"
+              disabled
+              className="interactive-button interactive-button-secondary rounded-md border border-blue-900/10 bg-cream-100 px-4 py-3 font-semibold text-slate-500 disabled:cursor-not-allowed"
+              title="Saving card edits back to the guide will be added later."
+            >
+              Save to guide later
+            </button>
+            <Link
+              href={printHref}
+              onClick={persistPrintState}
+              className="interactive-button interactive-button-primary inline-flex items-center justify-center rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+            >
+              Print / Save as PDF
+            </Link>
+          </div>
+        </div>
       </section>
+      {editingText ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-blue-900/40 px-3 py-3 backdrop-blur-sm sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="card-text-editor-title"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setEditingText(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-xl rounded-lg border border-blue-900/10 bg-cream-50 p-5 shadow-2xl">
+            <h3 id="card-text-editor-title" className="text-xl font-semibold text-blue-900">
+              {editingText.label}
+            </h3>
+            {editingText.multiline ? (
+              <textarea
+                value={editingText.value}
+                onChange={(event) => setEditingText({ ...editingText, value: event.target.value })}
+                className="interactive-field mt-4 min-h-36 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base leading-7"
+                autoFocus
+              />
+            ) : (
+              <input
+                value={editingText.value}
+                onChange={(event) => setEditingText({ ...editingText, value: event.target.value })}
+                className="interactive-field mt-4 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+                autoFocus
+              />
+            )}
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setEditingText(null)}
+                className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEditedText}
+                className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white"
+              >
+                Save text
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function getVisibleEditableItemIds(sides: GuideCardSide[]): string[] {
+  return sides.flatMap((side) =>
+    side.blocks.flatMap((block) => block.editableItems?.map((item) => item.id) ?? []),
+  );
+}
+
+function hasGuideCardCustomizationEdits(customization: GuideCardCustomization): boolean {
+  return (
+    customization.itemOrder.length > 0 ||
+    customization.removedItemIds.length > 0 ||
+    Object.keys(customization.fullPrayerOverrides).length > 0 ||
+    Object.keys(customization.textOverrides).length > 0
+  );
+}
+
+function applyFullPrayerOverridesForPreview(
+  fullPrayerIds: PrayerId[],
+  customization: GuideCardCustomization,
+): PrayerId[] {
+  const nextIds = new Set(fullPrayerIds);
+
+  Object.entries(customization.fullPrayerOverrides).forEach(([id, enabled]) => {
+    if (!isPrayerId(id)) {
+      return;
+    }
+
+    if (enabled) {
+      nextIds.add(id);
+      return;
+    }
+
+    nextIds.delete(id);
+  });
+
+  return [...nextIds];
+}
+
+function omitPrayerOverride(
+  overrides: GuideCardCustomization["fullPrayerOverrides"],
+  prayerId: PrayerId,
+): GuideCardCustomization["fullPrayerOverrides"] {
+  const next = { ...overrides };
+  delete next[prayerId];
+  return next;
+}
+
+function isPrayerId(value: string | undefined): value is PrayerId {
+  return (
+    value === "sign-of-the-cross" ||
+    value === "apostles-creed" ||
+    value === "our-father" ||
+    value === "hail-mary" ||
+    value === "glory-be" ||
+    value === "fatima-prayer" ||
+    value === "hail-holy-queen" ||
+    value === "closing-prayer" ||
+    value === "memorare" ||
+    value === "st-michael-prayer"
   );
 }

@@ -566,6 +566,100 @@ a {
   box-shadow: 0 18px 36px rgb(15 23 42 / 0.12);
 }
 
+.guide-card-editable-title,
+.guide-card-editable-item {
+  position: relative;
+  border-radius: 4px;
+}
+
+.guide-card-editable-item {
+  outline: 1px solid transparent;
+  transition: background-color 120ms ease, outline-color 120ms ease;
+}
+
+.guide-card-editable-item:hover,
+.guide-card-editable-item:focus-within,
+.guide-card-editable-item:focus-visible,
+.guide-card-editable-title:hover,
+.guide-card-editable-title:focus-within {
+  background-color: rgb(21 59 117 / 0.035);
+  outline-color: rgb(21 59 117 / 0.16);
+}
+
+.guide-card-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.08in;
+}
+
+.guide-card-heading-row h3 {
+  flex: 1;
+}
+
+.guide-card-heading-edit,
+.guide-card-item-controls button {
+  border: 1px solid rgb(21 59 117 / 0.22);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.95);
+  color: #153b75;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.16rem 0.24rem;
+  box-shadow: 0 4px 10px rgb(15 23 42 / 0.08);
+}
+
+.guide-card-heading-edit {
+  margin-top: 0.06in;
+  opacity: 0;
+}
+
+.guide-card-item-controls {
+  position: absolute;
+  top: 0.1rem;
+  right: 0.1rem;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.14rem;
+  max-width: min(92%, 16rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.guide-card-title-controls {
+  top: 0;
+}
+
+.guide-card-editable-item:hover > .guide-card-item-controls,
+.guide-card-editable-item:focus-within > .guide-card-item-controls,
+.guide-card-editable-item:focus-visible > .guide-card-item-controls,
+.guide-card-editable-title:hover .guide-card-item-controls,
+.guide-card-editable-title:focus-within .guide-card-item-controls,
+.guide-card-heading-row:hover .guide-card-heading-edit,
+.guide-card-heading-row:focus-within .guide-card-heading-edit {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.guide-card-item-controls button:focus-visible,
+.guide-card-heading-edit:focus-visible {
+  outline: 2px solid #153b75;
+  outline-offset: 2px;
+}
+
+.guide-card-item-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.guide-card-drag-handle {
+  cursor: grab;
+}
+
 .guide-card-face-preview.print-card-pocket-4 {
   aspect-ratio: 3.94 / 5.19;
   max-width: 3.94in;
@@ -889,5 +983,10 @@ a {
 
   .print-card {
     box-shadow: none;
+  }
+
+  .guide-card-item-controls,
+  .guide-card-heading-edit {
+    display: none !important;
   }
 }

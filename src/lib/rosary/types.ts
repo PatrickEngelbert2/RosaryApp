@@ -226,6 +226,41 @@ export type GuideCardLayoutOptions = {
   includeOverflowWarnings: boolean;
 };
 
+export type GuideCardEditableItemType =
+  | "heading"
+  | "prayer"
+  | "instruction"
+  | "mystery"
+  | "saint-invocation"
+  | "pause"
+  | "text";
+
+export type GuideCardEditableItem = {
+  id: string;
+  type: GuideCardEditableItemType;
+  sectionId: string;
+  prayerId?: PrayerId;
+  title?: string;
+  shortText?: string;
+  fullText?: string;
+  currentText: string;
+  printMode?: "short" | "full";
+  isRemoved?: boolean;
+  order: number;
+  canToggleFullPrayer?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+};
+
+export type GuideCardCustomization = {
+  guideId: string;
+  itemOrder: string[];
+  removedItemIds: string[];
+  fullPrayerOverrides: Partial<Record<PrayerId, boolean>>;
+  textOverrides: Record<string, string>;
+  updatedAt: string;
+};
+
 export type GuideCardBlock = {
   id: string;
   type:
@@ -248,6 +283,7 @@ export type GuideCardBlock = {
   compact?: boolean;
   leaderOnly?: boolean;
   sectionGroup?: string;
+  editableItems?: GuideCardEditableItem[];
 };
 
 export type GuideCardSide = {

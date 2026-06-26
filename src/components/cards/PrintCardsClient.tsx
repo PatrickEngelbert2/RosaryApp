@@ -12,11 +12,12 @@ import {
 import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import {
   getActiveRosaryConfig,
+  getGuideCardCustomization,
   getGuideCardLayoutOptions,
   getGuideCardSelectedGuideId,
   getSavedRosaryConfigs,
 } from "@/lib/rosary/storage";
-import type { GuideCardLayoutOptions, UserRosaryConfig } from "@/lib/rosary/types";
+import type { GuideCardCustomization, GuideCardLayoutOptions, UserRosaryConfig } from "@/lib/rosary/types";
 
 const DEFAULT_GUIDE_ID = "default-guide";
 
@@ -24,6 +25,9 @@ export function PrintCardsClient() {
   const [guide, setGuide] = useState<UserRosaryConfig>(() => createDefaultGeneratedGuideConfig());
   const [layoutOptions, setLayoutOptions] = useState<GuideCardLayoutOptions>(() =>
     normalizeGuideCardLayoutOptions({}),
+  );
+  const [customization, setCustomization] = useState<GuideCardCustomization>(() =>
+    getGuideCardCustomization(DEFAULT_GUIDE_ID),
   );
   const [usedFallback, setUsedFallback] = useState(true);
 
@@ -38,7 +42,9 @@ export function PrintCardsClient() {
       setLayoutOptions(storedOptions);
 
       if (wantsDefaultGuide) {
-        setGuide(createDefaultGeneratedGuideConfig());
+        const defaultGuide = createDefaultGeneratedGuideConfig();
+        setGuide(defaultGuide);
+        setCustomization(getGuideCardCustomization(defaultGuide.id));
         setUsedFallback(savedGuides.length === 0);
         return;
       }
@@ -50,18 +56,21 @@ export function PrintCardsClient() {
 
       if (nextGuide) {
         setGuide(nextGuide);
+        setCustomization(getGuideCardCustomization(nextGuide.id));
         setUsedFallback(false);
         return;
       }
 
-      setGuide(createDefaultGeneratedGuideConfig());
+      const defaultGuide = createDefaultGeneratedGuideConfig();
+      setGuide(defaultGuide);
+      setCustomization(getGuideCardCustomization(defaultGuide.id));
       setUsedFallback(true);
     });
   }, []);
 
   const generatedCardSet = useMemo(
-    () => generateGuideCardsFromConfig(guide, layoutOptions),
-    [guide, layoutOptions],
+    () => generateGuideCardsFromConfig(guide, layoutOptions, undefined, customization),
+    [customization, guide, layoutOptions],
   );
   const printGroups = useMemo(
     () => chunkCardsForPrint(generatedCardSet.cards, generatedCardSet.cardsPerPage),

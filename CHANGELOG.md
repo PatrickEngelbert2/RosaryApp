@@ -50,6 +50,14 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Adjusted the Build a Guide hammer silhouette and tap direction so the hammer head reads clearly and swings into the document.
 - Improved the Lead a Walk icon to show footprints following a guided path toward a cross marker while preserving the path animation idea.
 - Preserved the Guide Cards and Resources icon concepts.
+- Added Guide Card Preview Editing v1 with hover/focus controls for editing, removing, reordering, and toggling card preview items.
+- Added cards-only local customizations for guide card item order, removed items, full/short prayer overrides, and text overrides.
+- Added direct full/short prayer toggles from the preview while preserving canonical prayer IDs for future multilingual prayer variants.
+- Added plain-text preview editing for card titles, subtitles, section headings, prayer lines, mystery lines, instructions, pauses, and saint invocations.
+- Added arrow-based and native drag/drop guide card preview reordering with keyboard-accessible arrow controls.
+- Added Reset card edits behavior to restore generated defaults without altering the underlying guide.
+- Added a second Print / Save as PDF button below the guide card preview.
+- Kept preview editing controls out of print output while making the print page consume customized structured card content.
 
 ### Fixed
 

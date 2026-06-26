@@ -236,7 +236,7 @@ a {
   }
 
   58% {
-    transform: rotate(-8deg) translate(-1px, 2px);
+    transform: rotate(-11deg) translate(-1px, 2px);
   }
 
   76% {
@@ -437,7 +437,8 @@ a {
   .interactive-card-link:hover .explore-build-hammer,
   .group:focus-visible .interactive-card-link .explore-build-hammer {
     animation: explore-hammer-tap 820ms ease-in-out both;
-    transform-origin: 58% 32%;
+    transform-box: view-box;
+    transform-origin: 51px 51px;
   }
 
   .interactive-card-link:hover .explore-build-paper,

@@ -66,11 +66,12 @@ export function ExploreIcon({ name }: ExploreIconProps) {
           <path className="explore-build-line" d="M23 47h11" />
         </g>
         <g className="explore-build-hammer text-gold-500">
-          <path className="fill-gold-500/25" d="M28 15h21l5 5-5 5H28l-5-5Z" />
-          <path d="M28 15h21l5 5-5 5H28l-5-5Z" />
-          <path className="fill-gold-500/25" d="M37 25l5 3-13 25-5-3Z" />
-          <path d="M37 25l5 3-13 25-5-3Z" />
-          <path d="M48 15c4-4 9-2 12 2" />
+          <path className="fill-gold-500/25" d="M15 19h26v9H15Z" />
+          <path d="M15 19h26v9H15Z" />
+          <path d="M15 19c-4 1-7 3-9 6" />
+          <path d="M15 28c-4-1-7-3-9-6" />
+          <path d="M35 28 51 51" strokeWidth="5" />
+          <path d="M48 52h8" strokeWidth="4" />
         </g>
         <path className="explore-build-spark text-gold-500" d="M51 30l4-3M52 36h5" />
       </svg>

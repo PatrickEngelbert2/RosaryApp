@@ -305,7 +305,8 @@ export type GuideCardBlock = {
     | "instruction"
     | "mystery-list"
     | "invocation-list"
-    | "custom-guidance";
+    | "custom-guidance"
+    | "compact-group";
   heading?: string;
   lines?: string[];
   body?: string;
@@ -336,6 +337,7 @@ export type GeneratedGuideCard = {
   front: GuideCardSide;
   back?: GuideCardSide;
   extraSides?: GuideCardSide[];
+  sourceBlocks?: GuideCardBlock[];
   layoutOptions: GuideCardLayoutOptions;
 };
 

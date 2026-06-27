@@ -562,6 +562,51 @@ a {
   overflow-x: auto;
 }
 
+.guide-card-measurement-host {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  z-index: -1;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.guide-card-measurement-host .print-card {
+  max-width: none;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.guide-card-measurement-host .print-card-pocket-4 {
+  width: 3.94in;
+  height: 5.19in;
+}
+
+.guide-card-measurement-host .print-card-tall-3 {
+  width: 2.586in;
+  height: 10.5in;
+}
+
+.guide-card-measurement-host .print-card-wide-3 {
+  width: 8in;
+  height: 3.42in;
+}
+
+.guide-card-measurement-host .print-card-tall-2 {
+  width: 3.94in;
+  height: 10.5in;
+}
+
+.guide-card-measurement-host .print-card-wide-2 {
+  width: 8in;
+  height: 5.19in;
+}
+
+.guide-card-measurement-host .print-card-full-1 {
+  width: 8in;
+  height: 10.5in;
+}
+
 .guide-card-face-preview {
   box-shadow: 0 18px 36px rgb(15 23 42 / 0.12);
 }
@@ -729,12 +774,12 @@ a {
 }
 
 .guide-card-face-preview.print-card-tall-3 {
-  aspect-ratio: 2.58 / 10.5;
-  max-width: 2.58in;
+  aspect-ratio: 2.586 / 10.5;
+  max-width: 2.586in;
 }
 
 .guide-card-face-preview.print-card-wide-3 {
-  aspect-ratio: 8 / 3.34;
+  aspect-ratio: 8 / 3.42;
   max-width: 8in;
 }
 
@@ -880,6 +925,42 @@ a {
 .print-card-full-1 h3 {
   margin-top: 0.14in;
   font-size: 14pt;
+}
+
+.guide-card-compact-group {
+  margin-top: 0.035in;
+}
+
+.guide-card-compact-group h4 {
+  margin: 0 0 0.018in;
+  color: #111;
+  font-size: 7.4pt;
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.print-card-wide-2 .guide-card-compact-group h4 {
+  font-size: 8.8pt;
+}
+
+.print-card-wide-3 .guide-card-compact-group h4 {
+  font-size: 7.8pt;
+}
+
+.print-card-tall-3 .guide-card-compact-group h4 {
+  font-size: 6.5pt;
+}
+
+.print-card-tall-2 .guide-card-compact-group h4 {
+  font-size: 8pt;
+}
+
+.print-card-full-1 .guide-card-compact-group h4 {
+  font-size: 11.5pt;
+}
+
+.guide-card-compact-group p {
+  margin: 0;
 }
 
 .print-card p,
@@ -1051,6 +1132,7 @@ a {
   .guide-card-item-controls,
   .guide-card-heading-edit,
   .guide-card-preview-add-button,
+  .guide-card-measurement-host,
   .guide-card-drop-indicator {
     display: none !important;
   }

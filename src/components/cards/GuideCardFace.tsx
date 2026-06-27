@@ -107,6 +107,7 @@ function GuideCardBlockView({
     .join(" ");
 
   const editableItem = block.editableItems?.[0];
+  const blockKey = block.layoutInstanceId ?? block.id;
   const editableAction: GuideCardEditAction | undefined = editableItem
     ? {
         itemId: editableItem.id,
@@ -140,6 +141,7 @@ function GuideCardBlockView({
         .filter(Boolean)
         .join(" ") || undefined}
       data-editable-item-id={editableAction?.itemId}
+      data-guide-block-key={blockKey}
       data-guide-section-id={editableAction?.sectionId}
       draggable={Boolean(editHandlers && editableAction)}
       onDragStart={(event) => {
@@ -178,6 +180,15 @@ function GuideCardBlockView({
       {dropPosition === "before" ? <CardItemDropIndicator /> : null}
       {block.type === "heading" ? (
         <h3>{block.heading}</h3>
+      ) : block.type === "compact-group" ? (
+        <div className="guide-card-compact-group">
+          {block.heading ? <h4>{block.heading}</h4> : null}
+          {block.lines?.map((line) => (
+            <p key={line} className={block.compact ? "compact" : undefined}>
+              {line}
+            </p>
+          ))}
+        </div>
       ) : block.heading ? (
         <div className="guide-card-heading-row">
           <h3>{block.heading}</h3>
@@ -195,7 +206,7 @@ function GuideCardBlockView({
         </div>
       ) : null}
       {block.body ? <p className={bodyClassName}>{block.body}</p> : null}
-      {block.lines && block.lines.length > 0 ? (
+      {block.type !== "compact-group" && block.lines && block.lines.length > 0 ? (
         <ul className={block.compact ? "compact" : undefined}>
           {block.lines.map((line) => (
             <li key={line}>{line}</li>

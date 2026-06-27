@@ -14,6 +14,10 @@ import {
 } from "@/lib/rosary/generateGuideCards";
 import { GUIDE_CARD_LAYOUTS } from "@/lib/rosary/guideCardLayouts";
 import {
+  getGuideCardBlockKey,
+  packGuideCardBlocksByHeight,
+} from "@/lib/rosary/measuredGuideCardLayout";
+import {
   createGuideCardCustomItem,
   findDuplicateIds,
   getVisibleEditableItemIds,
@@ -35,6 +39,7 @@ import {
 } from "@/lib/rosary/storageSchema";
 import type {
   GeneratedGuideCard,
+  GuideCardBlock,
   GuideCardCustomization,
   GuideCardSide,
   PrayerId,
@@ -218,6 +223,48 @@ describe("card content generation", () => {
     expect(text).not.toContain("10 Ave Maria prayers");
   });
 
+  it("renders Holy Father's Intentions as a compact group after the closing prayer", () => {
+    const generated = generateGuideCardsFromConfig(createTestGuide(), { cardSize: "full-1", cardCount: 1 }, fixedDate);
+    const sourceBlocks = generated.cards[0].sourceBlocks ?? allSides(generated.cards[0]).flatMap((side) => side.blocks);
+    const compactGroupIndex = sourceBlocks.findIndex((block) =>
+      block.sourceItemIds?.includes("holy-father-intentions:group"),
+    );
+    const closingPrayerIndex = sourceBlocks.findIndex((block) =>
+      block.lines?.some((line) => line.includes("O God, whose Only Begotten Son")),
+    );
+    const additionalClosingIndex = sourceBlocks.findIndex((block) =>
+      block.lines?.some((line) => line.includes("St. Michael the Archangel")),
+    );
+    const compactGroup = sourceBlocks[compactGroupIndex];
+
+    expect(compactGroup?.type).toBe("compact-group");
+    expect(compactGroup?.heading).toBe("Holy Father's Intentions");
+    expect(compactGroup?.lines?.every((line) => line.startsWith("- "))).toBe(true);
+    expect(compactGroup?.sourceItemIds).toEqual(["holy-father-intentions:group"]);
+    expect(compactGroupIndex).toBeGreaterThan(closingPrayerIndex);
+    expect(compactGroupIndex).toBeLessThan(additionalClosingIndex);
+  });
+
+  it("removes the Final heading while preserving the closing Sign of the Cross item", () => {
+    const generated = generateGuideCardsFromConfig(
+      createTestGuide({
+        prayerLanguageById: {
+          "sign-of-the-cross": "la",
+        },
+      }),
+      { cardSize: "full-1", cardCount: 1, fullPrayerIds: ["sign-of-the-cross"] },
+      fixedDate,
+    );
+    const sourceBlocks = generated.cards[0].sourceBlocks ?? allSides(generated.cards[0]).flatMap((side) => side.blocks);
+    const finalSign = sourceBlocks.find((block) => block.id === "layout:final-sign:line-1");
+    const text = generatedText(generated.cards[0]);
+
+    expect(sourceBlocks.some((block) => block.heading === "Final")).toBe(false);
+    expect(text).not.toContain("Final");
+    expect(finalSign?.heading).toBeUndefined();
+    expect(finalSign?.lines?.[0]).toBe("In nomine Patris, et Filii, et Spiritus Sancti. Amen.");
+  });
+
   it("keeps mystery fruit text with its mystery as one editable unit", () => {
     const generated = generateGuideCardsFromConfig(
       createTestGuide(),
@@ -395,6 +442,38 @@ describe("card ordering and reordering", () => {
 });
 
 describe("card layout packing", () => {
+  it("packs measured blocks front-first using the fewest faces", () => {
+    const blocks = [
+      createMeasuredTestBlock("a"),
+      createMeasuredTestBlock("b"),
+      createMeasuredTestBlock("c"),
+    ];
+    const heights = new Map(blocks.map((block) => [getGuideCardBlockKey(block), 5]));
+    const packed = packGuideCardBlocksByHeight(blocks, heights, 10);
+
+    expect(packed.sides.map((side) => side.map((block) => block.id))).toEqual([["a", "b"], ["c"]]);
+    expect(packed.warnings).toEqual([]);
+  });
+
+  it("moves a heading with its first child instead of orphaning it", () => {
+    const blocks = [
+      createMeasuredTestBlock("intro"),
+      createMeasuredTestBlock("section-heading", "heading", "Measured Section"),
+      createMeasuredTestBlock("section-line"),
+    ];
+    const heights = new Map([
+      ["intro", 8],
+      ["section-heading", 4],
+      ["section-line", 8],
+    ]);
+    const packed = packGuideCardBlocksByHeight(blocks, heights, 12);
+
+    expect(packed.sides.map((side) => side.map((block) => block.id))).toEqual([
+      ["intro"],
+      ["section-heading", "section-line"],
+    ]);
+  });
+
   it.each(GUIDE_CARD_LAYOUTS)("%s keeps tiny content front-only when it fits", (layout) => {
     const config = createTestGuide();
     const baseline = generateGuideCardsFromConfig(config, { cardSize: layout.id, cardCount: 1 }, fixedDate);
@@ -571,6 +650,31 @@ function generatedText(card: GeneratedGuideCard): string {
       ...side.blocks.flatMap((block) => [block.heading ?? "", block.body ?? "", ...(block.lines ?? [])]),
     ])
     .join("\n");
+}
+
+function createMeasuredTestBlock(
+  id: string,
+  type: GuideCardBlock["type"] = "instruction",
+  heading?: string,
+): GuideCardBlock {
+  return {
+    id,
+    layoutInstanceId: id,
+    type,
+    heading,
+    lines: type === "heading" ? undefined : [`${id} text`],
+    estimatedWeight: 1,
+    sourceItemIds: [id],
+    editableItems: [
+      {
+        id,
+        type: type === "heading" ? "heading" : "text",
+        sectionId: id,
+        currentText: heading ?? `${id} text`,
+        order: 0,
+      },
+    ],
+  };
 }
 
 function hasEmptyFaceBeforeNonEmpty(sides: GuideCardSide[]): boolean {

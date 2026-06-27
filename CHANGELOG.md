@@ -8,6 +8,12 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Reworked Guide Cards preview and print layout to use client-side rendered card measurement as the final packing source of truth instead of rough fit estimates.
+- Updated Guide Cards packing to fill the front first, then the back, then continuation faces only when measured content no longer fits.
+- Preserved shared measured layout decisions between preview and `/cards/print`, including the polished preparing-layout states before cards render or print.
+- Made Holy Father's Intentions a compact movable card group with `- ` prayer lines, defaulting just after the Rosary Closing Prayer.
+- Removed the wasteful `Final` Guide Cards heading so the closing Sign of the Cross renders as a standalone editable card item.
+- Added measured layout regression coverage for compact Holy Father's Intentions structure, Final heading removal, front-first packing, and heading orphan prevention.
 - Added Vitest regression coverage for prayer language resolution, guide creation, card content generation, card customization/reordering, card layout packing, preview/print data parity, and storage validation.
 - Hardened saved guide, card set, card layout option, and guide-card customization storage parsing with versioned local collection data and safe recovery for invalid or incompatible localStorage values.
 - Extracted guide-card customization ordering and override helpers into pure utilities so movement, drag/drop, duplicate ID checks, full-prayer overrides, and edit detection are covered by tests.
@@ -74,6 +80,9 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Fixed
 
+- Fixed Guide Cards prematurely moving content to back or continuation faces by measuring rendered card item heights before packing card faces.
+- Fixed continuation warnings so they are shown only when measured continuation faces are actually generated.
+- Reduced wasted Guide Cards space around Holy Father's Intentions and the final Sign of the Cross while keeping both as structured editable card content.
 - Fixed invalid or malformed saved guide data being able to crash app pages during localStorage normalization.
 - Fixed guide-card full-prayer checkbox labels so they reflect the effective card language after guide-level or card-specific language choices.
 - Kept each Guide Card mystery and its fruit of the mystery together when card content flows across front/back or continuation sides.

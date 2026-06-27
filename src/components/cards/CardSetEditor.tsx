@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { prayersById } from "@/content/prayers";
 import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
+import { useMeasuredGuideCardLayout } from "@/components/cards/GuideCardMeasurementHost";
 import type {
   GuideCardDragState,
   GuideCardDropPosition,
@@ -150,8 +151,10 @@ export function CardSetEditor() {
     () => generateGuideCardsFromConfig(selectedGuide, sanitizedLayoutOptions, undefined, selectedCustomization),
     [sanitizedLayoutOptions, selectedCustomization, selectedGuide],
   );
+  const measuredLayout = useMeasuredGuideCardLayout(generatedCardSet);
+  const measuredCardSet = measuredLayout.cardSet;
   const currentLayout = getGuideCardLayout(sanitizedLayoutOptions.cardSize);
-  const previewCard = generatedCardSet.cards[0];
+  const previewCard = measuredCardSet?.cards[0];
   const previewSides = useMemo(
     () =>
       previewCard
@@ -162,13 +165,17 @@ export function CardSetEditor() {
   const hasBackSide = Boolean(previewCard?.back);
   const extraSideCount = previewCard?.extraSides?.length ?? 0;
   const sideUsageSummary =
-    extraSideCount > 0
+    measuredLayout.isMeasuring
+      ? "Preparing measured layout."
+      : extraSideCount > 0
       ? `Needs front, back, and ${extraSideCount} extra ${extraSideCount === 1 ? "side" : "sides"}.`
       : hasBackSide
         ? "Uses front and back."
         : "Fits on one side with these settings.";
   const previewStatus =
-    extraSideCount > 0
+    measuredLayout.isMeasuring
+      ? "Preparing card layout..."
+      : extraSideCount > 0
       ? `This guide needs front, back, and ${extraSideCount} extra ${
           extraSideCount === 1 ? "side" : "sides"
         } with the current settings.`
@@ -611,17 +618,21 @@ export function CardSetEditor() {
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-700">{previewStatus}</p>
         </div>
-        {generatedCardSet.warnings.length > 0 ? (
+        {measuredCardSet && measuredCardSet.warnings.length > 0 ? (
           <div className="mb-4 space-y-2 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
-            {generatedCardSet.warnings.map((warning) => (
+            {measuredCardSet.warnings.map((warning) => (
               <p key={warning}>{warning}</p>
             ))}
           </div>
         ) : null}
-        {previewSides.length > 0 ? (
+        {measuredLayout.isMeasuring ? (
+          <div className="rounded-lg border border-blue-900/10 bg-white px-4 py-5 text-sm font-medium text-slate-700 shadow-sm">
+            Preparing card layout...
+          </div>
+        ) : previewSides.length > 0 ? (
           <GeneratedGuideCardPreview
             sides={previewSides}
-            cardSize={generatedCardSet.layoutOptions.cardSize}
+            cardSize={measuredCardSet?.layoutOptions.cardSize ?? generatedCardSet.layoutOptions.cardSize}
             editHandlers={{
               onAddItem: openAddCardItem,
               onDeleteItem: handleDeleteItem,
@@ -753,6 +764,7 @@ export function CardSetEditor() {
           onAdd={handleAddCardItem}
         />
       ) : null}
+      {measuredLayout.measurementHost}
     </div>
   );
 }

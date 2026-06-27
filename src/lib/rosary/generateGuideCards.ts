@@ -529,6 +529,10 @@ function splitBlockForCapacity(
   }
 
   if (lines.length === 1) {
+    if (shouldKeepSingleLineBlockTogether(block)) {
+      return undefined;
+    }
+
     return splitSingleLineBlock(block, capacity, layout);
   }
 
@@ -584,6 +588,10 @@ function splitSingleLineBlock(
     first: createSplitBlock(block, [chunks[0]], "part-1", layout, false),
     remainder: createSplitBlock(block, [chunks.slice(1).join(" ")], "continued", layout, true, []),
   };
+}
+
+function shouldKeepSingleLineBlockTogether(block: GuideCardBlock): boolean {
+  return block.type === "mystery-list" || block.editableItems?.some((item) => item.type === "mystery") === true;
 }
 
 function createSplitBlock(

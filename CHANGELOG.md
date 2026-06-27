@@ -61,6 +61,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Fixed
 
+- Kept each Guide Card mystery and its fruit of the mystery together when card content flows across front/back or continuation sides.
 - Fixed duplicate React keys when Guide Card preview items are moved across visual sections by separating canonical source item IDs from generated layout instance IDs.
 - Improved Guide Card preview drag/drop placement feedback with item target highlighting, before/after insertion lines, and a lifted dragged-item state.
 - Clarified cross-section Guide Card preview moves so reordering removes the item from its old visual position and inserts it at the indicated target.

@@ -2,6 +2,7 @@ import type {
   GuideCardLayoutOptions,
   MysterySetId,
   PrayerId,
+  PrayerLanguage,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
 import {
@@ -14,6 +15,7 @@ import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 export type EasyGuidePurpose = "self" | "walk-group" | "printable-cards" | "simple";
 export type EasyGuideMysteryChoice = "today" | MysterySetId;
 export type EasyGuideHelpLevel = "simple" | "complete" | "beginner";
+export type EasyGuideLatinChoice = "none" | "choose" | "unsure";
 export type EasyGuideSaintChoice = "none" | "common" | "custom";
 export type EasyGuidePrintIntent = "not-now" | "pocket" | "larger" | "unsure";
 
@@ -21,6 +23,8 @@ export type EasyGuideAnswers = {
   purpose: EasyGuidePurpose;
   mysteryChoice: EasyGuideMysteryChoice;
   helpLevel: EasyGuideHelpLevel;
+  latinChoice: EasyGuideLatinChoice;
+  latinPrayerIds: PrayerId[];
   closingPrayerIds: PrayerId[];
   saintChoice: EasyGuideSaintChoice;
   customSaints: string[];
@@ -49,6 +53,8 @@ export const defaultEasyGuideAnswers: EasyGuideAnswers = {
   purpose: "simple",
   mysteryChoice: "today",
   helpLevel: "complete",
+  latinChoice: "none",
+  latinPrayerIds: [],
   closingPrayerIds: standardEasyClosingPrayerIds,
   saintChoice: "none",
   customSaints: [],
@@ -85,6 +91,7 @@ export function createUserRosaryConfigFromWizardAnswers(
       enabled: saints.length > 0,
       saints,
     },
+    prayerLanguageById: buildPrayerLanguageById(answers),
     preferences: {
       ...baseConfig.preferences,
       defaultCollapseKnownPrayers: answers.helpLevel !== "beginner",
@@ -99,6 +106,16 @@ export function createUserRosaryConfigFromWizardAnswers(
     defaultName,
     guideCardLayoutOptions: buildGuideCardLayoutOptions(answers),
   };
+}
+
+function buildPrayerLanguageById(answers: EasyGuideAnswers): Partial<Record<PrayerId, PrayerLanguage>> {
+  if (answers.latinChoice !== "choose") {
+    return {};
+  }
+
+  return Object.fromEntries(
+    [...new Set(answers.latinPrayerIds)].map((prayerId) => [prayerId, "la" satisfies PrayerLanguage]),
+  ) as Partial<Record<PrayerId, PrayerLanguage>>;
 }
 
 export function buildDefaultEasyGuideName(answers: EasyGuideAnswers): string {

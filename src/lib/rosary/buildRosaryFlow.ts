@@ -5,10 +5,12 @@ import {
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
+import { getPrayerLanguage, getPrayerVariant } from "@/lib/rosary/prayerText";
 import type {
   CustomGuidanceInsertionPoint,
   Mystery,
   MysterySet,
+  PrayerId,
   RenderedRosaryStep,
   RosaryStep,
   UserRosaryConfig,
@@ -81,14 +83,14 @@ function renderStep(
   }
 
   if (step.type === "prayer" && step.prayerId) {
-    const prayer = prayersById[step.prayerId];
+    const prayer = getPrayerForConfig(step.prayerId, config);
     const repeat = step.repeat ?? 1;
 
     return [
       {
         id: step.id,
         type: repeat > 1 ? "prayer-group" : "prayer",
-        title: step.title || prayer.title,
+        title: prayer.title || step.title,
         prayer,
         text: prayer.text,
         repeatCount: repeat,
@@ -102,14 +104,14 @@ function renderStep(
   }
 
   if (step.type === "prayer-group" && step.prayerId) {
-    const prayer = prayersById[step.prayerId];
+    const prayer = getPrayerForConfig(step.prayerId, config);
     const repeat = step.repeatCount ?? step.repeat ?? 1;
 
     return [
       {
         id: step.id,
         type: "prayer-group",
-        title: step.title || prayer.title,
+        title: prayer.title || step.title,
         prayer,
         text: prayer.text,
         repeatCount: repeat,
@@ -200,9 +202,9 @@ function renderDecade(
     {
       id: `${step.id}-${mystery.id}-our-father`,
       type: "prayer",
-      title: "Our Father",
-      prayer: prayersById["our-father"],
-      text: prayersById["our-father"].text,
+      title: getPrayerForConfig("our-father", config).title,
+      prayer: getPrayerForConfig("our-father", config),
+      text: getPrayerForConfig("our-father", config).text,
       defaultCollapsed: collapse,
       leaderOnly: false,
       cardEligible: true,
@@ -213,9 +215,9 @@ function renderDecade(
   steps.push({
     id: `${step.id}-${mystery.id}-hail-marys`,
     type: "prayer-group",
-    title: "Hail Mary",
-    prayer: prayersById["hail-mary"],
-    text: prayersById["hail-mary"].text,
+    title: getPrayerForConfig("hail-mary", config).title,
+    prayer: getPrayerForConfig("hail-mary", config),
+    text: getPrayerForConfig("hail-mary", config).text,
     repeatCount: 10,
     defaultCollapsed: collapse,
     leaderOnly: false,
@@ -227,9 +229,9 @@ function renderDecade(
     {
       id: `${step.id}-${mystery.id}-glory-be`,
       type: "prayer",
-      title: "Glory Be",
-      prayer: prayersById["glory-be"],
-      text: prayersById["glory-be"].text,
+      title: getPrayerForConfig("glory-be", config).title,
+      prayer: getPrayerForConfig("glory-be", config),
+      text: getPrayerForConfig("glory-be", config).text,
       defaultCollapsed: collapse,
       leaderOnly: false,
       cardEligible: true,
@@ -238,9 +240,9 @@ function renderDecade(
     {
       id: `${step.id}-${mystery.id}-fatima-prayer`,
       type: "prayer",
-      title: "Fatima Prayer",
-      prayer: prayersById["fatima-prayer"],
-      text: prayersById["fatima-prayer"].text,
+      title: getPrayerForConfig("fatima-prayer", config).title,
+      prayer: getPrayerForConfig("fatima-prayer", config),
+      text: getPrayerForConfig("fatima-prayer", config).text,
       description: step.text,
       defaultCollapsed: collapse,
       leaderOnly: false,
@@ -258,20 +260,33 @@ function renderSelectedClosings(config: UserRosaryConfig, baseOrder: number): Re
   return config.selectedClosingPrayerIds
     .filter((prayerId) => prayersById[prayerId])
     .map((prayerId, index) => {
-      const prayer = prayersById[prayerId];
+      const resolvedPrayer = getPrayerForConfig(prayerId, config);
 
       return {
         id: `selected-closing-${prayerId}`,
         type: "prayer",
-        title: prayer.title,
-        prayer,
-        text: prayer.text,
+        title: resolvedPrayer.title,
+        prayer: resolvedPrayer,
+        text: resolvedPrayer.text,
         defaultCollapsed: config.preferences.defaultCollapseKnownPrayers,
         leaderOnly: false,
         cardEligible: true,
         order: baseOrder + index / 10,
       };
     });
+}
+
+function getPrayerForConfig(prayerId: PrayerId, config: UserRosaryConfig) {
+  const prayer = prayersById[prayerId];
+  const variant = getPrayerVariant(prayer, getPrayerLanguage(prayerId, config.prayerLanguageById));
+
+  return {
+    ...prayer,
+    title: variant.title,
+    incipit: variant.incipit,
+    text: variant.text,
+    shortText: variant.shortText,
+  };
 }
 
 function renderSaintInvocations(

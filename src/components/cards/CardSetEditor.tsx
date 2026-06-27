@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { prayersById } from "@/content/prayers";
 import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
 import type { GuideCardDragState, GuideCardDropPosition } from "@/components/cards/GuideCardFace";
 import { Card } from "@/components/ui/Card";
@@ -33,12 +34,13 @@ import {
   saveGuideCardSelectedGuideId,
   setActiveRosaryConfig,
 } from "@/lib/rosary/storage";
-import { getPrayerIncipit } from "@/lib/rosary/prayerText";
+import { getPrayerIncipit, getPrayerLanguage, getPrayerVariant, latinPrayerIds } from "@/lib/rosary/prayerText";
 import type {
   GuideCardCustomization,
   GuideCardLayoutOptions,
   GuideCardSide,
   PrayerId,
+  PrayerLanguage,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
 
@@ -104,6 +106,10 @@ export function CardSetEditor() {
       ? customization
       : createEmptyGuideCardCustomization(selectedGuide.id);
   const prayerOptions = useMemo(() => getRelevantGuidePrayerOptions(selectedGuide), [selectedGuide]);
+  const languagePrayerOptions = useMemo(() => {
+    const ids = new Set<PrayerId>(["sign-of-the-cross", ...prayerOptions.map((prayer) => prayer.id)]);
+    return latinPrayerIds.filter((prayerId) => ids.has(prayerId)).map((prayerId) => prayersById[prayerId]);
+  }, [prayerOptions]);
   const selectedPrayerIdKey = prayerOptions.map((prayer) => prayer.id).join("|");
   const sanitizedLayoutOptions = useMemo(
     () => {
@@ -229,6 +235,23 @@ export function CardSetEditor() {
         [prayerId]: checked,
       },
     }));
+  }
+
+  function updateCardPrayerLanguage(prayerId: PrayerId, value: PrayerLanguage | "guide-default") {
+    updateCustomization((current) => {
+      const nextOverrides = { ...(current.prayerLanguageOverrides ?? {}) };
+
+      if (value === "guide-default") {
+        delete nextOverrides[prayerId];
+      } else {
+        nextOverrides[prayerId] = value;
+      }
+
+      return {
+        ...current,
+        prayerLanguageOverrides: nextOverrides,
+      };
+    });
   }
 
   function updateCustomization(
@@ -429,31 +452,85 @@ export function CardSetEditor() {
             save space.
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {prayerOptions.map((prayer) => (
-              <label
-                key={prayer.id}
-                htmlFor={`full-prayer-${prayer.id}`}
-                className="flex gap-3 rounded-md border border-blue-900/10 bg-white px-3 py-3 text-sm text-slate-700"
-              >
-                <input
-                  id={`full-prayer-${prayer.id}`}
-                  type="checkbox"
-                  value={prayer.id}
-                  checked={effectiveFullPrayerIds.includes(prayer.id)}
-                  disabled={!prayer.text}
-                  onChange={(event) => toggleFullPrayer(prayer.id, event.target.checked)}
-                  className="mt-1 h-4 w-4"
-                />
-                <span>
-                  <span className="block font-semibold text-blue-900">{prayer.title}</span>
-                  <span className="block text-xs leading-5 text-slate-600">
-                    {prayer.text
-                      ? `${getPrayerIncipit(prayer)} Print full text when checked.`
-                      : "No full text is available."}
+            {prayerOptions.map((prayer) => {
+              const languageOverride = selectedCustomization.prayerLanguageOverrides?.[prayer.id];
+              const cardLanguage =
+                languageOverride && languageOverride !== "guide-default"
+                  ? languageOverride
+                  : getPrayerLanguage(prayer.id, selectedGuide.prayerLanguageById);
+              const prayerVariant = getPrayerVariant(prayer, cardLanguage);
+
+              return (
+                <label
+                  key={prayer.id}
+                  htmlFor={`full-prayer-${prayer.id}`}
+                  className="flex gap-3 rounded-md border border-blue-900/10 bg-white px-3 py-3 text-sm text-slate-700"
+                >
+                  <input
+                    id={`full-prayer-${prayer.id}`}
+                    type="checkbox"
+                    value={prayer.id}
+                    checked={effectiveFullPrayerIds.includes(prayer.id)}
+                    disabled={!prayer.text}
+                    onChange={(event) => toggleFullPrayer(prayer.id, event.target.checked)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <span>
+                    <span className="block font-semibold text-blue-900">{prayerVariant.title}</span>
+                    <span className="block text-xs leading-5 text-slate-600">
+                      {prayer.text
+                        ? `${getPrayerIncipit(prayer, cardLanguage)} Print full text when checked.`
+                        : "No full text is available."}
+                    </span>
                   </span>
-                </span>
-              </label>
-            ))}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-blue-900/10 pt-5">
+          <h3 className="text-lg font-semibold text-blue-900">Prayer language on cards</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            Choose the language used for each prayer on these cards. Card settings can differ from
+            the guide.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {languagePrayerOptions.map((prayer) => {
+              const guideLanguage = getPrayerLanguage(prayer.id, selectedGuide.prayerLanguageById);
+              const latinVariant = getPrayerVariant(prayer, "la");
+              const override = selectedCustomization.prayerLanguageOverrides?.[prayer.id] ?? "guide-default";
+
+              return (
+                <label
+                  key={prayer.id}
+                  htmlFor={`card-language-${prayer.id}`}
+                  className="rounded-md border border-blue-900/10 bg-white px-3 py-3 text-sm text-slate-700"
+                >
+                  <span className="block font-semibold text-blue-900">{prayer.title}</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-600">
+                    English: {prayer.incipit} Latin: {latinVariant.incipit}
+                  </span>
+                  <select
+                    id={`card-language-${prayer.id}`}
+                    value={override}
+                    onChange={(event) =>
+                      updateCardPrayerLanguage(
+                        prayer.id,
+                        event.target.value as PrayerLanguage | "guide-default",
+                      )
+                    }
+                    className="interactive-field mt-3 w-full rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="guide-default">
+                      Use guide setting ({guideLanguage === "la" ? "Latin" : "English"})
+                    </option>
+                    <option value="en">English</option>
+                    <option value="la">Latin</option>
+                  </select>
+                </label>
+              );
+            })}
           </div>
         </div>
 
@@ -641,6 +718,7 @@ function hasGuideCardCustomizationEdits(customization: GuideCardCustomization): 
     customization.itemOrder.length > 0 ||
     customization.removedItemIds.length > 0 ||
     Object.keys(customization.fullPrayerOverrides).length > 0 ||
+    Object.keys(customization.prayerLanguageOverrides ?? {}).length > 0 ||
     Object.keys(customization.textOverrides).length > 0
   );
 }

@@ -8,6 +8,23 @@ export const prayers: Prayer[] = [
     text: "In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
     shortText: "In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
     category: "opening",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Sign of the Cross",
+        incipit: "In the name of the Father...",
+        text: "In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
+        shortText: "In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
+      },
+      la: {
+        language: "la",
+        title: "Signum Crucis",
+        incipit: "In nomine Patris...",
+        text: "In nomine Patris, et Filii, et Spiritus Sancti. Amen.",
+        shortText: "In nomine Patris, et Filii, et Spiritus Sancti. Amen.",
+      },
+    },
   },
   {
     id: "apostles-creed",
@@ -16,6 +33,23 @@ export const prayers: Prayer[] = [
     text: "I believe in God, the Father almighty, Creator of heaven and earth, and in Jesus Christ, his only Son, our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died and was buried; he descended into hell; on the third day he rose again from the dead; he ascended into heaven, and is seated at the right hand of God the Father almighty; from there he will come to judge the living and the dead.\n\nI believe in the Holy Spirit, the holy catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.",
     shortText: "I believe in God, the Father almighty, Creator of heaven and earth...",
     category: "opening",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Apostles' Creed",
+        incipit: "I believe in God...",
+        text: "I believe in God, the Father almighty, Creator of heaven and earth, and in Jesus Christ, his only Son, our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died and was buried; he descended into hell; on the third day he rose again from the dead; he ascended into heaven, and is seated at the right hand of God the Father almighty; from there he will come to judge the living and the dead.\n\nI believe in the Holy Spirit, the holy catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.",
+        shortText: "I believe in God, the Father almighty, Creator of heaven and earth...",
+      },
+      la: {
+        language: "la",
+        title: "Symbolum Apostolorum",
+        incipit: "Credo in Deum...",
+        text: "Credo in Deum, Patrem omnipotentem, Creatorem caeli et terrae; et in Iesum Christum, Filium eius unicum, Dominum nostrum; qui conceptus est de Spiritu Sancto, natus ex Maria Virgine, passus sub Pontio Pilato, crucifixus, mortuus, et sepultus; descendit ad inferos; tertia die resurrexit a mortuis; ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis; inde venturus est iudicare vivos et mortuos.\n\nCredo in Spiritum Sanctum, sanctam Ecclesiam catholicam, sanctorum communionem, remissionem peccatorum, carnis resurrectionem, vitam aeternam. Amen.",
+        shortText: "Credo in Deum, Patrem omnipotentem, Creatorem caeli et terrae...",
+      },
+    },
   },
   {
     id: "our-father",
@@ -24,6 +58,23 @@ export const prayers: Prayer[] = [
     text: "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven.\n\nGive us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.",
     shortText: "Our Father, who art in heaven, hallowed be thy name...",
     category: "decade",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Our Father",
+        incipit: "Our Father...",
+        text: "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven.\n\nGive us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.",
+        shortText: "Our Father, who art in heaven, hallowed be thy name...",
+      },
+      la: {
+        language: "la",
+        title: "Pater Noster",
+        incipit: "Pater noster...",
+        text: "Pater noster, qui es in caelis, sanctificetur nomen tuum; adveniat regnum tuum; fiat voluntas tua, sicut in caelo et in terra.\n\nPanem nostrum quotidianum da nobis hodie; et dimitte nobis debita nostra, sicut et nos dimittimus debitoribus nostris; et ne nos inducas in tentationem; sed libera nos a malo. Amen.",
+        shortText: "Pater noster...",
+      },
+    },
   },
   {
     id: "hail-mary",
@@ -32,6 +83,23 @@ export const prayers: Prayer[] = [
     text: "Hail Mary, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus.\n\nHoly Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
     shortText: "Hail Mary, full of grace, the Lord is with thee...",
     category: "decade",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Hail Mary",
+        incipit: "Hail Mary...",
+        text: "Hail Mary, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus.\n\nHoly Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
+        shortText: "Hail Mary, full of grace, the Lord is with thee...",
+      },
+      la: {
+        language: "la",
+        title: "Ave Maria",
+        incipit: "Ave Maria...",
+        text: "Ave Maria, gratia plena, Dominus tecum; benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus.\n\nSancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen.",
+        shortText: "Ave Maria...",
+      },
+    },
   },
   {
     id: "glory-be",
@@ -40,6 +108,23 @@ export const prayers: Prayer[] = [
     text: "Glory be to the Father, and to the Son, and to the Holy Spirit.\n\nAs it was in the beginning, is now, and ever shall be, world without end. Amen.",
     shortText: "Glory be to the Father, and to the Son, and to the Holy Spirit.",
     category: "decade",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Glory Be",
+        incipit: "Glory be...",
+        text: "Glory be to the Father, and to the Son, and to the Holy Spirit.\n\nAs it was in the beginning, is now, and ever shall be, world without end. Amen.",
+        shortText: "Glory be to the Father, and to the Son, and to the Holy Spirit.",
+      },
+      la: {
+        language: "la",
+        title: "Gloria Patri",
+        incipit: "Gloria Patri...",
+        text: "Gloria Patri, et Filio, et Spiritui Sancto.\n\nSicut erat in principio, et nunc, et semper, et in saecula saeculorum. Amen.",
+        shortText: "Gloria Patri...",
+      },
+    },
   },
   {
     id: "fatima-prayer",
@@ -48,6 +133,23 @@ export const prayers: Prayer[] = [
     text: "O my Jesus, forgive us our sins, save us from the fires of hell, lead all souls to heaven, especially those in most need of thy mercy. Amen.",
     shortText: "O my Jesus, forgive us our sins, save us from the fires of hell...",
     category: "decade",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Fatima Prayer",
+        incipit: "O my Jesus...",
+        text: "O my Jesus, forgive us our sins, save us from the fires of hell, lead all souls to heaven, especially those in most need of thy mercy. Amen.",
+        shortText: "O my Jesus, forgive us our sins, save us from the fires of hell...",
+      },
+      la: {
+        language: "la",
+        title: "Oratio Fatimae",
+        incipit: "O mi Iesu...",
+        text: "O mi Iesu, dimitte nobis debita nostra, libera nos ab igne inferni, perduc in caelum omnes animas, praesertim eas quae misericordiae tuae maxime indigent.",
+        shortText: "O mi Iesu...",
+      },
+    },
   },
   {
     id: "hail-holy-queen",
@@ -56,6 +158,23 @@ export const prayers: Prayer[] = [
     text: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope. To thee do we cry, poor banished children of Eve; to thee do we send up our sighs, mourning and weeping in this valley of tears.\n\nTurn then, most gracious advocate, thine eyes of mercy toward us; and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
     shortText: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope...",
     category: "closing",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Hail Holy Queen",
+        incipit: "Hail, holy Queen...",
+        text: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope. To thee do we cry, poor banished children of Eve; to thee do we send up our sighs, mourning and weeping in this valley of tears.\n\nTurn then, most gracious advocate, thine eyes of mercy toward us; and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
+        shortText: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope...",
+      },
+      la: {
+        language: "la",
+        title: "Salve Regina",
+        incipit: "Salve Regina...",
+        text: "Salve Regina, Mater misericordiae; vita, dulcedo, et spes nostra, salve.\n\nAd te clamamus, exsules filii Hevae. Ad te suspiramus, gementes et flentes in hac lacrimarum valle.\n\nEia ergo, advocata nostra, illos tuos misericordes oculos ad nos converte.\n\nEt Iesum, benedictum fructum ventris tui, nobis post hoc exsilium ostende.\n\nO clemens, O pia, O dulcis Virgo Maria.\n\nOra pro nobis, sancta Dei Genitrix.\n\nUt digni efficiamur promissionibus Christi.",
+        shortText: "Salve Regina...",
+      },
+    },
   },
   {
     id: "closing-prayer",
@@ -64,6 +183,23 @@ export const prayers: Prayer[] = [
     text: "O God, whose only begotten Son, by his life, death, and resurrection, has purchased for us the rewards of eternal life, grant, we beseech thee, that while meditating on these mysteries of the most holy Rosary of the Blessed Virgin Mary, we may imitate what they contain and obtain what they promise, through the same Christ our Lord. Amen.",
     shortText: "O God, whose Only Begotten Son...",
     category: "closing",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Closing Prayer",
+        incipit: "O God, whose Only Begotten Son...",
+        text: "O God, whose only begotten Son, by his life, death, and resurrection, has purchased for us the rewards of eternal life, grant, we beseech thee, that while meditating on these mysteries of the most holy Rosary of the Blessed Virgin Mary, we may imitate what they contain and obtain what they promise, through the same Christ our Lord. Amen.",
+        shortText: "O God, whose Only Begotten Son...",
+      },
+      la: {
+        language: "la",
+        title: "Oratio Conclusiva Rosarii",
+        incipit: "Deus, cuius Unigenitus...",
+        text: "Oremus.\n\nDeus, cuius Unigenitus per vitam, mortem et resurrectionem suam nobis salutis aeternae praemia comparavit: concede, quaesumus; ut haec mysteria sacratissimo beatae Mariae Virginis Rosario recolentes, et imitemur quod continent, et quod promittunt assequamur.\n\nPer eundem Christum Dominum nostrum. Amen.",
+        shortText: "Deus, cuius Unigenitus...",
+      },
+    },
   },
   {
     id: "memorare",
@@ -72,6 +208,23 @@ export const prayers: Prayer[] = [
     text: "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thine intercession was left unaided.\n\nInspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother. To thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen.",
     shortText: "Remember, O most gracious Virgin Mary, that never was it known...",
     category: "optional",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "Memorare",
+        incipit: "Remember, O most gracious Virgin Mary...",
+        text: "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thine intercession was left unaided.\n\nInspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother. To thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen.",
+        shortText: "Remember, O most gracious Virgin Mary, that never was it known...",
+      },
+      la: {
+        language: "la",
+        title: "Memorare",
+        incipit: "Memorare, O piissima Virgo Maria...",
+        text: "Memorare, O piissima Virgo Maria, non esse auditum a saeculo quemquam ad tua currentem praesidia, tua implorantem auxilia, tua petentem suffragia esse derelictum.\n\nEgo tali animatus confidentia, ad te, Virgo Virginum, Mater, curro; ad te venio; coram te gemens peccator assisto.\n\nNoli, Mater Verbi, verba mea despicere; sed audi propitia et exaudi. Amen.",
+        shortText: "Memorare, O piissima Virgo Maria...",
+      },
+    },
   },
   {
     id: "st-michael-prayer",
@@ -80,6 +233,23 @@ export const prayers: Prayer[] = [
     text: "St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.\n\nMay God rebuke him, we humbly pray, and do thou, O Prince of the heavenly hosts, by the power of God, cast into hell Satan, and all the evil spirits, who prowl about the world seeking the ruin of souls. Amen.",
     shortText: "St. Michael the Archangel, defend us in battle.",
     category: "optional",
+    defaultLanguage: "en",
+    variants: {
+      en: {
+        language: "en",
+        title: "St. Michael Prayer",
+        incipit: "St. Michael the Archangel...",
+        text: "St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.\n\nMay God rebuke him, we humbly pray, and do thou, O Prince of the heavenly hosts, by the power of God, cast into hell Satan, and all the evil spirits, who prowl about the world seeking the ruin of souls. Amen.",
+        shortText: "St. Michael the Archangel, defend us in battle.",
+      },
+      la: {
+        language: "la",
+        title: "Sancte Michael Archangele",
+        incipit: "Sancte Michael Archangele...",
+        text: "Sancte Michael Archangele, defende nos in proelio; contra nequitiam et insidias diaboli esto praesidium.\n\nImperet illi Deus, supplices deprecamur: tuque, Princeps militiae caelestis, Satanam aliosque spiritus malignos, qui ad perditionem animarum pervagantur in mundo, divina virtute in infernum detrude. Amen.",
+        shortText: "Sancte Michael Archangele...",
+      },
+    },
   },
 ];
 

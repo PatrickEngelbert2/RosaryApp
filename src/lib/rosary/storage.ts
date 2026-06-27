@@ -1,11 +1,14 @@
 import type {
   GuideCardCustomization,
   GuideCardLayoutOptions,
+  PrayerId,
+  PrayerLanguage,
   RosaryCardSet,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import { normalizeRosaryConfig } from "@/lib/rosary/configUtils";
+import { isPrayerId, normalizePrayerLanguage } from "@/lib/rosary/prayerText";
 
 const CONFIGS_KEY = "rosary-walks:rosary-configs:v1";
 const ACTIVE_CONFIG_KEY = "rosary-walks:active-config:v1";
@@ -153,6 +156,7 @@ export function createEmptyGuideCardCustomization(guideId: string): GuideCardCus
     itemOrder: [],
     removedItemIds: [],
     fullPrayerOverrides: {},
+    prayerLanguageOverrides: {},
     textOverrides: {},
     updatedAt: new Date().toISOString(),
   };
@@ -162,7 +166,7 @@ export function getGuideCardCustomizations(): GuideCardCustomization[] {
   const customizations = readJson<GuideCardCustomization[]>(GUIDE_CARD_CUSTOMIZATIONS_KEY, []);
 
   return Array.isArray(customizations)
-    ? customizations.filter((customization) => Boolean(customization.guideId))
+    ? customizations.filter((customization) => Boolean(customization.guideId)).map(normalizeGuideCardCustomization)
     : [];
 }
 
@@ -179,6 +183,7 @@ export function saveGuideCardCustomization(customization: GuideCardCustomization
     itemOrder: [...new Set(customization.itemOrder)],
     removedItemIds: [...new Set(customization.removedItemIds)],
     fullPrayerOverrides: { ...customization.fullPrayerOverrides },
+    prayerLanguageOverrides: normalizePrayerLanguageOverrides(customization.prayerLanguageOverrides),
     textOverrides: { ...customization.textOverrides },
     updatedAt: new Date().toISOString(),
   };
@@ -189,6 +194,35 @@ export function saveGuideCardCustomization(customization: GuideCardCustomization
   ];
 
   return writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, next);
+}
+
+function normalizeGuideCardCustomization(customization: GuideCardCustomization): GuideCardCustomization {
+  return {
+    ...customization,
+    itemOrder: Array.isArray(customization.itemOrder) ? customization.itemOrder : [],
+    removedItemIds: Array.isArray(customization.removedItemIds) ? customization.removedItemIds : [],
+    fullPrayerOverrides: customization.fullPrayerOverrides ?? {},
+    prayerLanguageOverrides: normalizePrayerLanguageOverrides(customization.prayerLanguageOverrides),
+    textOverrides: customization.textOverrides ?? {},
+    updatedAt: customization.updatedAt ?? new Date().toISOString(),
+  };
+}
+
+function normalizePrayerLanguageOverrides(
+  overrides: Partial<Record<PrayerId, PrayerLanguage | "guide-default">> | undefined,
+): Partial<Record<PrayerId, PrayerLanguage | "guide-default">> {
+  if (!overrides) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(overrides)
+      .filter(([prayerId]) => isPrayerId(prayerId))
+      .map(([prayerId, language]) => [
+        prayerId,
+        language === "guide-default" ? "guide-default" : normalizePrayerLanguage(language),
+      ]),
+  ) as Partial<Record<PrayerId, PrayerLanguage | "guide-default">>;
 }
 
 export function resetGuideCardCustomization(guideId: string): boolean {

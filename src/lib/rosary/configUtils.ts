@@ -1,5 +1,6 @@
 import { getRosaryTemplate } from "@/lib/rosary/defaultTemplates";
-import type { PrayerId, RosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
+import { isPrayerId, normalizePrayerLanguage } from "@/lib/rosary/prayerText";
+import type { PrayerId, PrayerLanguage, RosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
 
 export const defaultClosingPrayerIds: PrayerId[] = ["hail-holy-queen", "closing-prayer"];
 
@@ -39,6 +40,7 @@ export function createDefaultUserConfigFromTemplate(
       includeOptionalClosingPrayers: defaultClosingPrayerIds,
       showRepeatedPrayersIndividually: false,
     },
+    prayerLanguageById: {},
   };
 }
 
@@ -95,5 +97,20 @@ export function normalizeRosaryConfig(config: UserRosaryConfig): UserRosaryConfi
       showRepeatedPrayersIndividually:
         config.preferences?.showRepeatedPrayersIndividually ?? false,
     },
+    prayerLanguageById: normalizePrayerLanguageById(config.prayerLanguageById),
   };
+}
+
+export function normalizePrayerLanguageById(
+  prayerLanguageById: Partial<Record<PrayerId, PrayerLanguage>> | undefined,
+): Partial<Record<PrayerId, PrayerLanguage>> {
+  if (!prayerLanguageById) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(prayerLanguageById)
+      .filter(([prayerId]) => isPrayerId(prayerId))
+      .map(([prayerId, language]) => [prayerId, normalizePrayerLanguage(language)]),
+  ) as Partial<Record<PrayerId, PrayerLanguage>>;
 }

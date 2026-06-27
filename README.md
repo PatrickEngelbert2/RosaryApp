@@ -13,11 +13,13 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Build custom rosary guides.
 - Choose today's mysteries or manually select a mystery set.
 - Customize closing prayers.
+- Mix English and Latin prayer texts per prayer in saved guides.
 - Add saint invocations.
 - Follow prayers with collapsible text.
 - Group repeated Hail Marys or show them individually.
 - Generate printable front/back guide cards.
 - Customize guide card previews before printing.
+- Adjust guide card prayer language per prayer without changing the saved guide.
 - Choose Pocket, Tall, Wide, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
 - Save current guides locally in the browser.
@@ -112,11 +114,13 @@ The Build a Guide page supports two paths:
 
 Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by the advanced builder. Guides created in the wizard immediately work with `/pray/custom`, `/cards`, and `/cards/print`; no separate easy-guide format or backend is used.
 
+Saved guides can choose English or Latin per prayer. The Easy Guide Builder includes a simple optional Latin flow, while the advanced builder exposes per-prayer language controls. Missing language settings default to English so older saved guides continue to load normally. Spanish prayer variants are not implemented yet, but the prayer data is structured so they can be added later.
+
 ## Guide Card Workflow
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, and which prayers print in full. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English or Latin. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
 
 Supported layouts are:
 

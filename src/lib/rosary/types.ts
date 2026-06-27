@@ -10,6 +10,16 @@ export type PrayerId =
   | "memorare"
   | "st-michael-prayer";
 
+export type PrayerLanguage = "en" | "la" | "es";
+
+export type PrayerVariant = {
+  language: PrayerLanguage;
+  title: string;
+  incipit: string;
+  text: string;
+  shortText?: string;
+};
+
 export type Prayer = {
   id: PrayerId;
   title: string;
@@ -17,6 +27,8 @@ export type Prayer = {
   text: string;
   shortText?: string;
   category?: "opening" | "decade" | "closing" | "optional";
+  defaultLanguage?: PrayerLanguage;
+  variants?: Partial<Record<PrayerLanguage, PrayerVariant>>;
 };
 
 export type MysterySetId = "joyful" | "luminous" | "sorrowful" | "glorious";
@@ -151,6 +163,7 @@ export type UserRosaryConfig = {
   saintInvocations: SaintInvocations;
   customGuidance: CustomGuidance[];
   preferences: RosaryPreferences;
+  prayerLanguageById?: Partial<Record<PrayerId, PrayerLanguage>>;
 };
 
 export type LeaderGuide = {
@@ -257,6 +270,7 @@ export type GuideCardCustomization = {
   itemOrder: string[];
   removedItemIds: string[];
   fullPrayerOverrides: Partial<Record<PrayerId, boolean>>;
+  prayerLanguageOverrides?: Partial<Record<PrayerId, PrayerLanguage | "guide-default">>;
   textOverrides: Record<string, string>;
   updatedAt: string;
 };

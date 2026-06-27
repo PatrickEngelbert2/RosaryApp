@@ -22,6 +22,15 @@ import {
   getRelevantGuidePrayerOptions,
 } from "@/lib/rosary/generateGuideCards";
 import {
+  applyFullPrayerOverrides,
+  findDuplicateIds,
+  getVisibleEditableItemIds,
+  hasGuideCardCustomizationEdits,
+  moveEditableItem,
+  removePrayerOverride,
+  reorderEditableItem,
+} from "@/lib/rosary/guideCardCustomizations";
+import {
   getActiveRosaryConfig,
   createEmptyGuideCardCustomization,
   getGuideCardCustomization,
@@ -34,11 +43,10 @@ import {
   saveGuideCardSelectedGuideId,
   setActiveRosaryConfig,
 } from "@/lib/rosary/storage";
-import { getPrayerIncipit, getPrayerLanguage, getPrayerVariant, latinPrayerIds } from "@/lib/rosary/prayerText";
+import { getPrayerIncipit, getPrayerLanguage, getPrayerVariant, isPrayerId, latinPrayerIds } from "@/lib/rosary/prayerText";
 import type {
   GuideCardCustomization,
   GuideCardLayoutOptions,
-  GuideCardSide,
   PrayerId,
   PrayerLanguage,
   UserRosaryConfig,
@@ -123,7 +131,7 @@ export function CardSetEditor() {
     [layoutOptions, selectedPrayerIdKey],
   );
   const effectiveFullPrayerIds = useMemo(
-    () => applyFullPrayerOverridesForPreview(sanitizedLayoutOptions.fullPrayerIds, selectedCustomization),
+    () => applyFullPrayerOverrides(sanitizedLayoutOptions.fullPrayerIds, selectedCustomization),
     [sanitizedLayoutOptions.fullPrayerIds, selectedCustomization],
   );
   const generatedCardSet = useMemo(
@@ -219,7 +227,7 @@ export function CardSetEditor() {
     updateLayoutOptions({ fullPrayerIds: [...new Set(nextIds)] });
     updateCustomization((current) => ({
       ...current,
-      fullPrayerOverrides: omitPrayerOverride(current.fullPrayerOverrides, prayerId),
+      fullPrayerOverrides: removePrayerOverride(current.fullPrayerOverrides, prayerId),
     }));
   }
 
@@ -274,16 +282,12 @@ export function CardSetEditor() {
   }
 
   function handleMoveItem(itemId: string, direction: "up" | "down") {
-    const currentIndex = visibleEditableItemIds.indexOf(itemId);
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    const nextOrder = moveEditableItem(visibleEditableItemIds, itemId, direction);
 
-    if (currentIndex === -1 || targetIndex < 0 || targetIndex >= visibleEditableItemIds.length) {
+    if (nextOrder === visibleEditableItemIds) {
       return;
     }
 
-    const nextOrder = [...visibleEditableItemIds];
-    const [item] = nextOrder.splice(currentIndex, 1);
-    nextOrder.splice(targetIndex, 0, item);
     updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
   }
 
@@ -292,21 +296,12 @@ export function CardSetEditor() {
     targetItemId: string,
     position: GuideCardDropPosition,
   ) {
-    const draggedIndex = visibleEditableItemIds.indexOf(draggedItemId);
+    const nextOrder = reorderEditableItem(visibleEditableItemIds, draggedItemId, targetItemId, position);
 
-    if (draggedIndex === -1 || !visibleEditableItemIds.includes(targetItemId)) {
+    if (nextOrder === visibleEditableItemIds) {
       return;
     }
 
-    const nextOrder = visibleEditableItemIds.filter((id) => id !== draggedItemId);
-    const targetIndex = nextOrder.indexOf(targetItemId);
-
-    if (targetIndex === -1) {
-      return;
-    }
-
-    const insertionIndex = position === "after" ? targetIndex + 1 : targetIndex;
-    nextOrder.splice(insertionIndex, 0, draggedItemId);
     setDragState({});
     updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
   }
@@ -704,77 +699,5 @@ export function CardSetEditor() {
         </div>
       ) : null}
     </div>
-  );
-}
-
-function getVisibleEditableItemIds(sides: GuideCardSide[]): string[] {
-  return sides.flatMap((side) =>
-    side.blocks.flatMap((block) => block.editableItems?.map((item) => item.id) ?? []),
-  );
-}
-
-function hasGuideCardCustomizationEdits(customization: GuideCardCustomization): boolean {
-  return (
-    customization.itemOrder.length > 0 ||
-    customization.removedItemIds.length > 0 ||
-    Object.keys(customization.fullPrayerOverrides).length > 0 ||
-    Object.keys(customization.prayerLanguageOverrides ?? {}).length > 0 ||
-    Object.keys(customization.textOverrides).length > 0
-  );
-}
-
-function findDuplicateIds(ids: string[]): string[] {
-  const counts = new Map<string, number>();
-
-  ids.forEach((id) => {
-    counts.set(id, (counts.get(id) ?? 0) + 1);
-  });
-
-  return [...counts.entries()].filter(([, count]) => count > 1).map(([id]) => id);
-}
-
-function applyFullPrayerOverridesForPreview(
-  fullPrayerIds: PrayerId[],
-  customization: GuideCardCustomization,
-): PrayerId[] {
-  const nextIds = new Set(fullPrayerIds);
-
-  Object.entries(customization.fullPrayerOverrides).forEach(([id, enabled]) => {
-    if (!isPrayerId(id)) {
-      return;
-    }
-
-    if (enabled) {
-      nextIds.add(id);
-      return;
-    }
-
-    nextIds.delete(id);
-  });
-
-  return [...nextIds];
-}
-
-function omitPrayerOverride(
-  overrides: GuideCardCustomization["fullPrayerOverrides"],
-  prayerId: PrayerId,
-): GuideCardCustomization["fullPrayerOverrides"] {
-  const next = { ...overrides };
-  delete next[prayerId];
-  return next;
-}
-
-function isPrayerId(value: string | undefined): value is PrayerId {
-  return (
-    value === "sign-of-the-cross" ||
-    value === "apostles-creed" ||
-    value === "our-father" ||
-    value === "hail-mary" ||
-    value === "glory-be" ||
-    value === "fatima-prayer" ||
-    value === "hail-holy-queen" ||
-    value === "closing-prayer" ||
-    value === "memorare" ||
-    value === "st-michael-prayer"
   );
 }

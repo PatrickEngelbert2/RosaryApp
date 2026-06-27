@@ -66,8 +66,10 @@ $env:NO_OPEN="1"; npm start
 - `npm run build` creates a production build.
 - `npm run start:production` runs `next start` after a production build.
 - `npm run lint` runs ESLint.
+- `npm test` runs the Vitest regression suite once.
+- `npm run test:watch` runs Vitest in watch mode.
 - `npm run typecheck` runs TypeScript without emitting files.
-- `npm run check` runs typecheck, lint, and build.
+- `npm run check` runs typecheck, lint, tests, and build.
 
 ## Important Routes
 
@@ -103,7 +105,7 @@ Long-form prayer and Rosary content should stay in structured files:
 
 Rosary transformation logic lives under `src/lib/rosary`. Pages should render structured data instead of hardcoding long prayer flows.
 
-Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. Existing localStorage keys intentionally remain stable to avoid breaking saved guides.
+Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. The app is still in preview, so saved-guide and card-customization storage may change. Storage loading is versioned and validated; incompatible or malformed local app data is ignored and rewritten to safe defaults with an in-app recovery notice instead of crashing the page.
 
 ## Guide Building Workflow
 
@@ -155,6 +157,7 @@ Walk the Rosary uses subtle CSS-based hover, focus, and active states for button
 
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
 - Update `CHANGELOG.md` for meaningful features, fixes, polish passes, rebrands, or architecture changes.
+- Run the Vitest regression suite when changing prayer language resolution, guide creation, guide cards, card layout, preview customization, print content, or storage validation.
 - Keep documentation professional, accurate, and current.
 
 ## Security And Privacy
@@ -170,6 +173,7 @@ Before shipping changes, run:
 
 ```bash
 npm run check
+npm test
 npm audit
 ```
 

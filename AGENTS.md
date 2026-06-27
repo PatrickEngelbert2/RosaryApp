@@ -43,6 +43,8 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 
 - Update `CHANGELOG.md` for every meaningful feature, fix, polish pass, rebrand, or architecture change.
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
+- Run the relevant Vitest tests when changing prayer language resolution, guide creation, guide card content generation, card layout packing, preview customization, print parity, or storage validation.
+- Do not change guide-card layout behavior without running the card layout/content preservation regression tests.
 - Mention whether lint, build, and relevant tests were run in the final response.
 - Keep documentation professional and accurate.
 - Do not claim features are complete unless they were implemented and tested.

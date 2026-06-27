@@ -8,6 +8,11 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added Vitest regression coverage for prayer language resolution, guide creation, card content generation, card customization/reordering, card layout packing, preview/print data parity, and storage validation.
+- Hardened saved guide, card set, card layout option, and guide-card customization storage parsing with versioned local collection data and safe recovery for invalid or incompatible localStorage values.
+- Extracted guide-card customization ordering and override helpers into pure utilities so movement, drag/drop, duplicate ID checks, full-prayer overrides, and edit detection are covered by tests.
+- Added a friendly storage recovery notice when older preview data or malformed local app data has to be ignored.
+- Updated `npm run check` to include the regression test suite.
 - Added Latin variants for the core Rosary prayers while preserving English as the default for existing saved guides.
 - Added per-prayer English/Latin selection to saved guide configs, the Advanced Builder, and the Easy Guide Builder.
 - Added card-specific prayer language controls so Guide Cards can differ from the underlying guide without changing it.
@@ -66,6 +71,8 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Fixed
 
+- Fixed invalid or malformed saved guide data being able to crash app pages during localStorage normalization.
+- Fixed guide-card full-prayer checkbox labels so they reflect the effective card language after guide-level or card-specific language choices.
 - Kept each Guide Card mystery and its fruit of the mystery together when card content flows across front/back or continuation sides.
 - Fixed duplicate React keys when Guide Card preview items are moved across visual sections by separating canonical source item IDs from generated layout instance IDs.
 - Improved Guide Card preview drag/drop placement feedback with item target highlighting, before/after insertion lines, and a lifted dragged-item state.

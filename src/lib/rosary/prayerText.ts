@@ -75,7 +75,11 @@ function makeIncipit(text: string): string {
   return words.endsWith("...") ? words : `${words}...`;
 }
 
-export function isPrayerId(value: string): value is PrayerId {
+export function isPrayerId(value: unknown): value is PrayerId {
+  if (typeof value !== "string") {
+    return false;
+  }
+
   return [
     "sign-of-the-cross",
     "apostles-creed",

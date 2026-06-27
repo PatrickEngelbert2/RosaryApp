@@ -11,15 +11,31 @@ export type GuideCardEditAction = {
   printMode?: "short" | "full";
 };
 
+export type GuideCardDropPosition = "before" | "after";
+
+export type GuideCardDragState = {
+  activeItemId?: string;
+  targetItemId?: string;
+  position?: GuideCardDropPosition;
+};
+
 export type GuideCardEditHandlers = {
   onDeleteItem?: (itemId: string) => void;
   onEditItem?: (itemId: string, currentText: string) => void;
   onEditHeading?: (sectionId: string, currentHeading: string) => void;
   onMoveItem?: (itemId: string, direction: "up" | "down") => void;
-  onReorderItem?: (draggedItemId: string, targetItemId: string) => void;
+  onReorderItem?: (
+    draggedItemId: string,
+    targetItemId: string,
+    position: GuideCardDropPosition,
+  ) => void;
+  onDragStart?: (itemId: string) => void;
+  onDragEnd?: () => void;
+  onDragOverItem?: (targetItemId: string, position: GuideCardDropPosition) => void;
   onToggleFullPrayer?: (prayerId: GuideCardEditAction["prayerId"], nextFull: boolean) => void;
   onEditTitle?: (field: "title" | "subtitle", currentText: string) => void;
   canMoveItem?: (itemId: string, direction: "up" | "down") => boolean;
+  dragState?: GuideCardDragState;
 };
 
 type GuideCardFaceProps = {
@@ -62,7 +78,7 @@ export function GuideCardFace({ side, cardSize, mode = "print", editHandlers }: 
       </header>
       {side.blocks.map((block) => (
         <GuideCardBlockView
-          key={block.id}
+          key={block.layoutInstanceId ?? block.id}
           block={block}
           cardSize={cardSize}
           editHandlers={isEditable ? editHandlers : undefined}
@@ -103,35 +119,64 @@ function GuideCardBlockView({
         printMode: editableItem.printMode,
       }
     : undefined;
+  const isDragging = Boolean(
+    editHandlers?.dragState?.activeItemId &&
+      editableAction?.itemId === editHandlers.dragState.activeItemId,
+  );
+  const dropPosition =
+    editHandlers?.dragState?.targetItemId &&
+    editableAction?.itemId === editHandlers.dragState.targetItemId
+      ? editHandlers.dragState.position
+      : undefined;
 
   return (
     <section
       className={[
         block.leaderOnly ? "leader-section" : "",
         editHandlers && editableAction ? "guide-card-editable-item" : "",
+        isDragging ? "guide-card-dragging-item" : "",
+        dropPosition === "before" ? "guide-card-drop-before" : "",
+        dropPosition === "after" ? "guide-card-drop-after" : "",
       ]
         .filter(Boolean)
         .join(" ") || undefined}
+      data-editable-item-id={editableAction?.itemId}
+      data-guide-section-id={editableAction?.sectionId}
       draggable={Boolean(editHandlers && editableAction)}
       onDragStart={(event) => {
         if (!editableAction) return;
         event.dataTransfer.setData("text/plain", editableAction.itemId);
+        event.dataTransfer.effectAllowed = "move";
+        editHandlers?.onDragStart?.(editableAction.itemId);
+      }}
+      onDragEnd={() => {
+        editHandlers?.onDragEnd?.();
       }}
       onDragOver={(event) => {
         if (editHandlers && editableAction) {
           event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          const rect = event.currentTarget.getBoundingClientRect();
+          const position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+          editHandlers.onDragOverItem?.(editableAction.itemId, position);
         }
       }}
       onDrop={(event) => {
         if (!editableAction) return;
+        event.preventDefault();
         const draggedItemId = event.dataTransfer.getData("text/plain");
+        const rect = event.currentTarget.getBoundingClientRect();
+        const position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
 
         if (draggedItemId && draggedItemId !== editableAction.itemId) {
-          editHandlers?.onReorderItem?.(draggedItemId, editableAction.itemId);
+          editHandlers?.onReorderItem?.(draggedItemId, editableAction.itemId, position);
         }
+
+        editHandlers?.onDragEnd?.();
       }}
       tabIndex={editHandlers && editableAction ? 0 : undefined}
     >
+      {dropPosition === "before" ? <CardItemDropIndicator /> : null}
       {block.heading ? (
         <div className="guide-card-heading-row">
           <h3>{block.heading}</h3>
@@ -221,6 +266,15 @@ function GuideCardBlockView({
           </button>
         </div>
       ) : null}
+      {dropPosition === "after" ? <CardItemDropIndicator /> : null}
     </section>
+  );
+}
+
+function CardItemDropIndicator() {
+  return (
+    <div className="guide-card-drop-indicator" aria-hidden="true">
+      <span />
+    </div>
   );
 }

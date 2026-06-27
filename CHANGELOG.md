@@ -61,6 +61,10 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Fixed
 
+- Fixed duplicate React keys when Guide Card preview items are moved across visual sections by separating canonical source item IDs from generated layout instance IDs.
+- Improved Guide Card preview drag/drop placement feedback with item target highlighting, before/after insertion lines, and a lifted dragged-item state.
+- Clarified cross-section Guide Card preview moves so reordering removes the item from its old visual position and inserts it at the indicated target.
+- Preserved clean Guide Card print output by keeping drag/drop indicators and preview controls hidden from print.
 - Replaced remaining prototype/default branding where appropriate while keeping localStorage keys stable.
 - Removed placeholder printable language from the homepage Explore section.
 - Reduced excessive whitespace above the homepage hero and between the hero and next section.

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
+import type { GuideCardDragState, GuideCardDropPosition } from "@/components/cards/GuideCardFace";
 import { Card } from "@/components/ui/Card";
 import {
   GUIDE_CARD_SIZE_OPTIONS,
@@ -58,6 +59,7 @@ export function CardSetEditor() {
     value: string;
     multiline: boolean;
   } | null>(null);
+  const [dragState, setDragState] = useState<GuideCardDragState>({});
   const [hasLoadedOptions, setHasLoadedOptions] = useState(false);
   const defaultGuide = useMemo(() => createDefaultGeneratedGuideConfig(), []);
 
@@ -154,6 +156,24 @@ export function CardSetEditor() {
   const visibleEditableItemIds = useMemo(() => getVisibleEditableItemIds(previewSides), [previewSides]);
   const hasCardEdits = hasGuideCardCustomizationEdits(selectedCustomization);
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      return;
+    }
+
+    const duplicateItemIds = findDuplicateIds(visibleEditableItemIds);
+
+    if (duplicateItemIds.length === 0) {
+      return;
+    }
+
+    console.warn("Guide card editor invariant warning: duplicate editable item IDs.", {
+      guideId: selectedGuide.id,
+      duplicateItemIds,
+      affectedSideIds: previewSides.map((side) => side.id),
+    });
+  }, [previewSides, selectedGuide.id, visibleEditableItemIds]);
+
   function handleGuideChange(id: string) {
     setSelectedGuideId(id);
     saveGuideCardSelectedGuideId(id);
@@ -244,17 +264,27 @@ export function CardSetEditor() {
     updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
   }
 
-  function handleReorderItem(draggedItemId: string, targetItemId: string) {
+  function handleReorderItem(
+    draggedItemId: string,
+    targetItemId: string,
+    position: GuideCardDropPosition,
+  ) {
     const draggedIndex = visibleEditableItemIds.indexOf(draggedItemId);
-    const targetIndex = visibleEditableItemIds.indexOf(targetItemId);
 
-    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+    if (draggedIndex === -1 || !visibleEditableItemIds.includes(targetItemId)) {
       return;
     }
 
-    const nextOrder = [...visibleEditableItemIds];
-    const [item] = nextOrder.splice(draggedIndex, 1);
-    nextOrder.splice(targetIndex, 0, item);
+    const nextOrder = visibleEditableItemIds.filter((id) => id !== draggedItemId);
+    const targetIndex = nextOrder.indexOf(targetItemId);
+
+    if (targetIndex === -1) {
+      return;
+    }
+
+    const insertionIndex = position === "after" ? targetIndex + 1 : targetIndex;
+    nextOrder.splice(insertionIndex, 0, draggedItemId);
+    setDragState({});
     updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
   }
 
@@ -276,6 +306,7 @@ export function CardSetEditor() {
   function handleResetCardEdits() {
     resetGuideCardCustomization(selectedGuide.id);
     setCustomization(createEmptyGuideCardCustomization(selectedGuide.id));
+    setDragState({});
   }
 
   function persistPrintState() {
@@ -491,7 +522,16 @@ export function CardSetEditor() {
                 }),
               onMoveItem: handleMoveItem,
               onReorderItem: handleReorderItem,
+              onDragStart: (itemId) => setDragState({ activeItemId: itemId }),
+              onDragEnd: () => setDragState({}),
+              onDragOverItem: (targetItemId, position) =>
+                setDragState((current) =>
+                  current.activeItemId && current.activeItemId !== targetItemId
+                    ? { ...current, targetItemId, position }
+                    : current,
+                ),
               onToggleFullPrayer: toggleFullPrayerFromPreview,
+              dragState,
               canMoveItem: (itemId, direction) => {
                 const index = visibleEditableItemIds.indexOf(itemId);
                 return direction === "up"
@@ -603,6 +643,16 @@ function hasGuideCardCustomizationEdits(customization: GuideCardCustomization): 
     Object.keys(customization.fullPrayerOverrides).length > 0 ||
     Object.keys(customization.textOverrides).length > 0
   );
+}
+
+function findDuplicateIds(ids: string[]): string[] {
+  const counts = new Map<string, number>();
+
+  ids.forEach((id) => {
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  });
+
+  return [...counts.entries()].filter(([, count]) => count > 1).map(([id]) => id);
 }
 
 function applyFullPrayerOverridesForPreview(

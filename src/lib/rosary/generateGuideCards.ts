@@ -119,6 +119,7 @@ export function generateGuideCardsFromConfig(
   );
   const { front, back, extraSides } = layoutBlocksAcrossSides(
     blocks,
+    config.id,
     config.name?.trim() || "Rosary Walk Guide",
     mysterySet.title,
     layoutOptions,
@@ -374,16 +375,22 @@ function createMaterializedBlock(
   layout: GuideCardLayoutDefinition,
 ): GuideCardBlock {
   const lines = [text];
+  const layoutInstanceId = createLayoutInstanceId(item);
 
   return {
     ...sourceBlock,
-    id: item.id,
+    id: layoutInstanceId,
+    layoutInstanceId,
     heading,
     lines,
     sourceItemIds: [item.id],
     editableItems: [item],
     estimatedWeight: estimateMaterializedBlockWeight(lines, heading, layout, Boolean(sourceBlock.compact)),
   };
+}
+
+function createLayoutInstanceId(item: GuideCardEditableItem): string {
+  return `layout:${item.id}`;
 }
 
 function estimateMaterializedBlockWeight(
@@ -400,6 +407,7 @@ function estimateMaterializedBlockWeight(
 
 function layoutBlocksAcrossSides(
   blocks: GuideCardBlock[],
+  guideId: string,
   title: string,
   mysterySetTitle: string,
   options: GuideCardLayoutOptions,
@@ -439,7 +447,7 @@ function layoutBlocksAcrossSides(
   const renderedSides = [result.front, ...(result.back ? [result.back] : []), ...result.extraSides];
 
   warnIfSourceItemsMissing(sourceItemCounts, renderedSides, warnings);
-  addDevelopmentLayoutInvariantWarnings(sourceItemCounts, renderedSides, layout, warnings);
+  addDevelopmentLayoutInvariantWarnings(guideId, sourceItemCounts, renderedSides, layout, warnings);
 
   return result;
 }
@@ -586,12 +594,21 @@ function createSplitBlock(
   continued: boolean,
   sourceItemIds = block.sourceItemIds,
 ): GuideCardBlock {
+  const baseInstanceId = block.layoutInstanceId ?? block.id;
+  const splitSourceItemIds = sourceItemIds?.slice(0, lines.length);
+  const splitEditableItems =
+    block.editableItems && splitSourceItemIds
+      ? block.editableItems.filter((item) => splitSourceItemIds.includes(item.id))
+      : block.editableItems;
+
   return {
     ...block,
     id: `${block.id}-${idSuffix}`,
+    layoutInstanceId: `${baseInstanceId}:${idSuffix}`,
     heading: continued && block.heading ? `${block.heading} (continued)` : block.heading,
     lines,
-    sourceItemIds: sourceItemIds?.slice(0, lines.length),
+    sourceItemIds: splitSourceItemIds,
+    editableItems: splitEditableItems,
     continuationOf: continued ? block.continuationOf ?? block.id : block.continuationOf,
     estimatedWeight: estimateBlockWeight(lines, layout, Boolean(block.compact)),
   };
@@ -816,6 +833,7 @@ function warnIfSourceItemsMissing(
 }
 
 function addDevelopmentLayoutInvariantWarnings(
+  guideId: string,
   sourceItemCounts: Map<string, number>,
   sides: GuideCardSide[],
   layout: GuideCardLayoutDefinition,
@@ -826,7 +844,8 @@ function addDevelopmentLayoutInvariantWarnings(
   }
 
   const invariantWarnings = [
-    ...findSourceItemCountWarnings(sourceItemCounts, sides),
+    ...findSourceItemCountWarnings(guideId, sourceItemCounts, sides),
+    ...findDuplicateLayoutKeyWarnings(guideId, sides),
     ...findEmptyFaceWarnings(sides),
     ...findFrontFirstPlacementWarnings(sides, layout),
     ...findOrphanHeadingWarnings(sides),
@@ -841,6 +860,7 @@ function addDevelopmentLayoutInvariantWarnings(
 }
 
 function findSourceItemCountWarnings(
+  guideId: string,
   sourceItemCounts: Map<string, number>,
   sides: GuideCardSide[],
 ): string[] {
@@ -852,12 +872,33 @@ function findSourceItemCountWarnings(
 
     if (renderedCount !== expectedCount) {
       warnings.push(
-        `Layout integrity warning: generated item ${id} rendered ${renderedCount} time(s), expected ${expectedCount}.`,
+        `Layout integrity warning for guide ${guideId}: generated item ${id} rendered ${renderedCount} time(s), expected ${expectedCount}.`,
       );
     }
   });
 
   return warnings;
+}
+
+function findDuplicateLayoutKeyWarnings(guideId: string, sides: GuideCardSide[]): string[] {
+  return sides.flatMap((side) => {
+    const counts = new Map<string, number>();
+
+    side.blocks.forEach((block) => {
+      const key = block.layoutInstanceId ?? block.id;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+
+    const duplicateKeys = [...counts.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([key]) => key);
+
+    return duplicateKeys.length > 0
+      ? [
+          `Layout integrity warning for guide ${guideId}: duplicate rendered block keys on ${side.id}: ${duplicateKeys.join(", ")}.`,
+        ]
+      : [];
+  });
 }
 
 function findEmptyFaceWarnings(sides: GuideCardSide[]): string[] {

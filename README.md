@@ -116,7 +116,7 @@ Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by 
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, and which prayers print in full. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+Users can choose the card count, card size, and which prayers print in full. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
 
 Supported layouts are:
 

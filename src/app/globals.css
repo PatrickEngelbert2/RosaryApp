@@ -580,10 +580,55 @@ a {
 .guide-card-editable-item:hover,
 .guide-card-editable-item:focus-within,
 .guide-card-editable-item:focus-visible,
+.guide-card-drop-before,
+.guide-card-drop-after,
 .guide-card-editable-title:hover,
 .guide-card-editable-title:focus-within {
   background-color: rgb(21 59 117 / 0.035);
   outline-color: rgb(21 59 117 / 0.16);
+}
+
+.guide-card-dragging-item {
+  opacity: 0.46;
+  box-shadow: 0 10px 24px rgb(16 42 86 / 0.12);
+}
+
+.guide-card-drop-before,
+.guide-card-drop-after {
+  background-color: rgb(185 137 40 / 0.08);
+  outline-color: rgb(185 137 40 / 0.42);
+}
+
+.guide-card-drop-indicator {
+  position: relative;
+  height: 0.12in;
+  margin: 0.035in 0;
+}
+
+.guide-card-drop-indicator::before {
+  position: absolute;
+  top: 50%;
+  right: 0.02in;
+  left: 0.02in;
+  height: 3px;
+  content: "";
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b98928, #153b75);
+  box-shadow: 0 0 0 2px rgb(255 250 240 / 0.92), 0 5px 14px rgb(185 137 40 / 0.24);
+  transform: translateY(-50%);
+}
+
+.guide-card-drop-indicator span {
+  position: absolute;
+  top: 50%;
+  left: 0.02in;
+  width: 0.12in;
+  height: 0.12in;
+  border: 2px solid #fffaf0;
+  border-radius: 999px;
+  background: #b98928;
+  box-shadow: 0 2px 8px rgb(16 42 86 / 0.22);
+  transform: translateY(-50%);
 }
 
 .guide-card-heading-row {
@@ -986,7 +1031,8 @@ a {
   }
 
   .guide-card-item-controls,
-  .guide-card-heading-edit {
+  .guide-card-heading-edit,
+  .guide-card-drop-indicator {
     display: none !important;
   }
 }

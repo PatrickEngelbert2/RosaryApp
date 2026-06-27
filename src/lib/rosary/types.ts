@@ -263,6 +263,7 @@ export type GuideCardCustomization = {
 
 export type GuideCardBlock = {
   id: string;
+  layoutInstanceId?: string;
   type:
     | "heading"
     | "prayer"

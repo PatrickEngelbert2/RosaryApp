@@ -9,6 +9,8 @@ import { createDefaultUserConfigFromTemplate, normalizeRosaryConfig } from "@/li
 import {
   getCompactPrayerText,
   getFullPrayerTextForCards,
+  getPrayerLanguage,
+  getPrayerVariant,
   normalizePrayerTextForCards,
 } from "@/lib/rosary/prayerText";
 import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
@@ -26,6 +28,7 @@ import type {
   MysterySet,
   Prayer,
   PrayerId,
+  PrayerLanguage,
   RosaryStep,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
@@ -113,7 +116,7 @@ export function generateGuideCardsFromConfig(
   const warnings: string[] = [];
   const layout = getGuideCardLayout(layoutOptions.cardSize);
   const blocks = materializeEditableBlocks(
-    buildOrderedGuideBlocks(config, mysterySet, layoutOptions, layout, warnings),
+    buildOrderedGuideBlocks(config, mysterySet, layoutOptions, layout, warnings, customization),
     layout,
     customization,
   );
@@ -208,15 +211,16 @@ function buildOrderedGuideBlocks(
   options: GuideCardLayoutOptions,
   layout: GuideCardLayoutDefinition,
   warnings: string[],
+  customization?: GuideCardCustomization,
 ): GuideCardBlock[] {
-  const closingLines = buildClosingSummary(config, options);
+  const closingLines = buildClosingSummary(config, options, customization);
   const saintBlock = buildSaintInvocationBlock(config, layout);
   const guidanceLines = buildConciseGuidance(config, guidancePointsForBack, warnings);
   const leaderLines = buildLeaderNoteSummary(config, warnings);
   const mysteryLines = buildMysterySummary(mysterySet);
 
   const blocks: GuideCardBlock[] = [
-    sectionBlock("opening", "Opening", buildOpeningSummary(config, options), layout, "prayer"),
+    sectionBlock("opening", "Opening", buildOpeningSummary(config, options, customization), layout, "prayer"),
     sectionBlock(
       "intentions",
       "Intentions",
@@ -229,7 +233,7 @@ function buildOrderedGuideBlocks(
       ],
       layout,
     ),
-    sectionBlock("each-decade", "Each Decade", buildDecadeSummary(config, options), layout),
+    sectionBlock("each-decade", "Each Decade", buildDecadeSummary(config, options, customization), layout),
     {
       id: "mystery-set",
       type: "mystery-list",
@@ -246,9 +250,9 @@ function buildOrderedGuideBlocks(
       ? [sectionBlock("closing", "Closing", closingLines, layout, "prayer")]
       : []),
     sectionBlock("holy-father-intentions", "Holy Father's Intentions", [
-      formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father")),
-      formatPrayerLineForCard("hail-mary", options.fullPrayerIds.includes("hail-mary")),
-      formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be")),
+      formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father"), config, customization),
+      formatPrayerLineForCard("hail-mary", options.fullPrayerIds.includes("hail-mary"), config, customization),
+      formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be"), config, customization),
     ], layout),
     ...(saintBlock ? [saintBlock] : []),
     ...(guidanceLines.length > 0
@@ -275,7 +279,7 @@ function buildOrderedGuideBlocks(
     sectionBlock(
       "final-sign",
       "Final",
-      [formatPrayerLineForCard("sign-of-the-cross", false)],
+      [formatPrayerLineForCard("sign-of-the-cross", false, config, customization)],
       layout,
       "prayer",
     ),
@@ -321,6 +325,7 @@ function materializeEditableBlocks(
     itemOrder: [],
     removedItemIds: [],
     fullPrayerOverrides: {},
+    prayerLanguageOverrides: {},
     textOverrides: {},
     updatedAt: "",
   };
@@ -997,6 +1002,7 @@ function getMinimumRenderableBlockWeight(
 function buildOpeningSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
+  customization?: GuideCardCustomization,
 ): GuideCardGeneratedLine[] {
   const firstDecadeOrder =
     config.steps
@@ -1011,20 +1017,32 @@ function buildOpeningSummary(
     .sort((a, b) => a.order - b.order);
   const steps = openingSteps.length > 0 ? openingSteps : fallbackOpeningSteps();
 
-  return steps.map((step) => formatOpeningStep(step, options));
+  return steps.map((step) => formatOpeningStep(step, options, config, customization));
 }
 
-function formatOpeningStep(step: RosaryStep, options: GuideCardLayoutOptions): GuideCardGeneratedLine {
+function formatOpeningStep(
+  step: RosaryStep,
+  options: GuideCardLayoutOptions,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): GuideCardGeneratedLine {
   if (step.prayerId === "hail-mary" && (step.repeatCount ?? step.repeat ?? 1) === 3) {
     return formatRepeatedPrayerLineForCard(
       "hail-mary",
-      "Three Hail Marys for faith, hope, and charity",
+      getRepeatedPrayerLabel("Three Hail Marys for faith, hope, and charity", "hail-mary", config, customization),
       options.fullPrayerIds.includes("hail-mary"),
+      config,
+      customization,
     );
   }
 
   if (step.prayerId) {
-    return formatPrayerLineForCard(step.prayerId, options.fullPrayerIds.includes(step.prayerId));
+    return formatPrayerLineForCard(
+      step.prayerId,
+      options.fullPrayerIds.includes(step.prayerId),
+      config,
+      customization,
+    );
   }
 
   return editableLine(step.title, "instruction");
@@ -1033,10 +1051,13 @@ function formatOpeningStep(step: RosaryStep, options: GuideCardLayoutOptions): G
 function buildClosingSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
+  customization?: GuideCardCustomization,
 ): GuideCardGeneratedLine[] {
   return closingOrder
     .filter((prayerId) => config.selectedClosingPrayerIds.includes(prayerId))
-    .map((prayerId) => formatPrayerLineForCard(prayerId, options.fullPrayerIds.includes(prayerId)));
+    .map((prayerId) =>
+      formatPrayerLineForCard(prayerId, options.fullPrayerIds.includes(prayerId), config, customization),
+    );
 }
 
 export function buildMysterySummary(mysterySet: MysterySet): GuideCardGeneratedLine[] {
@@ -1058,57 +1079,88 @@ export function buildMysterySummary(mysterySet: MysterySet): GuideCardGeneratedL
 export function buildDecadeSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
+  customization?: GuideCardCustomization,
 ): GuideCardGeneratedLine[] {
   return [
     editableLine("Announce the mystery and fruit.", "instruction"),
-    formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father")),
+    formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father"), config, customization),
     formatRepeatedPrayerLineForCard(
       "hail-mary",
-      "10 Hail Marys",
+      getRepeatedPrayerLabel("10 Hail Marys", "hail-mary", config, customization),
       options.fullPrayerIds.includes("hail-mary"),
+      config,
+      customization,
     ),
-    formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be")),
+    formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be"), config, customization),
     ...(hasFatimaPrayer(config)
-      ? [formatPrayerLineForCard("fatima-prayer", options.fullPrayerIds.includes("fatima-prayer"))]
+      ? [
+          formatPrayerLineForCard(
+            "fatima-prayer",
+            options.fullPrayerIds.includes("fatima-prayer"),
+            config,
+            customization,
+          ),
+        ]
       : []),
   ];
 }
 
-function formatPrayerForCard(prayerId: PrayerId, full: boolean): string {
-  const prayer = prayersById[prayerId];
+function formatPrayerForCard(
+  prayerId: PrayerId,
+  full: boolean,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): string {
+  const prayer = getCardPrayerVariant(prayerId, config, customization);
 
   if (!full) {
-    return compactPrayerText(prayerId);
+    return compactPrayerText(prayerId, config, customization);
   }
 
-  return `${prayer.title}: ${getFullPrayerTextForCards(prayer)}`;
+  return `${prayer.title}: ${getFullPrayerTextForCards(prayersById[prayerId], prayer.language)}`;
 }
 
-function formatPrayerLineForCard(prayerId: PrayerId, full: boolean): GuideCardGeneratedLine {
-  return editableLine(formatPrayerForCard(prayerId, full), "prayer", {
+function formatPrayerLineForCard(
+  prayerId: PrayerId,
+  full: boolean,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): GuideCardGeneratedLine {
+  const prayer = getCardPrayerVariant(prayerId, config, customization);
+
+  return editableLine(formatPrayerForCard(prayerId, full, config, customization), "prayer", {
     prayerId,
-    title: prayersById[prayerId].title,
+    title: prayer.title,
     printMode: full ? "full" : "short",
     canToggleFullPrayer: prayerId !== "sign-of-the-cross",
   });
 }
 
-function formatRepeatedPrayerForCard(prayerId: PrayerId, label: string, full: boolean): string {
-  const prayer = prayersById[prayerId];
-
+function formatRepeatedPrayerForCard(
+  prayerId: PrayerId,
+  label: string,
+  full: boolean,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): string {
   if (!full) {
-    return `${label}: ${compactPrayerText(prayerId)}`;
+    return `${label}: ${compactPrayerText(prayerId, config, customization)}`;
   }
 
-  return `${label}: ${getFullPrayerTextForCards(prayer)}`;
+  return `${label}: ${getFullPrayerTextForCards(
+    prayersById[prayerId],
+    getCardPrayerLanguage(prayerId, config, customization),
+  )}`;
 }
 
 function formatRepeatedPrayerLineForCard(
   prayerId: PrayerId,
   label: string,
   full: boolean,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
 ): GuideCardGeneratedLine {
-  return editableLine(formatRepeatedPrayerForCard(prayerId, label, full), "prayer", {
+  return editableLine(formatRepeatedPrayerForCard(prayerId, label, full, config, customization), "prayer", {
     prayerId,
     title: label,
     printMode: full ? "full" : "short",
@@ -1116,8 +1168,55 @@ function formatRepeatedPrayerLineForCard(
   });
 }
 
-function compactPrayerText(prayerId: PrayerId): string {
-  return getCompactPrayerText(prayersById[prayerId]);
+function compactPrayerText(
+  prayerId: PrayerId,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): string {
+  return getCompactPrayerText(prayersById[prayerId], getCardPrayerLanguage(prayerId, config, customization));
+}
+
+function getCardPrayerVariant(
+  prayerId: PrayerId,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+) {
+  return getPrayerVariant(prayersById[prayerId], getCardPrayerLanguage(prayerId, config, customization));
+}
+
+function getCardPrayerLanguage(
+  prayerId: PrayerId,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): PrayerLanguage {
+  const override = customization?.prayerLanguageOverrides?.[prayerId];
+
+  if (override && override !== "guide-default") {
+    return override;
+  }
+
+  return getPrayerLanguage(prayerId, config.prayerLanguageById);
+}
+
+function getRepeatedPrayerLabel(
+  englishLabel: string,
+  prayerId: PrayerId,
+  config: UserRosaryConfig,
+  customization?: GuideCardCustomization,
+): string {
+  const prayer = getCardPrayerVariant(prayerId, config, customization);
+
+  if (prayer.language === "en") {
+    return englishLabel;
+  }
+
+  if (prayerId === "hail-mary") {
+    return englishLabel
+      .replace("Three Hail Marys", "Three Ave Maria prayers")
+      .replace("10 Hail Marys", "10 Ave Maria prayers");
+  }
+
+  return englishLabel.replace(prayersById[prayerId].title, prayer.title);
 }
 
 function buildSaintInvocationBlock(

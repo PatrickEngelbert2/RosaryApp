@@ -8,6 +8,11 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added Latin variants for the core Rosary prayers while preserving English as the default for existing saved guides.
+- Added per-prayer English/Latin selection to saved guide configs, the Advanced Builder, and the Easy Guide Builder.
+- Added card-specific prayer language controls so Guide Cards can differ from the underlying guide without changing it.
+- Updated Custom Pray and Guide Cards rendering so full/short prayer text resolves from the selected language.
+- Structured prayer variant data so future Spanish variants can be added without changing canonical prayer IDs.
 - Rebranded the project to Walk the Rosary.
 - Updated site metadata, browser tab title, README, changelog, AGENTS instructions, and public-facing copy.
 - Added a new original SVG favicon/icon concept for the Walk the Rosary brand.

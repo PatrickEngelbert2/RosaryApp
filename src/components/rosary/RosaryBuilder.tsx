@@ -13,6 +13,7 @@ import {
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
 import { rosaryTemplates } from "@/lib/rosary/defaultTemplates";
+import { getPrayerLanguage, getPrayerVariant, latinPrayerIds } from "@/lib/rosary/prayerText";
 import {
   deleteRosaryConfig,
   getActiveRosaryConfig,
@@ -24,6 +25,7 @@ import type {
   CustomGuidance,
   CustomGuidanceInsertionPoint,
   PrayerId,
+  PrayerLanguage,
   RosaryStepType,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
@@ -115,6 +117,24 @@ export function RosaryBuilder() {
       },
       updatedAt: new Date().toISOString(),
     }));
+  }
+
+  function updatePrayerLanguage(prayerId: PrayerId, language: PrayerLanguage) {
+    setConfig((current) => {
+      const nextLanguages = { ...(current.prayerLanguageById ?? {}) };
+
+      if (language === "en") {
+        delete nextLanguages[prayerId];
+      } else {
+        nextLanguages[prayerId] = language;
+      }
+
+      return {
+        ...current,
+        prayerLanguageById: nextLanguages,
+        updatedAt: new Date().toISOString(),
+      };
+    });
   }
 
   function addCustomStep() {
@@ -534,7 +554,44 @@ export function RosaryBuilder() {
         </Card>
 
         <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">5. Save locally</h2>
+          <h2 className="text-2xl font-semibold text-blue-900">5. Prayer languages</h2>
+          <p className="mt-3 leading-7 text-slate-700">
+            Choose English or Latin for each prayer. You can mix languages in the same guide.
+          </p>
+          <div className="mt-5 grid gap-3">
+            {latinPrayerIds.map((prayerId) => {
+              const prayer = prayersById[prayerId];
+              const latinVariant = getPrayerVariant(prayer, "la");
+
+              return (
+                <label
+                  key={prayerId}
+                  htmlFor={`guide-prayer-language-${prayerId}`}
+                  className="grid gap-3 rounded-md border border-blue-900/10 bg-cream-50 p-3 sm:grid-cols-[1fr_auto] sm:items-center"
+                >
+                  <span>
+                    <span className="block font-semibold text-blue-900">{prayer.title}</span>
+                    <span className="block text-sm leading-6 text-slate-700">
+                      English: {prayer.incipit} Latin: {latinVariant.incipit}
+                    </span>
+                  </span>
+                  <select
+                    id={`guide-prayer-language-${prayerId}`}
+                    value={getPrayerLanguage(prayerId, config.prayerLanguageById)}
+                    onChange={(event) => updatePrayerLanguage(prayerId, event.target.value as PrayerLanguage)}
+                    className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="en">English</option>
+                    <option value="la">Latin</option>
+                  </select>
+                </label>
+              );
+            })}
+          </div>
+        </Card>
+
+        <Card>
+          <h2 className="text-2xl font-semibold text-blue-900">6. Save locally</h2>
           <p className="mt-3 leading-7 text-slate-700">
             This saves your Rosary style in this browser only. No account or backend is used.
           </p>

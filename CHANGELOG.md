@@ -50,9 +50,22 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Adjusted the Build a Guide hammer silhouette and tap direction so the hammer head reads clearly and swings into the document.
 - Improved the Lead a Walk icon to show footprints following a guided path toward a cross marker while preserving the path animation idea.
 - Preserved the Guide Cards and Resources icon concepts.
+- Added Guide Card Preview Editing v1 with hover/focus controls for editing, removing, reordering, and toggling card preview items.
+- Added cards-only local customizations for guide card item order, removed items, full/short prayer overrides, and text overrides.
+- Added direct full/short prayer toggles from the preview while preserving canonical prayer IDs for future multilingual prayer variants.
+- Added plain-text preview editing for card titles, subtitles, section headings, prayer lines, mystery lines, instructions, pauses, and saint invocations.
+- Added arrow-based and native drag/drop guide card preview reordering with keyboard-accessible arrow controls.
+- Added Reset card edits behavior to restore generated defaults without altering the underlying guide.
+- Added a second Print / Save as PDF button below the guide card preview.
+- Kept preview editing controls out of print output while making the print page consume customized structured card content.
 
 ### Fixed
 
+- Kept each Guide Card mystery and its fruit of the mystery together when card content flows across front/back or continuation sides.
+- Fixed duplicate React keys when Guide Card preview items are moved across visual sections by separating canonical source item IDs from generated layout instance IDs.
+- Improved Guide Card preview drag/drop placement feedback with item target highlighting, before/after insertion lines, and a lifted dragged-item state.
+- Clarified cross-section Guide Card preview moves so reordering removes the item from its old visual position and inserts it at the indicated target.
+- Preserved clean Guide Card print output by keeping drag/drop indicators and preview controls hidden from print.
 - Replaced remaining prototype/default branding where appropriate while keeping localStorage keys stable.
 - Removed placeholder printable language from the homepage Explore section.
 - Reduced excessive whitespace above the homepage hero and between the hero and next section.

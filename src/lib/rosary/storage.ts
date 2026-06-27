@@ -1,4 +1,9 @@
-import type { GuideCardLayoutOptions, RosaryCardSet, UserRosaryConfig } from "@/lib/rosary/types";
+import type {
+  GuideCardCustomization,
+  GuideCardLayoutOptions,
+  RosaryCardSet,
+  UserRosaryConfig,
+} from "@/lib/rosary/types";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import { normalizeRosaryConfig } from "@/lib/rosary/configUtils";
 
@@ -8,6 +13,7 @@ const CARD_SETS_KEY = "rosary-walks:card-sets:v1";
 const ACTIVE_CARD_SET_KEY = "rosary-walks:active-card-set:v1";
 const GUIDE_CARD_OPTIONS_KEY = "rosary-walks:guide-card-options:v1";
 const GUIDE_CARD_SELECTED_GUIDE_KEY = "rosary-walks:guide-card-selected-guide:v1";
+const GUIDE_CARD_CUSTOMIZATIONS_KEY = "rosary-walks:guide-card-customizations:v1";
 
 function canUseLocalStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -139,4 +145,55 @@ export function getGuideCardSelectedGuideId(): string | null {
 
 export function saveGuideCardSelectedGuideId(id: string): boolean {
   return writeJson(GUIDE_CARD_SELECTED_GUIDE_KEY, id);
+}
+
+export function createEmptyGuideCardCustomization(guideId: string): GuideCardCustomization {
+  return {
+    guideId,
+    itemOrder: [],
+    removedItemIds: [],
+    fullPrayerOverrides: {},
+    textOverrides: {},
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export function getGuideCardCustomizations(): GuideCardCustomization[] {
+  const customizations = readJson<GuideCardCustomization[]>(GUIDE_CARD_CUSTOMIZATIONS_KEY, []);
+
+  return Array.isArray(customizations)
+    ? customizations.filter((customization) => Boolean(customization.guideId))
+    : [];
+}
+
+export function getGuideCardCustomization(guideId: string): GuideCardCustomization {
+  return (
+    getGuideCardCustomizations().find((customization) => customization.guideId === guideId) ??
+    createEmptyGuideCardCustomization(guideId)
+  );
+}
+
+export function saveGuideCardCustomization(customization: GuideCardCustomization): boolean {
+  const nextCustomization = {
+    ...customization,
+    itemOrder: [...new Set(customization.itemOrder)],
+    removedItemIds: [...new Set(customization.removedItemIds)],
+    fullPrayerOverrides: { ...customization.fullPrayerOverrides },
+    textOverrides: { ...customization.textOverrides },
+    updatedAt: new Date().toISOString(),
+  };
+  const customizations = getGuideCardCustomizations();
+  const next = [
+    ...customizations.filter((item) => item.guideId !== nextCustomization.guideId),
+    nextCustomization,
+  ];
+
+  return writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, next);
+}
+
+export function resetGuideCardCustomization(guideId: string): boolean {
+  return writeJson(
+    GUIDE_CARD_CUSTOMIZATIONS_KEY,
+    getGuideCardCustomizations().filter((customization) => customization.guideId !== guideId),
+  );
 }

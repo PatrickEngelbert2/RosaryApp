@@ -18,6 +18,9 @@ import type {
   GeneratedGuideCard,
   GeneratedGuideCardSet,
   GuideCardBlock,
+  GuideCardCustomization,
+  GuideCardEditableItem,
+  GuideCardEditableItemType,
   GuideCardLayoutOptions,
   GuideCardSide,
   MysterySet,
@@ -26,6 +29,17 @@ import type {
   RosaryStep,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
+
+type GuideCardGeneratedLine = {
+  text: string;
+  type: GuideCardEditableItemType;
+  prayerId?: PrayerId;
+  title?: string;
+  printMode?: "short" | "full";
+  canToggleFullPrayer?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+};
 
 const openingPrayerIds: PrayerId[] = [
   "sign-of-the-cross",
@@ -67,37 +81,50 @@ const guidancePointsForBack: CustomGuidanceInsertionPoint[] = [
   "end",
 ];
 
+const defaultGeneratedGuideId = "default-guide";
+
 export function createDefaultGeneratedGuideConfig(): UserRosaryConfig {
-  return normalizeRosaryConfig(createDefaultUserConfigFromTemplate("standard-rosary"));
+  return normalizeRosaryConfig({
+    ...createDefaultUserConfigFromTemplate("standard-rosary"),
+    id: defaultGeneratedGuideId,
+  });
 }
 
 export function generateGuideCardsFromConfig(
   inputConfig: UserRosaryConfig,
   inputOptions: Partial<GuideCardLayoutOptions> | number = {},
   date = new Date(),
+  customization?: GuideCardCustomization,
 ): GeneratedGuideCardSet {
   const config = normalizeRosaryConfig(inputConfig);
   const options =
     typeof inputOptions === "number"
       ? normalizeGuideCardLayoutOptions({ cardCount: inputOptions })
       : normalizeGuideCardLayoutOptions(inputOptions);
-  const layoutOptions = {
+  const normalizedLayoutOptions = {
     ...options,
     fullPrayerIds: options.fullPrayerIds.filter((id) =>
       getRelevantGuidePrayerOptions(config).some((prayer) => prayer.id === id),
     ),
   };
+  const layoutOptions = applyFullPrayerOverrides(normalizedLayoutOptions, customization);
   const cardCount = clampCardCount(layoutOptions.cardCount);
   const mysterySet = getMysterySetForConfig(config, date);
   const warnings: string[] = [];
   const layout = getGuideCardLayout(layoutOptions.cardSize);
-  const blocks = buildOrderedGuideBlocks(config, mysterySet, layoutOptions, layout, warnings);
+  const blocks = materializeEditableBlocks(
+    buildOrderedGuideBlocks(config, mysterySet, layoutOptions, layout, warnings),
+    layout,
+    customization,
+  );
   const { front, back, extraSides } = layoutBlocksAcrossSides(
     blocks,
+    config.id,
     config.name?.trim() || "Rosary Walk Guide",
     mysterySet.title,
     layoutOptions,
     warnings,
+    customization,
   );
   const cards = Array.from({ length: cardCount }, (_, index) =>
     buildGeneratedGuideCard(index + 1, front, back, extraSides, layoutOptions),
@@ -190,19 +217,27 @@ function buildOrderedGuideBlocks(
 
   const blocks: GuideCardBlock[] = [
     sectionBlock("opening", "Opening", buildOpeningSummary(config, options), layout, "prayer"),
-    sectionBlock("intentions", "Intentions", [
-      "At this time, please offer your intentions.",
-      "[pause]",
-      ...buildConciseGuidance(config, guidancePointsForFront, warnings),
-    ], layout),
+    sectionBlock(
+      "intentions",
+      "Intentions",
+      [
+        editableLine("At this time, please offer your intentions.", "instruction"),
+        editableLine("[pause]", "pause", { canToggleFullPrayer: false }),
+        ...buildConciseGuidance(config, guidancePointsForFront, warnings).map((text) =>
+          editableLine(text, "instruction"),
+        ),
+      ],
+      layout,
+    ),
     sectionBlock("each-decade", "Each Decade", buildDecadeSummary(config, options), layout),
     {
       id: "mystery-set",
       type: "mystery-list",
       heading: mysterySet.title,
-      lines: mysteryLines,
-      estimatedWeight: estimateBlockWeight(mysteryLines, layout, false),
-      sourceItemIds: makeLineSourceItemIds("mystery-set", mysteryLines),
+      lines: mysteryLines.map((line) => line.text),
+      estimatedWeight: estimateBlockWeight(mysteryLines.map((line) => line.text), layout, false),
+      sourceItemIds: makeLineSourceItemIds("mystery-set", mysteryLines.map((line) => line.text)),
+      editableItems: makeEditableItems("mystery-set", mysterySet.title, mysteryLines),
       keepTogether: true,
       priority: "required",
       sectionGroup: "mysteries",
@@ -211,29 +246,177 @@ function buildOrderedGuideBlocks(
       ? [sectionBlock("closing", "Closing", closingLines, layout, "prayer")]
       : []),
     sectionBlock("holy-father-intentions", "Holy Father's Intentions", [
-      formatPrayerForCard("our-father", options.fullPrayerIds.includes("our-father")),
-      formatPrayerForCard("hail-mary", options.fullPrayerIds.includes("hail-mary")),
-      formatPrayerForCard("glory-be", options.fullPrayerIds.includes("glory-be")),
+      formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father")),
+      formatPrayerLineForCard("hail-mary", options.fullPrayerIds.includes("hail-mary")),
+      formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be")),
     ], layout),
     ...(saintBlock ? [saintBlock] : []),
     ...(guidanceLines.length > 0
-      ? [sectionBlock("custom-guidance", "Guide Notes", guidanceLines, layout, "custom-guidance", true)]
+      ? [sectionBlock(
+          "custom-guidance",
+          "Guide Notes",
+          guidanceLines.map((text) => editableLine(text, "instruction")),
+          layout,
+          "custom-guidance",
+          true,
+        )]
       : []),
     ...(leaderLines.length > 0
-      ? [sectionBlock("leader-notes", "Leader Notes", leaderLines, layout, "custom-guidance", true, true)]
+      ? [sectionBlock(
+          "leader-notes",
+          "Leader Notes",
+          leaderLines.map((text) => editableLine(text, "instruction")),
+          layout,
+          "custom-guidance",
+          true,
+          true,
+        )]
       : []),
-    sectionBlock("final-sign", "Final", [compactPrayerText("sign-of-the-cross")], layout, "prayer"),
+    sectionBlock(
+      "final-sign",
+      "Final",
+      [formatPrayerLineForCard("sign-of-the-cross", false)],
+      layout,
+      "prayer",
+    ),
   ];
 
   return blocks.filter((block) => block.lines?.length || block.body);
 }
 
+function applyFullPrayerOverrides(
+  options: GuideCardLayoutOptions,
+  customization?: GuideCardCustomization,
+): GuideCardLayoutOptions {
+  if (!customization) {
+    return options;
+  }
+
+  const fullPrayerIds = new Set(options.fullPrayerIds);
+
+  Object.entries(customization.fullPrayerOverrides).forEach(([id, shouldUseFullText]) => {
+    const prayerId = id as PrayerId;
+
+    if (shouldUseFullText) {
+      fullPrayerIds.add(prayerId);
+      return;
+    }
+
+    fullPrayerIds.delete(prayerId);
+  });
+
+  return {
+    ...options,
+    fullPrayerIds: [...fullPrayerIds],
+  };
+}
+
+function materializeEditableBlocks(
+  blocks: GuideCardBlock[],
+  layout: GuideCardLayoutDefinition,
+  customization?: GuideCardCustomization,
+): GuideCardBlock[] {
+  const customizationForGuide = customization ?? {
+    guideId: "",
+    itemOrder: [],
+    removedItemIds: [],
+    fullPrayerOverrides: {},
+    textOverrides: {},
+    updatedAt: "",
+  };
+  const removedItemIds = new Set(customizationForGuide.removedItemIds);
+  const flattenedItems = blocks.flatMap((block, blockIndex) =>
+    (block.editableItems ?? []).map((item, lineIndex) => ({
+      block,
+      blockIndex,
+      lineIndex,
+      item,
+    })),
+  );
+  const itemById = new Map(flattenedItems.map((entry) => [entry.item.id, entry]));
+  const orderedIds = [
+    ...customizationForGuide.itemOrder.filter((id) => itemById.has(id)),
+    ...flattenedItems.map((entry) => entry.item.id).filter((id) => !customizationForGuide.itemOrder.includes(id)),
+  ];
+  const renderedSectionIds = new Set<string>();
+
+  return orderedIds
+    .map((id) => itemById.get(id))
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+    .filter((entry) => !removedItemIds.has(entry.item.id))
+    .map((entry, order) => {
+      const sectionHeadingKey = getSectionHeadingOverrideKey(entry.item.sectionId);
+      const heading =
+        renderedSectionIds.has(entry.item.sectionId)
+          ? undefined
+          : customizationForGuide.textOverrides[sectionHeadingKey] ?? entry.block.heading;
+      const text = customizationForGuide.textOverrides[entry.item.id] ?? entry.item.currentText;
+      const lineItem: GuideCardEditableItem = {
+        ...entry.item,
+        currentText: text,
+        order,
+      };
+      const block = createMaterializedBlock(entry.block, lineItem, text, heading, layout);
+
+      renderedSectionIds.add(entry.item.sectionId);
+      return block;
+    });
+}
+
+function getSectionHeadingOverrideKey(sectionId: string): string {
+  return `${sectionId}:heading`;
+}
+
+function createMaterializedBlock(
+  sourceBlock: GuideCardBlock,
+  item: GuideCardEditableItem,
+  text: string,
+  heading: string | undefined,
+  layout: GuideCardLayoutDefinition,
+): GuideCardBlock {
+  const lines = [text];
+  const layoutInstanceId = createLayoutInstanceId(item);
+
+  return {
+    ...sourceBlock,
+    id: layoutInstanceId,
+    layoutInstanceId,
+    heading,
+    lines,
+    sourceItemIds: [item.id],
+    editableItems: [item],
+    estimatedWeight: estimateMaterializedBlockWeight(sourceBlock, lines, heading, layout),
+  };
+}
+
+function createLayoutInstanceId(item: GuideCardEditableItem): string {
+  return `layout:${item.id}`;
+}
+
+function estimateMaterializedBlockWeight(
+  sourceBlock: GuideCardBlock,
+  lines: string[],
+  heading: string | undefined,
+  layout: GuideCardLayoutDefinition,
+): number {
+  const charsPerLine =
+    sourceBlock.type === "mystery-list"
+      ? layout.compactCharsPerLine
+      : getCharsPerLine(layout, sourceBlock.compact);
+  const headingWeight = heading ? layout.headingWeight : 0;
+  const spacingWeight = heading ? layout.sectionGapWeight : layout.sectionGapWeight * 0.35;
+
+  return estimateLines(lines, charsPerLine) + headingWeight + spacingWeight;
+}
+
 function layoutBlocksAcrossSides(
   blocks: GuideCardBlock[],
+  guideId: string,
   title: string,
   mysterySetTitle: string,
   options: GuideCardLayoutOptions,
   warnings: string[],
+  customization?: GuideCardCustomization,
 ): { front: GuideCardSide; back?: GuideCardSide; extraSides: GuideCardSide[] } {
   const layout = getGuideCardLayout(options.cardSize);
   const capacity = layout.capacity;
@@ -258,17 +441,17 @@ function layoutBlocksAcrossSides(
   }
 
   const result = {
-    front: createSide("front", title, `${mysterySetTitle} guide`, frontBlocks ?? []),
-    back: backBlocks?.length ? createSide("back", title, "Continued", backBlocks) : undefined,
+    front: createSide("front", title, `${mysterySetTitle} guide`, frontBlocks ?? [], customization),
+    back: backBlocks?.length ? createSide("back", title, "Continued", backBlocks, customization) : undefined,
     extraSides: extraBlockGroups.map((extraBlocks, index) =>
-      createSide(`extra-${index + 1}`, title, `Continued ${index + 2}`, extraBlocks),
+      createSide(`extra-${index + 1}`, title, `Continued ${index + 2}`, extraBlocks, customization),
     ),
   };
 
   const renderedSides = [result.front, ...(result.back ? [result.back] : []), ...result.extraSides];
 
   warnIfSourceItemsMissing(sourceItemCounts, renderedSides, warnings);
-  addDevelopmentLayoutInvariantWarnings(sourceItemCounts, renderedSides, layout, warnings);
+  addDevelopmentLayoutInvariantWarnings(guideId, sourceItemCounts, renderedSides, layout, warnings);
 
   return result;
 }
@@ -350,6 +533,10 @@ function splitBlockForCapacity(
   }
 
   if (lines.length === 1) {
+    if (shouldKeepSingleLineBlockTogether(block)) {
+      return undefined;
+    }
+
     return splitSingleLineBlock(block, capacity, layout);
   }
 
@@ -407,6 +594,10 @@ function splitSingleLineBlock(
   };
 }
 
+function shouldKeepSingleLineBlockTogether(block: GuideCardBlock): boolean {
+  return block.type === "mystery-list" || block.editableItems?.some((item) => item.type === "mystery") === true;
+}
+
 function createSplitBlock(
   block: GuideCardBlock,
   lines: string[],
@@ -415,12 +606,21 @@ function createSplitBlock(
   continued: boolean,
   sourceItemIds = block.sourceItemIds,
 ): GuideCardBlock {
+  const baseInstanceId = block.layoutInstanceId ?? block.id;
+  const splitSourceItemIds = sourceItemIds?.slice(0, lines.length);
+  const splitEditableItems =
+    block.editableItems && splitSourceItemIds
+      ? block.editableItems.filter((item) => splitSourceItemIds.includes(item.id))
+      : block.editableItems;
+
   return {
     ...block,
     id: `${block.id}-${idSuffix}`,
+    layoutInstanceId: `${baseInstanceId}:${idSuffix}`,
     heading: continued && block.heading ? `${block.heading} (continued)` : block.heading,
     lines,
-    sourceItemIds: sourceItemIds?.slice(0, lines.length),
+    sourceItemIds: splitSourceItemIds,
+    editableItems: splitEditableItems,
     continuationOf: continued ? block.continuationOf ?? block.id : block.continuationOf,
     estimatedWeight: estimateBlockWeight(lines, layout, Boolean(block.compact)),
   };
@@ -455,6 +655,7 @@ function cloneGuideCardBlock(block: GuideCardBlock): GuideCardBlock {
     ...block,
     lines: block.lines ? [...block.lines] : undefined,
     sourceItemIds: block.sourceItemIds ? [...block.sourceItemIds] : undefined,
+    editableItems: block.editableItems ? block.editableItems.map((item) => ({ ...item })) : undefined,
   };
 }
 
@@ -479,19 +680,23 @@ function addSideDensityWarnings(
 function sectionBlock(
   id: string,
   heading: string,
-  lines: string[],
+  lines: Array<string | GuideCardGeneratedLine>,
   layout: GuideCardLayoutDefinition,
   type: GuideCardBlock["type"] = "instruction",
   compact = true,
   leaderOnly = false,
 ): GuideCardBlock {
+  const generatedLines = normalizeGeneratedLines(lines, type);
+  const textLines = generatedLines.map((line) => line.text);
+
   return {
     id,
     type,
     heading,
-    lines,
-    estimatedWeight: estimateBlockWeight(lines, layout, compact),
-    sourceItemIds: makeLineSourceItemIds(id, lines),
+    lines: textLines,
+    estimatedWeight: estimateBlockWeight(textLines, layout, compact),
+    sourceItemIds: makeLineSourceItemIds(id, textLines),
+    editableItems: makeEditableItems(id, heading, generatedLines),
     keepTogether: true,
     priority: type === "custom-guidance" ? "optional" : "required",
     compact,
@@ -500,16 +705,87 @@ function sectionBlock(
   };
 }
 
+function normalizeGeneratedLines(
+  lines: Array<string | GuideCardGeneratedLine>,
+  blockType: GuideCardBlock["type"],
+): GuideCardGeneratedLine[] {
+  return lines.map((line) =>
+    typeof line === "string"
+      ? editableLine(line, getEditableTypeForBlock(blockType, line))
+      : line,
+  );
+}
+
+function getEditableTypeForBlock(
+  blockType: GuideCardBlock["type"],
+  text: string,
+): GuideCardEditableItemType {
+  if (text.trim().toLowerCase() === "[pause]") {
+    return "pause";
+  }
+
+  if (blockType === "prayer") {
+    return "prayer";
+  }
+
+  if (blockType === "mystery-list") {
+    return "mystery";
+  }
+
+  if (blockType === "invocation-list") {
+    return "saint-invocation";
+  }
+
+  return "instruction";
+}
+
+function makeEditableItems(
+  sectionId: string,
+  heading: string,
+  lines: GuideCardGeneratedLine[],
+): GuideCardEditableItem[] {
+  return lines.map((line, index) => ({
+    id: `${sectionId}:line-${index + 1}`,
+    type: line.type,
+    sectionId,
+    prayerId: line.prayerId,
+    title: line.title ?? heading,
+    shortText: line.prayerId ? getCompactPrayerText(prayersById[line.prayerId]) : undefined,
+    fullText: line.prayerId ? getFullPrayerTextForCards(prayersById[line.prayerId]) : undefined,
+    currentText: line.text,
+    printMode: line.printMode,
+    order: index,
+    canToggleFullPrayer: line.canToggleFullPrayer ?? Boolean(line.prayerId),
+    canEdit: line.canEdit ?? true,
+    canDelete: line.canDelete ?? true,
+  }));
+}
+
+function editableLine(
+  text: string,
+  type: GuideCardEditableItemType,
+  options: Partial<Omit<GuideCardGeneratedLine, "text" | "type">> = {},
+): GuideCardGeneratedLine {
+  return {
+    text,
+    type,
+    canEdit: true,
+    canDelete: true,
+    ...options,
+  };
+}
+
 function createSide(
   id: string,
   title: string,
   subtitle: string,
   blocks: GuideCardBlock[],
+  customization?: GuideCardCustomization,
 ): GuideCardSide {
   return {
     id,
-    title,
-    subtitle,
+    title: customization?.textOverrides["card:title"] ?? title,
+    subtitle: customization?.textOverrides["card:subtitle"] ?? subtitle,
     blocks,
     overflowWarnings: [],
   };
@@ -569,6 +845,7 @@ function warnIfSourceItemsMissing(
 }
 
 function addDevelopmentLayoutInvariantWarnings(
+  guideId: string,
   sourceItemCounts: Map<string, number>,
   sides: GuideCardSide[],
   layout: GuideCardLayoutDefinition,
@@ -579,7 +856,8 @@ function addDevelopmentLayoutInvariantWarnings(
   }
 
   const invariantWarnings = [
-    ...findSourceItemCountWarnings(sourceItemCounts, sides),
+    ...findSourceItemCountWarnings(guideId, sourceItemCounts, sides),
+    ...findDuplicateLayoutKeyWarnings(guideId, sides),
     ...findEmptyFaceWarnings(sides),
     ...findFrontFirstPlacementWarnings(sides, layout),
     ...findOrphanHeadingWarnings(sides),
@@ -594,6 +872,7 @@ function addDevelopmentLayoutInvariantWarnings(
 }
 
 function findSourceItemCountWarnings(
+  guideId: string,
   sourceItemCounts: Map<string, number>,
   sides: GuideCardSide[],
 ): string[] {
@@ -605,12 +884,33 @@ function findSourceItemCountWarnings(
 
     if (renderedCount !== expectedCount) {
       warnings.push(
-        `Layout integrity warning: generated item ${id} rendered ${renderedCount} time(s), expected ${expectedCount}.`,
+        `Layout integrity warning for guide ${guideId}: generated item ${id} rendered ${renderedCount} time(s), expected ${expectedCount}.`,
       );
     }
   });
 
   return warnings;
+}
+
+function findDuplicateLayoutKeyWarnings(guideId: string, sides: GuideCardSide[]): string[] {
+  return sides.flatMap((side) => {
+    const counts = new Map<string, number>();
+
+    side.blocks.forEach((block) => {
+      const key = block.layoutInstanceId ?? block.id;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+
+    const duplicateKeys = [...counts.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([key]) => key);
+
+    return duplicateKeys.length > 0
+      ? [
+          `Layout integrity warning for guide ${guideId}: duplicate rendered block keys on ${side.id}: ${duplicateKeys.join(", ")}.`,
+        ]
+      : [];
+  });
 }
 
 function findEmptyFaceWarnings(sides: GuideCardSide[]): string[] {
@@ -697,7 +997,7 @@ function getMinimumRenderableBlockWeight(
 function buildOpeningSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
-): string[] {
+): GuideCardGeneratedLine[] {
   const firstDecadeOrder =
     config.steps
       .filter((step) => step.enabled !== false && step.type === "decade")
@@ -714,9 +1014,9 @@ function buildOpeningSummary(
   return steps.map((step) => formatOpeningStep(step, options));
 }
 
-function formatOpeningStep(step: RosaryStep, options: GuideCardLayoutOptions): string {
+function formatOpeningStep(step: RosaryStep, options: GuideCardLayoutOptions): GuideCardGeneratedLine {
   if (step.prayerId === "hail-mary" && (step.repeatCount ?? step.repeat ?? 1) === 3) {
-    return formatRepeatedPrayerForCard(
+    return formatRepeatedPrayerLineForCard(
       "hail-mary",
       "Three Hail Marys for faith, hope, and charity",
       options.fullPrayerIds.includes("hail-mary"),
@@ -724,22 +1024,22 @@ function formatOpeningStep(step: RosaryStep, options: GuideCardLayoutOptions): s
   }
 
   if (step.prayerId) {
-    return formatPrayerForCard(step.prayerId, options.fullPrayerIds.includes(step.prayerId));
+    return formatPrayerLineForCard(step.prayerId, options.fullPrayerIds.includes(step.prayerId));
   }
 
-  return step.title;
+  return editableLine(step.title, "instruction");
 }
 
 function buildClosingSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
-): string[] {
+): GuideCardGeneratedLine[] {
   return closingOrder
     .filter((prayerId) => config.selectedClosingPrayerIds.includes(prayerId))
-    .map((prayerId) => formatPrayerForCard(prayerId, options.fullPrayerIds.includes(prayerId)));
+    .map((prayerId) => formatPrayerLineForCard(prayerId, options.fullPrayerIds.includes(prayerId)));
 }
 
-export function buildMysterySummary(mysterySet: MysterySet): string[] {
+export function buildMysterySummary(mysterySet: MysterySet): GuideCardGeneratedLine[] {
   const setName = mysterySet.title.replace(" Mysteries", "");
 
   return mysterySet.mysteries.map((mystery) => {
@@ -747,25 +1047,29 @@ export function buildMysterySummary(mysterySet: MysterySet): string[] {
       ? ` The fruit of this mystery is ${mystery.fruitOfMystery}.`
       : "";
 
-    return `${mystery.number}. The ${ordinalWord(mystery.number)} ${setName} Mystery is ${mystery.title}.${fruit}`;
+    return editableLine(
+      `${mystery.number}. The ${ordinalWord(mystery.number)} ${setName} Mystery is ${mystery.title}.${fruit}`,
+      "mystery",
+      { title: mystery.title },
+    );
   });
 }
 
 export function buildDecadeSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
-): string[] {
+): GuideCardGeneratedLine[] {
   return [
-    "Announce the mystery and fruit.",
-    formatPrayerForCard("our-father", options.fullPrayerIds.includes("our-father")),
-    formatRepeatedPrayerForCard(
+    editableLine("Announce the mystery and fruit.", "instruction"),
+    formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father")),
+    formatRepeatedPrayerLineForCard(
       "hail-mary",
       "10 Hail Marys",
       options.fullPrayerIds.includes("hail-mary"),
     ),
-    formatPrayerForCard("glory-be", options.fullPrayerIds.includes("glory-be")),
+    formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be")),
     ...(hasFatimaPrayer(config)
-      ? [formatPrayerForCard("fatima-prayer", options.fullPrayerIds.includes("fatima-prayer"))]
+      ? [formatPrayerLineForCard("fatima-prayer", options.fullPrayerIds.includes("fatima-prayer"))]
       : []),
   ];
 }
@@ -780,6 +1084,15 @@ function formatPrayerForCard(prayerId: PrayerId, full: boolean): string {
   return `${prayer.title}: ${getFullPrayerTextForCards(prayer)}`;
 }
 
+function formatPrayerLineForCard(prayerId: PrayerId, full: boolean): GuideCardGeneratedLine {
+  return editableLine(formatPrayerForCard(prayerId, full), "prayer", {
+    prayerId,
+    title: prayersById[prayerId].title,
+    printMode: full ? "full" : "short",
+    canToggleFullPrayer: prayerId !== "sign-of-the-cross",
+  });
+}
+
 function formatRepeatedPrayerForCard(prayerId: PrayerId, label: string, full: boolean): string {
   const prayer = prayersById[prayerId];
 
@@ -788,6 +1101,19 @@ function formatRepeatedPrayerForCard(prayerId: PrayerId, label: string, full: bo
   }
 
   return `${label}: ${getFullPrayerTextForCards(prayer)}`;
+}
+
+function formatRepeatedPrayerLineForCard(
+  prayerId: PrayerId,
+  label: string,
+  full: boolean,
+): GuideCardGeneratedLine {
+  return editableLine(formatRepeatedPrayerForCard(prayerId, label, full), "prayer", {
+    prayerId,
+    title: label,
+    printMode: full ? "full" : "short",
+    canToggleFullPrayer: true,
+  });
 }
 
 function compactPrayerText(prayerId: PrayerId): string {
@@ -882,9 +1208,13 @@ function estimateBlockWeight(
   layout: GuideCardLayoutDefinition,
   compact: boolean,
 ): number {
-  const charsPerLine = compact ? layout.compactCharsPerLine : layout.bodyCharsPerLine;
+  const charsPerLine = getCharsPerLine(layout, compact);
 
   return estimateLines(lines, charsPerLine) + layout.headingWeight + layout.sectionGapWeight;
+}
+
+function getCharsPerLine(layout: GuideCardLayoutDefinition, compact: boolean | undefined): number {
+  return compact ? layout.compactCharsPerLine : layout.bodyCharsPerLine;
 }
 
 function estimateLines(lines: string[], charsPerLine: number): number {

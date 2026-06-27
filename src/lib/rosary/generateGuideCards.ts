@@ -385,7 +385,7 @@ function createMaterializedBlock(
     lines,
     sourceItemIds: [item.id],
     editableItems: [item],
-    estimatedWeight: estimateMaterializedBlockWeight(lines, heading, layout, Boolean(sourceBlock.compact)),
+    estimatedWeight: estimateMaterializedBlockWeight(sourceBlock, lines, heading, layout),
   };
 }
 
@@ -394,15 +394,19 @@ function createLayoutInstanceId(item: GuideCardEditableItem): string {
 }
 
 function estimateMaterializedBlockWeight(
+  sourceBlock: GuideCardBlock,
   lines: string[],
   heading: string | undefined,
   layout: GuideCardLayoutDefinition,
-  compact: boolean,
 ): number {
-  const charsPerLine = compact ? layout.compactCharsPerLine : layout.bodyCharsPerLine;
+  const charsPerLine =
+    sourceBlock.type === "mystery-list"
+      ? layout.compactCharsPerLine
+      : getCharsPerLine(layout, sourceBlock.compact);
   const headingWeight = heading ? layout.headingWeight : 0;
+  const spacingWeight = heading ? layout.sectionGapWeight : layout.sectionGapWeight * 0.35;
 
-  return estimateLines(lines, charsPerLine) + headingWeight + layout.sectionGapWeight;
+  return estimateLines(lines, charsPerLine) + headingWeight + spacingWeight;
 }
 
 function layoutBlocksAcrossSides(
@@ -1204,9 +1208,13 @@ function estimateBlockWeight(
   layout: GuideCardLayoutDefinition,
   compact: boolean,
 ): number {
-  const charsPerLine = compact ? layout.compactCharsPerLine : layout.bodyCharsPerLine;
+  const charsPerLine = getCharsPerLine(layout, compact);
 
   return estimateLines(lines, charsPerLine) + layout.headingWeight + layout.sectionGapWeight;
+}
+
+function getCharsPerLine(layout: GuideCardLayoutDefinition, compact: boolean | undefined): number {
+  return compact ? layout.compactCharsPerLine : layout.bodyCharsPerLine;
 }
 
 function estimateLines(lines: string[], charsPerLine: number): number {

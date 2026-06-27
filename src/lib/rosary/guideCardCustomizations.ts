@@ -1,8 +1,11 @@
 import { isPrayerId } from "@/lib/rosary/prayerText";
 import type {
+  GuideCardCustomItem,
+  GuideCardCustomItemKind,
   GuideCardCustomization,
   GuideCardSide,
   PrayerId,
+  PrayerLanguage,
 } from "@/lib/rosary/types";
 
 export type GuideCardDropPosition = "before" | "after";
@@ -59,6 +62,27 @@ export function reorderEditableItem(
   return nextOrder;
 }
 
+export function insertEditableItemAfter(
+  visibleItemIds: string[],
+  newItemId: string,
+  targetItemId?: string,
+): string[] {
+  const nextOrder = visibleItemIds.filter((id) => id !== newItemId);
+
+  if (!targetItemId) {
+    return [...nextOrder, newItemId];
+  }
+
+  const targetIndex = nextOrder.indexOf(targetItemId);
+
+  if (targetIndex === -1) {
+    return [...nextOrder, newItemId];
+  }
+
+  nextOrder.splice(targetIndex + 1, 0, newItemId);
+  return nextOrder;
+}
+
 export function findDuplicateIds(ids: string[]): string[] {
   const counts = new Map<string, number>();
 
@@ -75,8 +99,40 @@ export function hasGuideCardCustomizationEdits(customization: GuideCardCustomiza
     customization.removedItemIds.length > 0 ||
     Object.keys(customization.fullPrayerOverrides).length > 0 ||
     Object.keys(customization.prayerLanguageOverrides ?? {}).length > 0 ||
+    (customization.customItems?.length ?? 0) > 0 ||
     Object.keys(customization.textOverrides).length > 0
   );
+}
+
+export function createGuideCardCustomItem({
+  id,
+  kind,
+  sectionId,
+  text,
+  prayerId,
+  prayerLanguage,
+  printMode,
+  createdAt = new Date().toISOString(),
+}: {
+  id: string;
+  kind: GuideCardCustomItemKind;
+  sectionId: string;
+  text: string;
+  prayerId?: PrayerId;
+  prayerLanguage?: PrayerLanguage;
+  printMode?: "short" | "full";
+  createdAt?: string;
+}): GuideCardCustomItem {
+  return {
+    id,
+    kind,
+    sectionId,
+    text,
+    prayerId,
+    prayerLanguage,
+    printMode,
+    createdAt,
+  };
 }
 
 export function applyFullPrayerOverrides(

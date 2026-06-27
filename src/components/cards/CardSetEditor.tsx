@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { prayersById } from "@/content/prayers";
 import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
-import type { GuideCardDragState, GuideCardDropPosition } from "@/components/cards/GuideCardFace";
+import type {
+  GuideCardDragState,
+  GuideCardDropPosition,
+  GuideCardEditAction,
+} from "@/components/cards/GuideCardFace";
 import { Card } from "@/components/ui/Card";
 import {
   GUIDE_CARD_SIZE_OPTIONS,
@@ -15,6 +19,7 @@ import {
   getCardsPerPage,
   normalizeGuideCardLayoutOptions,
 } from "@/lib/rosary/cardUtils";
+import { createId } from "@/lib/rosary/configUtils";
 import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import {
   createDefaultGeneratedGuideConfig,
@@ -23,9 +28,11 @@ import {
 } from "@/lib/rosary/generateGuideCards";
 import {
   applyFullPrayerOverrides,
+  createGuideCardCustomItem,
   findDuplicateIds,
   getVisibleEditableItemIds,
   hasGuideCardCustomizationEdits,
+  insertEditableItemAfter,
   moveEditableItem,
   removePrayerOverride,
   reorderEditableItem,
@@ -46,6 +53,7 @@ import {
 import { getPrayerIncipit, getPrayerLanguage, getPrayerVariant, isPrayerId, latinPrayerIds } from "@/lib/rosary/prayerText";
 import type {
   GuideCardCustomization,
+  GuideCardCustomItemKind,
   GuideCardLayoutOptions,
   PrayerId,
   PrayerLanguage,
@@ -68,6 +76,10 @@ export function CardSetEditor() {
     label: string;
     value: string;
     multiline: boolean;
+  } | null>(null);
+  const [addingItem, setAddingItem] = useState<{
+    targetItemId?: string;
+    sectionId?: string;
   } | null>(null);
   const [dragState, setDragState] = useState<GuideCardDragState>({});
   const [hasLoadedOptions, setHasLoadedOptions] = useState(false);
@@ -325,6 +337,42 @@ export function CardSetEditor() {
     resetGuideCardCustomization(selectedGuide.id);
     setCustomization(createEmptyGuideCardCustomization(selectedGuide.id));
     setDragState({});
+    setAddingItem(null);
+  }
+
+  function openAddCardItem(target?: GuideCardEditAction) {
+    setAddingItem({
+      targetItemId: target?.itemId,
+      sectionId: target?.sectionId,
+    });
+  }
+
+  function handleAddCardItem(input: {
+    kind: GuideCardCustomItemKind;
+    text: string;
+    prayerId?: PrayerId;
+    prayerLanguage?: PrayerLanguage;
+    printMode?: "short" | "full";
+  }) {
+    const itemId = createId("custom-card-item");
+    const sectionId =
+      input.kind === "section" ? itemId : addingItem?.sectionId ?? "custom-card-items";
+    const item = createGuideCardCustomItem({
+      id: itemId,
+      kind: input.kind,
+      sectionId,
+      text: input.text,
+      prayerId: input.prayerId,
+      prayerLanguage: input.prayerLanguage,
+      printMode: input.printMode,
+    });
+
+    updateCustomization((current) => ({
+      ...current,
+      customItems: [...(current.customItems ?? []), item],
+      itemOrder: insertEditableItemAfter(visibleEditableItemIds, itemId, addingItem?.targetItemId),
+    }));
+    setAddingItem(null);
   }
 
   function persistPrintState() {
@@ -575,6 +623,7 @@ export function CardSetEditor() {
             sides={previewSides}
             cardSize={generatedCardSet.layoutOptions.cardSize}
             editHandlers={{
+              onAddItem: openAddCardItem,
               onDeleteItem: handleDeleteItem,
               onEditItem: (itemId, currentText) =>
                 setEditingText({ id: itemId, label: "Edit card item", value: currentText, multiline: true }),
@@ -698,6 +747,185 @@ export function CardSetEditor() {
           </div>
         </div>
       ) : null}
+      {addingItem ? (
+        <AddCardItemDialog
+          onCancel={() => setAddingItem(null)}
+          onAdd={handleAddCardItem}
+        />
+      ) : null}
     </div>
   );
+}
+
+function AddCardItemDialog({
+  onCancel,
+  onAdd,
+}: {
+  onCancel: () => void;
+  onAdd: (input: {
+    kind: GuideCardCustomItemKind;
+    text: string;
+    prayerId?: PrayerId;
+    prayerLanguage?: PrayerLanguage;
+    printMode?: "short" | "full";
+  }) => void;
+}) {
+  const [kind, setKind] = useState<GuideCardCustomItemKind>("note");
+  const [text, setText] = useState("");
+  const [prayerId, setPrayerId] = useState<PrayerId>("our-father");
+  const [prayerLanguage, setPrayerLanguage] = useState<PrayerLanguage>("en");
+  const [printMode, setPrintMode] = useState<"short" | "full">("short");
+  const prayerChoices = Object.values(prayersById);
+  const needsText = kind !== "prayer";
+  const label = getAddItemTextLabel(kind);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedText = text.trim();
+
+    if (needsText && !trimmedText) {
+      return;
+    }
+
+    onAdd({
+      kind,
+      text: needsText ? trimmedText : prayersById[prayerId].title,
+      prayerId: kind === "prayer" ? prayerId : undefined,
+      prayerLanguage: kind === "prayer" ? prayerLanguage : undefined,
+      printMode: kind === "prayer" ? printMode : undefined,
+    });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-blue-900/40 px-3 py-3 backdrop-blur-sm sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="card-add-item-title"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          onCancel();
+        }
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-xl rounded-lg border border-blue-900/10 bg-cream-50 p-5 shadow-2xl"
+      >
+        <h3 id="card-add-item-title" className="text-xl font-semibold text-blue-900">
+          Add card item
+        </h3>
+        <div className="mt-4 grid gap-4">
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="card-item-kind">
+            Item type
+            <select
+              id="card-item-kind"
+              value={kind}
+              onChange={(event) => setKind(event.target.value as GuideCardCustomItemKind)}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+              autoFocus
+            >
+              <option value="section">Section</option>
+              <option value="note">Note</option>
+              <option value="leader-note">Leader note</option>
+              <option value="intention">Intention</option>
+              <option value="saint-invocation">Saint invocation</option>
+              <option value="prayer">Prayer</option>
+              <option value="custom-text">Custom text</option>
+            </select>
+          </label>
+
+          {kind === "prayer" ? (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="block text-sm font-semibold text-blue-900" htmlFor="card-item-prayer">
+                Prayer
+                <select
+                  id="card-item-prayer"
+                  value={prayerId}
+                  onChange={(event) => setPrayerId(event.target.value as PrayerId)}
+                  className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+                >
+                  {prayerChoices.map((prayer) => (
+                    <option key={prayer.id} value={prayer.id}>
+                      {prayer.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm font-semibold text-blue-900" htmlFor="card-item-language">
+                Language
+                <select
+                  id="card-item-language"
+                  value={prayerLanguage}
+                  onChange={(event) => setPrayerLanguage(event.target.value as PrayerLanguage)}
+                  className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+                >
+                  <option value="en">English</option>
+                  <option value="la">Latin</option>
+                </select>
+              </label>
+              <label className="block text-sm font-semibold text-blue-900" htmlFor="card-item-print-mode">
+                Length
+                <select
+                  id="card-item-print-mode"
+                  value={printMode}
+                  onChange={(event) => setPrintMode(event.target.value as "short" | "full")}
+                  className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+                >
+                  <option value="short">Short</option>
+                  <option value="full">Full</option>
+                </select>
+              </label>
+            </div>
+          ) : (
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="card-item-text">
+              {label}
+              <textarea
+                id="card-item-text"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                className="interactive-field mt-2 min-h-28 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base leading-7"
+                placeholder={getAddItemPlaceholder(kind)}
+                required
+              />
+            </label>
+          )}
+        </div>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white"
+          >
+            Add item
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function getAddItemTextLabel(kind: GuideCardCustomItemKind): string {
+  if (kind === "section") return "Section heading";
+  if (kind === "saint-invocation") return "Saint name";
+  if (kind === "intention") return "Intention text";
+  if (kind === "leader-note") return "Leader note";
+  if (kind === "custom-text") return "Custom text";
+  return "Note text";
+}
+
+function getAddItemPlaceholder(kind: GuideCardCustomItemKind): string {
+  if (kind === "section") return "Closing procession";
+  if (kind === "saint-invocation") return "Saint Joseph";
+  if (kind === "intention") return "For our parish and neighbors";
+  if (kind === "leader-note") return "Pause here until the group gathers.";
+  if (kind === "custom-text") return "Custom card text";
+  return "Brief note for this card";
 }

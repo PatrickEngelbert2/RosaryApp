@@ -62,6 +62,9 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Preserved the Guide Cards and Resources icon concepts.
 - Added Guide Card Preview Editing v1 with hover/focus controls for editing, removing, reordering, and toggling card preview items.
 - Added cards-only local customizations for guide card item order, removed items, full/short prayer overrides, and text overrides.
+- Added Guide Card Preview Editing v2 with preview-only controls for adding new card sections, notes, leader notes, intentions, saint invocations, prayers, and custom text.
+- Stored added guide-card preview items as structured cards-only customizations that print with the card preview and are removed by Reset card edits.
+- Made guide-card section headings standalone editable, removable, and reorderable items instead of attaching them to the first child line.
 - Added direct full/short prayer toggles from the preview while preserving canonical prayer IDs for future multilingual prayer variants.
 - Added plain-text preview editing for card titles, subtitles, section headings, prayer lines, mystery lines, instructions, pauses, and saint invocations.
 - Added arrow-based and native drag/drop guide card preview reordering with keyboard-accessible arrow controls.
@@ -74,6 +77,8 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Fixed invalid or malformed saved guide data being able to crash app pages during localStorage normalization.
 - Fixed guide-card full-prayer checkbox labels so they reflect the effective card language after guide-level or card-specific language choices.
 - Kept each Guide Card mystery and its fruit of the mystery together when card content flows across front/back or continuation sides.
+- Fixed guide-card mystery rendering so each mystery sentence and its fruit of the mystery are one card item, preventing a fruit line from splitting onto another side by itself.
+- Cleaned guide-card prayer rendering so repeated prayers use `3x -` or `10x -` compact text, full prayers print without title prefixes, Glory Be uses `Glory be to the Father...`, and Sign of the Cross short text is just the prayer title.
 - Fixed duplicate React keys when Guide Card preview items are moved across visual sections by separating canonical source item IDs from generated layout instance IDs.
 - Improved Guide Card preview drag/drop placement feedback with item target highlighting, before/after insertion lines, and a lifted dragged-item state.
 - Clarified cross-section Guide Card preview moves so reordering removes the item from its old visual position and inserts it at the indicated target.

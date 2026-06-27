@@ -19,6 +19,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Group repeated Hail Marys or show them individually.
 - Generate printable front/back guide cards.
 - Customize guide card previews before printing.
+- Add card-only sections, notes, leader notes, intentions, saint invocations, prayers, and custom text from the guide card preview.
 - Adjust guide card prayer language per prayer without changing the saved guide.
 - Choose Pocket, Tall, Wide, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
@@ -122,7 +123,7 @@ Saved guides can choose English or Latin per prayer. The Easy Guide Builder incl
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English or Latin. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English or Latin. The preview can also be customized before printing: card items can be added, edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a generated canonical prayer ID is available. Added preview items can be sections, notes, leader notes, intentions, saint invocations, prayers, or custom text. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
 
 Supported layouts are:
 
@@ -135,7 +136,7 @@ Supported layouts are:
 
 The Number of cards needed field controls how many card slots the site generates. It does not control duplicate print copies; use the browser print dialog's Copies setting to print more sets. When a layout changes, the card count auto-adjusts to that layout's cards-per-page default only if the current count still appears to be the previous layout default. If the user has typed a custom count, the app preserves that count. Blank print slots remain invisible so front/back alignment is preserved.
 
-Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Preview full/short toggles use the same canonical prayer IDs, which keeps the data model ready for later Latin or Spanish prayer variants without adding language selection in this pass.
+Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Repeated prayers print in compact form such as `10x - Hail Mary, full of grace...` or `10x - Ave Maria, gratia plena...`. Full prayer lines print as the prayer text without a title prefix. Preview full/short toggles use the same canonical prayer IDs, which keeps the data model ready for later Latin or Spanish prayer variants without adding language selection in this pass.
 
 Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, balances ordered guide blocks across card faces when a second side is needed, and warns when a selected card size or full-prayer combination may be too dense. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
 

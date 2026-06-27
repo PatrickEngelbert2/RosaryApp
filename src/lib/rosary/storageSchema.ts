@@ -2,6 +2,8 @@ import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import { normalizeRosaryConfig } from "@/lib/rosary/configUtils";
 import { isPrayerId, normalizePrayerLanguage } from "@/lib/rosary/prayerText";
 import type {
+  GuideCardCustomItem,
+  GuideCardCustomItemKind,
   GuideCardCustomization,
   GuideCardLayoutOptions,
   MysterySetId,
@@ -138,6 +140,7 @@ export function normalizeStoredGuideCardCustomization(
     removedItemIds: stringArray(value.removedItemIds),
     fullPrayerOverrides: normalizeFullPrayerOverrides(value.fullPrayerOverrides),
     prayerLanguageOverrides: normalizePrayerLanguageOverrides(value.prayerLanguageOverrides),
+    customItems: normalizeCustomItems(value.customItems),
     textOverrides: normalizeTextOverrides(value.textOverrides),
     updatedAt: isNonEmptyString(value.updatedAt) ? value.updatedAt : new Date().toISOString(),
   };
@@ -187,6 +190,57 @@ export function normalizePrayerLanguageOverrides(
         language === "guide-default" ? "guide-default" : normalizePrayerLanguage(language),
       ]),
   ) as Partial<Record<PrayerId, PrayerLanguage | "guide-default">>;
+}
+
+function normalizeCustomItems(value: unknown): GuideCardCustomItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => normalizeCustomItem(item))
+    .filter((item): item is GuideCardCustomItem => Boolean(item));
+}
+
+function normalizeCustomItem(value: unknown): GuideCardCustomItem | undefined {
+  if (
+    !isRecord(value) ||
+    !isNonEmptyString(value.id) ||
+    !isCustomItemKind(value.kind) ||
+    !isNonEmptyString(value.sectionId) ||
+    typeof value.text !== "string"
+  ) {
+    return undefined;
+  }
+
+  const prayerId = isPrayerId(value.prayerId) ? value.prayerId : undefined;
+
+  if (value.kind === "prayer" && !prayerId) {
+    return undefined;
+  }
+
+  return {
+    id: value.id,
+    kind: value.kind,
+    sectionId: value.sectionId,
+    text: value.text,
+    prayerId,
+    prayerLanguage: normalizePrayerLanguage(value.prayerLanguage),
+    printMode: value.printMode === "full" ? "full" : "short",
+    createdAt: isNonEmptyString(value.createdAt) ? value.createdAt : new Date().toISOString(),
+  };
+}
+
+function isCustomItemKind(value: unknown): value is GuideCardCustomItemKind {
+  return (
+    value === "section" ||
+    value === "note" ||
+    value === "leader-note" ||
+    value === "intention" ||
+    value === "saint-invocation" ||
+    value === "prayer" ||
+    value === "custom-text"
+  );
 }
 
 function normalizeTextOverrides(value: unknown): Record<string, string> {

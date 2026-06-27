@@ -248,6 +248,26 @@ export type GuideCardEditableItemType =
   | "pause"
   | "text";
 
+export type GuideCardCustomItemKind =
+  | "section"
+  | "note"
+  | "leader-note"
+  | "intention"
+  | "saint-invocation"
+  | "prayer"
+  | "custom-text";
+
+export type GuideCardCustomItem = {
+  id: string;
+  kind: GuideCardCustomItemKind;
+  sectionId: string;
+  text: string;
+  prayerId?: PrayerId;
+  prayerLanguage?: PrayerLanguage;
+  printMode?: "short" | "full";
+  createdAt: string;
+};
+
 export type GuideCardEditableItem = {
   id: string;
   type: GuideCardEditableItemType;
@@ -271,6 +291,7 @@ export type GuideCardCustomization = {
   removedItemIds: string[];
   fullPrayerOverrides: Partial<Record<PrayerId, boolean>>;
   prayerLanguageOverrides?: Partial<Record<PrayerId, PrayerLanguage | "guide-default">>;
+  customItems?: GuideCardCustomItem[];
   textOverrides: Record<string, string>;
   updatedAt: string;
 };

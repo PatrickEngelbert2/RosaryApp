@@ -9,6 +9,7 @@ export type GuideCardEditAction = {
   text: string;
   heading?: string;
   printMode?: "short" | "full";
+  canToggleFullPrayer?: boolean;
 };
 
 export type GuideCardDropPosition = "before" | "after";
@@ -20,6 +21,7 @@ export type GuideCardDragState = {
 };
 
 export type GuideCardEditHandlers = {
+  onAddItem?: (target?: GuideCardEditAction) => void;
   onDeleteItem?: (itemId: string) => void;
   onEditItem?: (itemId: string, currentText: string) => void;
   onEditHeading?: (sectionId: string, currentHeading: string) => void;
@@ -97,10 +99,6 @@ function GuideCardBlockView({
   cardSize: GuideCardSize;
   editHandlers?: GuideCardEditHandlers;
 }) {
-  if (block.type === "heading") {
-    return <h3>{block.heading}</h3>;
-  }
-
   const bodyClassName = [
     block.compact ? "compact" : "",
     cardSize === "full-1" ? "full-page-prayer" : "",
@@ -117,6 +115,7 @@ function GuideCardBlockView({
         text: editableItem.currentText,
         heading: block.heading,
         printMode: editableItem.printMode,
+        canToggleFullPrayer: editableItem.canToggleFullPrayer,
       }
     : undefined;
   const isDragging = Boolean(
@@ -177,7 +176,9 @@ function GuideCardBlockView({
       tabIndex={editHandlers && editableAction ? 0 : undefined}
     >
       {dropPosition === "before" ? <CardItemDropIndicator /> : null}
-      {block.heading ? (
+      {block.type === "heading" ? (
+        <h3>{block.heading}</h3>
+      ) : block.heading ? (
         <div className="guide-card-heading-row">
           <h3>{block.heading}</h3>
           {editHandlers && editableAction ? (
@@ -229,7 +230,15 @@ function GuideCardBlockView({
           >
             Down
           </button>
-          {editableAction.prayerId ? (
+          <button
+            type="button"
+            aria-label="Add item below"
+            title="Add item below"
+            onClick={() => editHandlers.onAddItem?.(editableAction)}
+          >
+            Add
+          </button>
+          {editableAction.prayerId && editableAction.canToggleFullPrayer !== false ? (
             <button
               type="button"
               aria-label={

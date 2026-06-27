@@ -660,6 +660,24 @@ a {
   opacity: 0;
 }
 
+.guide-card-preview-add-button {
+  border: 1px solid rgb(21 59 117 / 0.22);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.95);
+  color: #153b75;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.45rem 0.65rem;
+}
+
+.guide-card-preview-add-button:hover,
+.guide-card-preview-add-button:focus-visible {
+  background: #f7efd7;
+  outline: 2px solid rgb(21 59 117 / 0.25);
+  outline-offset: 2px;
+}
+
 .guide-card-item-controls {
   position: absolute;
   top: 0.1rem;
@@ -1032,6 +1050,7 @@ a {
 
   .guide-card-item-controls,
   .guide-card-heading-edit,
+  .guide-card-preview-add-button,
   .guide-card-drop-indicator {
     display: none !important;
   }

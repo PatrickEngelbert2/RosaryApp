@@ -47,7 +47,18 @@ export function GeneratedGuideCardSide({
 }) {
   return (
     <div className="guide-card-preview-frame rounded-lg border border-blue-900/20 bg-white p-3 shadow-sm">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gold-500">{label}</p>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gold-500">{label}</p>
+        {editHandlers?.onAddItem ? (
+          <button
+            type="button"
+            className="guide-card-preview-add-button"
+            onClick={() => editHandlers.onAddItem?.()}
+          >
+            Add item
+          </button>
+        ) : null}
+      </div>
       <GuideCardFace side={side} cardSize={cardSize} mode="preview" editHandlers={editHandlers} />
       {side.overflowWarnings?.map((warning) => (
         <p key={warning} className="mt-3 rounded-md bg-cream-100 px-3 py-2 text-xs font-medium text-slate-700">

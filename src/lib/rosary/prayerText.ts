@@ -11,6 +11,20 @@ export function normalizePrayerTextForCards(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+export function ensureEllipsis(text: string): string {
+  const trimmed = normalizePrayerTextForCards(text);
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.endsWith("...")) {
+    return trimmed;
+  }
+
+  return `${trimmed.replace(/[.\u3002\u2026]+$/u, "")}...`;
+}
+
 export function getPrayerIncipit(prayer: Prayer, language?: PrayerLanguage): string {
   const variant = getPrayerVariant(prayer, language);
   return variant.incipit || makeIncipit(variant.text);

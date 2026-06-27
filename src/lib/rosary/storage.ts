@@ -233,6 +233,7 @@ export function createEmptyGuideCardCustomization(guideId: string): GuideCardCus
     removedItemIds: [],
     fullPrayerOverrides: {},
     prayerLanguageOverrides: {},
+    customItems: [],
     textOverrides: {},
     updatedAt: new Date().toISOString(),
   };

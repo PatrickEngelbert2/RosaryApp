@@ -14,8 +14,10 @@ import {
 } from "@/lib/rosary/generateGuideCards";
 import { GUIDE_CARD_LAYOUTS } from "@/lib/rosary/guideCardLayouts";
 import {
+  createGuideCardCustomItem,
   findDuplicateIds,
   getVisibleEditableItemIds,
+  insertEditableItemAfter,
   moveEditableItem,
   reorderEditableItem,
 } from "@/lib/rosary/guideCardCustomizations";
@@ -189,9 +191,121 @@ describe("card content generation", () => {
 
     expect(text).toContain("Custom opening line.");
     expect(visibleIds).not.toContain(secondItemId);
-    expect(text).toContain("Our Father:");
+    expect(text).toContain("Our Father, who art in heaven");
+    expect(text).not.toContain("Our Father:");
     expect(text).not.toContain("Grip");
     expect(text).not.toContain("Remove");
+  });
+
+  it("renders compact and full prayer text without card-only label prefixes", () => {
+    const config = createTestGuide({
+      prayerLanguageById: {
+        "hail-mary": "la",
+      },
+    });
+    const generated = generateGuideCardsFromConfig(
+      config,
+      { cardSize: "full-1", cardCount: 1, fullPrayerIds: ["our-father", "sign-of-the-cross"] },
+      fixedDate,
+    );
+    const text = generatedText(generated.cards[0]);
+
+    expect(text).toContain("10x - Ave Maria, gratia plena...");
+    expect(text).toContain("Glory be to the Father...");
+    expect(text).toContain("In the name of the Father, and of the Son, and of the Holy Spirit. Amen.");
+    expect(text).not.toContain("Our Father:");
+    expect(text).not.toContain("Sign of the Cross:");
+    expect(text).not.toContain("10 Ave Maria prayers");
+  });
+
+  it("keeps mystery fruit text with its mystery as one editable unit", () => {
+    const generated = generateGuideCardsFromConfig(
+      createTestGuide(),
+      { cardSize: "pocket-4", cardCount: 1 },
+      fixedDate,
+    );
+    const mysteryItem = allSides(generated.cards[0])
+      .flatMap((side) => side.blocks)
+      .flatMap((block) => block.lines ?? [])
+      .find((line) => line.includes("The First Sorrowful Mystery"));
+
+    expect(mysteryItem).toBe(
+      "1. The First Sorrowful Mystery is The Agony in the Garden. The fruit of this mystery is Sorrow for sin.",
+    );
+    expect(generatedText(generated.cards[0])).not.toMatch(/\nSorrow for sin\./);
+  });
+
+  it("renders added card-only items and reset removes them", () => {
+    const config = createTestGuide();
+    const customItems = [
+      createGuideCardCustomItem({
+        id: "custom-section",
+        kind: "section",
+        sectionId: "custom-section",
+        text: "Walk Notes",
+      }),
+      createGuideCardCustomItem({
+        id: "custom-note",
+        kind: "note",
+        sectionId: "custom-section",
+        text: "Meet by the front steps.",
+      }),
+      createGuideCardCustomItem({
+        id: "custom-leader-note",
+        kind: "leader-note",
+        sectionId: "custom-section",
+        text: "Wait until the group has crossed safely.",
+      }),
+      createGuideCardCustomItem({
+        id: "custom-intention",
+        kind: "intention",
+        sectionId: "custom-section",
+        text: "For our parish families.",
+      }),
+      createGuideCardCustomItem({
+        id: "custom-saint",
+        kind: "saint-invocation",
+        sectionId: "custom-section",
+        text: "Saint Anne",
+      }),
+      createGuideCardCustomItem({
+        id: "custom-prayer",
+        kind: "prayer",
+        sectionId: "custom-section",
+        text: "Hail Mary",
+        prayerId: "hail-mary",
+        prayerLanguage: "la",
+        printMode: "short",
+      }),
+      createGuideCardCustomItem({
+        id: "custom-text",
+        kind: "custom-text",
+        sectionId: "custom-section",
+        text: "Bring extra printed cards.",
+      }),
+    ];
+    const customized = generateGuideCardsFromConfig(
+      config,
+      { cardSize: "full-1", cardCount: 1 },
+      fixedDate,
+      createCustomization(config.id, { customItems }),
+    );
+    const reset = generateGuideCardsFromConfig(
+      config,
+      { cardSize: "full-1", cardCount: 1 },
+      fixedDate,
+      createCustomization(config.id),
+    );
+    const text = generatedText(customized.cards[0]);
+
+    expect(text).toContain("Walk Notes");
+    expect(text).toContain("Meet by the front steps.");
+    expect(text).toContain("Wait until the group has crossed safely.");
+    expect(text).toContain("For our parish families.");
+    expect(text).toContain("Saint Anne, pray for us.");
+    expect(text).toContain("Ave Maria, gratia plena...");
+    expect(text).toContain("Bring extra printed cards.");
+    expect(generatedText(reset.cards[0])).not.toContain("Walk Notes");
   });
 
   it("empty customization behaves as a reset of card-only customizations", () => {
@@ -236,6 +350,36 @@ describe("card ordering and reordering", () => {
     expect(new Set(crossSection).size).toBe(ids.length);
     expect(crossSection.sort()).toEqual([...ids].sort());
     expect(findDuplicateIds(crossSection)).toEqual([]);
+  });
+
+  it("inserts added items after a visible target", () => {
+    expect(insertEditableItemAfter(["a", "b", "c"], "new", "b")).toEqual(["a", "b", "new", "c"]);
+    expect(insertEditableItemAfter(["a", "b", "c"], "new")).toEqual(["a", "b", "c", "new"]);
+  });
+
+  it("treats section headings as editable standalone items", () => {
+    const config = createTestGuide();
+    const baseline = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+    const itemIds = getVisibleEditableItemIds(allSides(baseline.cards[0]));
+    const customized = generateGuideCardsFromConfig(
+      config,
+      { cardSize: "full-1", cardCount: 1 },
+      fixedDate,
+      createCustomization(config.id, {
+        textOverrides: {
+          "opening:heading": "Custom Opening",
+        },
+        removedItemIds: ["intentions:heading"],
+      }),
+    );
+    const customizedIds = getVisibleEditableItemIds(allSides(customized.cards[0]));
+
+    expect(itemIds).toContain("opening:heading");
+    expect(itemIds).toContain("opening:line-1");
+    expect(generatedText(customized.cards[0])).toContain("Custom Opening");
+    expect(customizedIds).not.toContain("intentions:heading");
+    expect(customizedIds).toContain("intentions:line-1");
+    expect(findDuplicateIds(customizedIds)).toEqual([]);
   });
 
   it("preserves stable editable item IDs and unique rendered keys", () => {
@@ -289,7 +433,7 @@ describe("card layout packing", () => {
     expect(generated.warnings.some((warning) => warning.includes("even though face"))).toBe(false);
     expect(hasEmptyFaceBeforeNonEmpty(sides)).toBe(false);
     expect(findDuplicateIds(sides.flatMap((side) => side.blocks.map((block) => block.layoutInstanceId ?? block.id)))).toEqual([]);
-    expect(sides.every((side) => side.blocks.every((block) => !block.heading || (block.lines?.length ?? 0) > 0 || Boolean(block.body)))).toBe(true);
+    expect(sides.every((side) => side.blocks.every((block) => block.type === "heading" || !block.heading || (block.lines?.length ?? 0) > 0 || Boolean(block.body)))).toBe(true);
 
     if ((generated.cards[0].extraSides?.length ?? 0) > 0) {
       expect(generated.cards[0].front.blocks.length).toBeGreaterThan(0);
@@ -351,6 +495,20 @@ describe("storage validation", () => {
         "our-father": "la",
         "not-a-prayer": "la",
       } as Record<string, "la">,
+      customItems: [
+        createGuideCardCustomItem({
+          id: "good-custom-item",
+          kind: "note",
+          sectionId: "custom",
+          text: "Keep me.",
+        }),
+        {
+          id: "bad-custom-item",
+          kind: "bad",
+          sectionId: "custom",
+          text: "Drop me.",
+        },
+      ] as unknown as GuideCardCustomization["customItems"],
       textOverrides: {
         keep: "yes",
         drop: 12 as unknown as string,
@@ -362,6 +520,7 @@ describe("storage validation", () => {
     expect(normalized.items[0].removedItemIds).toEqual(["x"]);
     expect(normalized.items[0].fullPrayerOverrides).toEqual({ "our-father": true });
     expect(normalized.items[0].prayerLanguageOverrides).toEqual({ "our-father": "la" });
+    expect(normalized.items[0].customItems?.map((item) => item.id)).toEqual(["good-custom-item"]);
     expect(normalized.items[0].textOverrides).toEqual({ keep: "yes" });
     expect(normalizeStoredGuideCardLayoutOptions({ cardSize: "bad", cardCount: 999 }).cardSize).toBe("pocket-4");
   });
@@ -393,6 +552,7 @@ function createCustomization(
     removedItemIds: [],
     fullPrayerOverrides: {},
     prayerLanguageOverrides: {},
+    customItems: [],
     textOverrides: {},
     updatedAt: "2026-06-26T00:00:00.000Z",
     ...overrides,

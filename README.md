@@ -16,7 +16,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Mix English and Latin prayer texts per prayer in saved guides.
 - Add saint invocations.
 - Follow prayers with collapsible text.
-- Pray saved guides one step at a time with mobile-friendly Back, Next, Restart, and Finish controls.
+- Pray saved guides one step at a time with mobile-friendly Back, Next, Finish, and protected restart controls.
 - Group repeated Hail Marys or show them individually.
 - Choose whether step-by-step mode counts each repeated prayer or groups repeated prayers for use with a physical rosary.
 - Generate printable front/back guide cards.
@@ -133,12 +133,14 @@ The Custom Pray page at `/pray/custom` has two prayer views for saved guides:
 - Read guide: the original scroll-based prayer view with collapsible prayer text, large-text controls, repeated-prayer display controls, and optional leader notes.
 - Pray step by step: a focused prayer mode that shows one prayer, mystery announcement, instruction, leader note, pause, saint invocation, or closing action at a time.
 
-Step-by-step mode is generated from the same structured rosary flow as the scroll view, so selected mysteries, closing prayers, saint invocations, leader notes, custom guidance, and English/Latin prayer choices stay consistent with the saved guide. The mode stores progress locally per guide in the browser and keeps the repeated-prayer pacing preference locally.
+Step-by-step mode is generated from the same structured rosary flow as the scroll view, so selected mysteries, closing prayers, saint invocations, leader notes, custom guidance, and English/Latin prayer choices stay consistent with the saved guide. The mode stores progress locally per guide in the browser and keeps the repeated-prayer pacing preference locally. Restart is a secondary action that asks for confirmation before resetting progress.
 
 Repeated prayers can be handled two ways:
 
 - Count each prayer expands repeated prayers into individual steps, such as `Hail Mary 4 of 10`. This is useful when someone does not have a physical rosary and wants the site to count each bead.
 - Group repeated prayers shows one step, such as `Hail Mary x 10`, and advances after the group. This is useful when someone has a rosary and only wants the site to keep them on track.
+
+Switching between these two pacing modes preserves the current logical prayer position where possible. For example, `Hail Mary 4 of 10` maps back to the grouped `Hail Mary x 10` step for that same decade instead of restarting the guide.
 
 ## Guide Card Workflow
 

@@ -40,9 +40,11 @@ export function createPrayerSteps(
           steps.push({
             ...createBasePrayerStep(step, currentMystery, config),
             id: `${step.id}-${index}`,
+            logicalStepKey: `${step.id}:repeat:${index}`,
             title: `${step.prayer.title} ${index} of ${repeatCount}`,
             subtitle: step.description,
             type: "prayer",
+            repeatGroupId: step.id,
             repeatIndex: index,
             repeatTotal: repeatCount,
             repeatCount: 1,
@@ -54,8 +56,10 @@ export function createPrayerSteps(
       steps.push({
         ...createBasePrayerStep(step, currentMystery, config),
         type: "repeated-prayer",
+        logicalStepKey: `${step.id}:repeat-group`,
         title: `${step.prayer.title} x ${repeatCount}`,
         subtitle: step.description,
+        repeatGroupId: step.id,
         repeatCount,
       });
       return;
@@ -99,6 +103,8 @@ function createBasePrayerStep(
 ): PrayerStep {
   return {
     id: step.id,
+    sourceFlowItemId: step.id,
+    logicalStepKey: getLogicalStepKey(step, mystery),
     type: "prayer",
     title: step.prayer?.title ?? step.title,
     subtitle: step.description,
@@ -106,6 +112,7 @@ function createBasePrayerStep(
     prayerId: step.prayer?.id,
     language: step.prayer?.id ? getPrayerLanguage(step.prayer.id, config.prayerLanguageById) : undefined,
     decadeIndex: mystery?.number,
+    mysteryId: mystery?.id,
     mysteryName: mystery?.title,
     mysteryTitle: mystery ? `${ordinalLabel(mystery.number)} ${mystery.setName} Mystery` : undefined,
     fruit: mystery?.fruitOfMystery,
@@ -122,17 +129,33 @@ function createNonPrayerStep(
 
   return {
     id: step.id,
+    sourceFlowItemId: step.id,
+    logicalStepKey: getLogicalStepKey(step, step.mystery ?? mystery),
     type,
     title: step.title,
     subtitle: step.description,
     body: step.text ?? step.description,
     decadeIndex: mystery?.number,
+    mysteryId: mystery?.id,
     mysteryName: mystery?.title,
     mysteryTitle: mystery ? `${ordinalLabel(mystery.number)} ${mystery.setName} Mystery` : undefined,
     fruit: step.mystery?.fruitOfMystery ?? mystery?.fruitOfMystery,
     scriptureReference: step.mystery?.scriptureReference ?? mystery?.scriptureReference,
     leaderOnly: step.leaderOnly,
   };
+}
+
+function getLogicalStepKey(
+  step: RenderedRosaryStep,
+  mystery: RenderedRosaryStep["mystery"],
+): string {
+  const context = mystery ? `decade-${mystery.number}` : "guide";
+
+  if (step.prayer?.id) {
+    return `${context}:prayer:${step.prayer.id}:${step.id}`;
+  }
+
+  return `${context}:${step.type}:${step.id}`;
 }
 
 function getStepType(step: RenderedRosaryStep): PrayerStepModeType {

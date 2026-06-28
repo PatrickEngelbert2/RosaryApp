@@ -135,15 +135,19 @@ export type PrayerStepModeType =
 export type PrayerStep = {
   id: string;
   type: PrayerStepModeType;
+  sourceFlowItemId?: string;
+  logicalStepKey: string;
   title: string;
   subtitle?: string;
   body?: string;
   prayerId?: PrayerId;
   language?: PrayerLanguage;
+  repeatGroupId?: string;
   repeatCount?: number;
   repeatIndex?: number;
   repeatTotal?: number;
   decadeIndex?: number;
+  mysteryId?: string;
   mysteryName?: string;
   mysteryTitle?: string;
   fruit?: string;

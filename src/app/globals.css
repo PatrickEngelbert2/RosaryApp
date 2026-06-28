@@ -163,10 +163,26 @@ a {
 }
 
 .step-prayer-primary-button,
-.step-prayer-secondary-button {
+.step-prayer-secondary-button,
+.step-prayer-danger-button,
+.step-prayer-mode-button,
+.step-prayer-text-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.step-prayer-primary-button,
+.step-prayer-secondary-button,
+.step-prayer-danger-button {
   min-height: 3rem;
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
@@ -179,22 +195,175 @@ a {
   color: white;
 }
 
+.step-prayer-primary-button:hover {
+  background: #153b75;
+  box-shadow: 0 12px 24px rgb(16 42 86 / 0.18);
+  transform: translateY(-2px);
+}
+
 .step-prayer-secondary-button {
   border: 1px solid rgb(16 42 86 / 0.18);
   background: white;
   color: #102a56;
 }
 
+.step-prayer-secondary-button:hover {
+  border-color: rgb(16 42 86 / 0.38);
+  background: #fffaf0;
+  box-shadow: 0 10px 20px rgb(16 42 86 / 0.12);
+  transform: translateY(-2px);
+}
+
+.step-prayer-danger-button {
+  border: 1px solid rgb(127 29 29 / 0.24);
+  background: white;
+  color: #7f1d1d;
+}
+
+.step-prayer-danger-button:hover {
+  border-color: rgb(127 29 29 / 0.45);
+  background: #fff7ed;
+  box-shadow: 0 10px 20px rgb(127 29 29 / 0.1);
+  transform: translateY(-2px);
+}
+
+.step-prayer-text-button {
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  color: #102a56;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration-line: underline;
+  text-decoration-color: rgb(185 137 40 / 0.45);
+  text-underline-offset: 0.24em;
+}
+
+.step-prayer-text-button:hover {
+  color: #153b75;
+  text-decoration-color: #b98928;
+  transform: translateY(-1px);
+}
+
+.step-prayer-mode-button {
+  min-height: 2.75rem;
+  border-radius: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.step-prayer-mode-button-active {
+  background: #102a56;
+  box-shadow: 0 6px 14px rgb(16 42 86 / 0.16);
+  color: white;
+}
+
+.step-prayer-mode-button-idle {
+  color: #102a56;
+}
+
+.step-prayer-mode-button:hover {
+  box-shadow: 0 8px 16px rgb(16 42 86 / 0.12);
+  transform: translateY(-1px);
+}
+
+.step-prayer-mode-button-idle:hover {
+  background: white;
+  color: #153b75;
+}
+
+.step-prayer-option {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.step-prayer-option:hover {
+  box-shadow: 0 10px 20px rgb(16 42 86 / 0.12);
+  transform: translateY(-2px);
+}
+
+.step-prayer-option-active {
+  border-color: #102a56;
+  background: #102a56;
+  color: white;
+}
+
+.step-prayer-option-idle {
+  border-color: rgb(16 42 86 / 0.1);
+  background: #fffaf0;
+  color: #1d2433;
+}
+
+.step-prayer-option-idle:hover {
+  border-color: rgb(16 42 86 / 0.28);
+  background: white;
+}
+
+.step-prayer-primary-button:active,
+.step-prayer-secondary-button:active,
+.step-prayer-danger-button:active,
+.step-prayer-mode-button:active,
+.step-prayer-text-button:active,
+.step-prayer-option:active {
+  transform: translateY(0) scale(0.98);
+}
+
 .step-prayer-primary-button:focus-visible,
-.step-prayer-secondary-button:focus-visible {
+.step-prayer-secondary-button:focus-visible,
+.step-prayer-danger-button:focus-visible,
+.step-prayer-mode-button:focus-visible,
+.step-prayer-text-button:focus-visible,
+.step-prayer-option:focus-within {
   outline: 2px solid rgb(16 42 86 / 0.32);
   outline-offset: 2px;
 }
 
 .step-prayer-primary-button:disabled,
-.step-prayer-secondary-button:disabled {
+.step-prayer-secondary-button:disabled,
+.step-prayer-danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+  transform: none;
+  box-shadow: none;
+}
+
+.step-prayer-primary-button:disabled:hover,
+.step-prayer-secondary-button:disabled:hover,
+.step-prayer-danger-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-prayer-primary-button,
+  .step-prayer-secondary-button,
+  .step-prayer-danger-button,
+  .step-prayer-mode-button,
+  .step-prayer-text-button,
+  .step-prayer-option {
+    transition: none;
+    transform: none;
+  }
+
+  .step-prayer-primary-button:hover,
+  .step-prayer-secondary-button:hover,
+  .step-prayer-danger-button:hover,
+  .step-prayer-mode-button:hover,
+  .step-prayer-text-button:hover,
+  .step-prayer-option:hover,
+  .step-prayer-primary-button:active,
+  .step-prayer-secondary-button:active,
+  .step-prayer-danger-button:active,
+  .step-prayer-mode-button:active,
+  .step-prayer-text-button:active,
+  .step-prayer-option:active {
+    transform: none;
+  }
 }
 
 @keyframes easy-fade {

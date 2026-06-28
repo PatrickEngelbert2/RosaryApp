@@ -12,8 +12,13 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Preserved the existing scroll/read prayer mode and added a clear Read guide / Pray step by step switch.
 - Added local repeated-prayer pacing preferences for step-by-step mode, with Count each prayer for app-counted beads and Group repeated prayers for users praying with a physical rosary.
 - Built step-by-step prayer data from the existing rosary flow and prayer language resolution so saved guide settings, mysteries, closing prayers, saint invocations, and English/Latin choices remain consistent.
-- Added mobile-friendly step navigation with progress, Back, Next, Restart, Finish, Exit, and local per-guide progress restoration.
+- Added mobile-friendly step navigation with progress, Back, Next, Finish, protected restart, and local per-guide progress restoration.
+- Removed unnecessary Exit and Return to guide controls from step-by-step mode so the existing Read guide / Pray step by step switch remains the way back to scroll mode.
+- Made Restart safer by moving it out of the main bottom navigation and requiring confirmation before resetting prayer progress.
+- Improved step-mode button cursor, hover, focus, and active states with motion-aware lift/press interactions.
+- Preserved logical prayer progress when switching between Count each prayer and Group repeated prayers.
 - Added regression coverage for step generation, repeated-prayer expansion/grouping, mixed English/Latin settings, saint invocations, closings, and navigation boundaries.
+- Added regression coverage for logical step matching between counted and grouped repeated-prayer modes.
 - Polished homepage, Builder, Guide Cards, Pray, and Resources copy so first-time users can more quickly understand how to pray, build, print, and lead.
 - Added local guide backup UI for backing up the selected guide, backing up all guides, and importing guide backup files without a backend.
 - Added a versioned Walk the Rosary guide backup JSON format that includes saved guides and related Guide Cards customizations.

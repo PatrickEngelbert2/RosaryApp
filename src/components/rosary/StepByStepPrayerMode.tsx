@@ -8,6 +8,7 @@ import {
   getNextPrayerStepIndex,
   getPreviousPrayerStepIndex,
 } from "@/lib/rosary/createPrayerSteps";
+import { findBestMatchingPrayerStepIndex } from "@/lib/rosary/prayerStepMatching";
 import {
   getStepPrayerModePreference,
   getStepPrayerProgress,
@@ -19,17 +20,16 @@ import type { PrayerStep, RepeatedPrayerStepMode, UserRosaryConfig } from "@/lib
 type StepByStepPrayerModeProps = {
   config: UserRosaryConfig;
   showLeaderNotes: boolean;
-  onExit: () => void;
 };
 
 export function StepByStepPrayerMode({
   config,
   showLeaderNotes,
-  onExit,
 }: StepByStepPrayerModeProps) {
   const [repeatedPrayerMode, setRepeatedPrayerMode] = useState<RepeatedPrayerStepMode>("group");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasLoadedProgress, setHasLoadedProgress] = useState(false);
+  const [isConfirmingRestart, setIsConfirmingRestart] = useState(false);
   const steps = useMemo(
     () => createPrayerSteps(config, { repeatedPrayerMode, includeLeaderNotes: showLeaderNotes }),
     [config, repeatedPrayerMode, showLeaderNotes],
@@ -93,20 +93,39 @@ export function StepByStepPrayerMode({
   });
 
   function updateRepeatedPrayerMode(mode: RepeatedPrayerStepMode) {
+    if (mode === repeatedPrayerMode) {
+      return;
+    }
+
+    const nextSteps = createPrayerSteps(config, {
+      repeatedPrayerMode: mode,
+      includeLeaderNotes: showLeaderNotes,
+    });
+    const nextIndex = findBestMatchingPrayerStepIndex({
+      currentStep,
+      nextSteps,
+      currentIndex: clampedIndex,
+      currentTotal: steps.length,
+    });
+
     setRepeatedPrayerMode(mode);
-    setCurrentIndex(0);
+    setCurrentIndex(nextIndex);
+    setIsConfirmingRestart(false);
   }
 
   function goNext() {
     setCurrentIndex((index) => getNextPrayerStepIndex(index, steps.length));
+    setIsConfirmingRestart(false);
   }
 
   function goBack() {
     setCurrentIndex((index) => getPreviousPrayerStepIndex(index, steps.length));
+    setIsConfirmingRestart(false);
   }
 
   function restart() {
     setCurrentIndex(0);
+    setIsConfirmingRestart(false);
   }
 
   if (steps.length === 0) {
@@ -114,13 +133,10 @@ export function StepByStepPrayerMode({
       <article className="rounded-lg border border-blue-900/10 bg-white p-5 shadow-sm">
         <h2 className="text-2xl font-semibold text-blue-900">No prayer steps found</h2>
         <p className="mt-3 leading-7 text-slate-700">
-          This guide does not have enabled prayer steps. Return to the guide or edit it in the
-          builder.
+          This guide does not have enabled prayer steps. Edit it in the builder to add prayer
+          content.
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <button type="button" className="step-prayer-secondary-button" onClick={onExit}>
-            Return to guide
-          </button>
           <Link className="step-prayer-primary-button" href="/builder">
             Edit guide
           </Link>
@@ -141,9 +157,6 @@ export function StepByStepPrayerMode({
               {config.name}
             </h2>
           </div>
-          <button type="button" className="step-prayer-secondary-button" onClick={onExit}>
-            Return to guide
-          </button>
         </div>
 
         <fieldset className="mt-5">
@@ -165,6 +178,13 @@ export function StepByStepPrayerMode({
         </fieldset>
       </div>
 
+      <RestartPrayerControl
+        isConfirming={isConfirmingRestart}
+        onRequestRestart={() => setIsConfirmingRestart(true)}
+        onCancel={() => setIsConfirmingRestart(false)}
+        onConfirm={restart}
+      />
+
       <div className="rounded-lg border border-blue-900/10 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3 text-sm font-medium text-slate-700">
           <span>
@@ -181,7 +201,7 @@ export function StepByStepPrayerMode({
       </div>
 
       {isComplete ? (
-        <CompletionCard onRestart={restart} onExit={onExit} />
+        <CompletionCard onRestart={restart} />
       ) : currentStep ? (
         <FocusedPrayerStepCard step={currentStep} />
       ) : null}
@@ -190,7 +210,7 @@ export function StepByStepPrayerMode({
         className="sticky bottom-0 z-20 -mx-4 border-t border-blue-900/10 bg-cream-50/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none"
         aria-label="Step prayer navigation"
       >
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             className="step-prayer-secondary-button"
@@ -198,12 +218,6 @@ export function StepByStepPrayerMode({
             disabled={clampedIndex === 0}
           >
             Back
-          </button>
-          <button type="button" className="step-prayer-secondary-button" onClick={restart}>
-            Restart
-          </button>
-          <button type="button" className="step-prayer-secondary-button" onClick={onExit}>
-            Exit
           </button>
           <button type="button" className="step-prayer-primary-button" onClick={goNext}>
             {clampedIndex >= steps.length - 1 ? "Finish" : "Next"}
@@ -229,8 +243,8 @@ function RepeatedPrayerOption({
     <label
       className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm ${
         checked
-          ? "border-blue-900 bg-blue-900 text-white"
-          : "border-blue-900/10 bg-cream-50 text-slate-800"
+          ? "step-prayer-option step-prayer-option-active"
+          : "step-prayer-option step-prayer-option-idle"
       }`}
     >
       <input
@@ -296,7 +310,46 @@ function FocusedPrayerStepCard({ step }: { step: PrayerStep }) {
   );
 }
 
-function CompletionCard({ onRestart, onExit }: { onRestart: () => void; onExit: () => void }) {
+function RestartPrayerControl({
+  isConfirming,
+  onRequestRestart,
+  onCancel,
+  onConfirm,
+}: {
+  isConfirming: boolean;
+  onRequestRestart: () => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (isConfirming) {
+    return (
+      <div className="rounded-lg border border-gold-500/30 bg-cream-100 p-4 shadow-sm">
+        <p className="font-semibold text-blue-900">Restart this prayer guide?</p>
+        <p className="mt-1 text-sm leading-6 text-slate-700">
+          Your current step progress will be reset.
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button type="button" className="step-prayer-secondary-button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="step-prayer-danger-button" onClick={onConfirm}>
+            Restart
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-end">
+      <button type="button" className="step-prayer-text-button" onClick={onRequestRestart}>
+        Restart guide
+      </button>
+    </div>
+  );
+}
+
+function CompletionCard({ onRestart }: { onRestart: () => void }) {
   return (
     <article className="rounded-lg border border-blue-900/10 bg-white p-6 text-center shadow-sm">
       <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">Complete</p>
@@ -305,9 +358,6 @@ function CompletionCard({ onRestart, onExit }: { onRestart: () => void; onExit: 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <button type="button" className="step-prayer-primary-button" onClick={onRestart}>
           Pray again
-        </button>
-        <button type="button" className="step-prayer-secondary-button" onClick={onExit}>
-          Return to guide
         </button>
         <Link className="step-prayer-secondary-button" href="/cards">
           Print guide cards

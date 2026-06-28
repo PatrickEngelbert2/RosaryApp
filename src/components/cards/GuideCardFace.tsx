@@ -1,15 +1,24 @@
-import type { GuideCardBlock, GuideCardSide, GuideCardSize } from "@/lib/rosary/types";
+import type {
+  GuideCardBlock,
+  GuideCardEditableItemType,
+  GuideCardSide,
+  GuideCardSize,
+} from "@/lib/rosary/types";
 
 type GuideCardFaceMode = "preview" | "print";
 
 export type GuideCardEditAction = {
   itemId: string;
   sectionId: string;
+  itemType?: GuideCardEditableItemType;
   prayerId?: string;
+  title?: string;
   text: string;
   heading?: string;
   printMode?: "short" | "full";
   canToggleFullPrayer?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
 };
 
 export type GuideCardDropPosition = "before" | "after";
@@ -36,8 +45,10 @@ export type GuideCardEditHandlers = {
   onDragOverItem?: (targetItemId: string, position: GuideCardDropPosition) => void;
   onToggleFullPrayer?: (prayerId: GuideCardEditAction["prayerId"], nextFull: boolean) => void;
   onEditTitle?: (field: "title" | "subtitle", currentText: string) => void;
+  onSelectItem?: (action: GuideCardEditAction) => void;
   canMoveItem?: (itemId: string, direction: "up" | "down") => boolean;
   dragState?: GuideCardDragState;
+  selectedItemId?: string;
 };
 
 type GuideCardFaceProps = {
@@ -112,11 +123,15 @@ function GuideCardBlockView({
     ? {
         itemId: editableItem.id,
         sectionId: editableItem.sectionId,
+        itemType: editableItem.type,
         prayerId: editableItem.prayerId,
+        title: editableItem.title,
         text: editableItem.currentText,
         heading: block.heading,
         printMode: editableItem.printMode,
         canToggleFullPrayer: editableItem.canToggleFullPrayer,
+        canEdit: editableItem.canEdit,
+        canDelete: editableItem.canDelete,
       }
     : undefined;
   const isDragging = Boolean(
@@ -135,6 +150,10 @@ function GuideCardBlockView({
         block.leaderOnly ? "leader-section" : "",
         editHandlers && editableAction ? "guide-card-editable-item" : "",
         isDragging ? "guide-card-dragging-item" : "",
+        editHandlers?.selectedItemId &&
+        editableAction?.itemId === editHandlers.selectedItemId
+          ? "guide-card-mobile-selected-item"
+          : "",
         dropPosition === "before" ? "guide-card-drop-before" : "",
         dropPosition === "after" ? "guide-card-drop-after" : "",
       ]
@@ -143,7 +162,13 @@ function GuideCardBlockView({
       data-editable-item-id={editableAction?.itemId}
       data-guide-block-key={blockKey}
       data-guide-section-id={editableAction?.sectionId}
+      data-mobile-selected={
+        editHandlers?.selectedItemId && editableAction?.itemId === editHandlers.selectedItemId
+          ? "true"
+          : undefined
+      }
       draggable={Boolean(editHandlers && editableAction)}
+      aria-label={editableAction ? `Select card item: ${editableAction.title ?? editableAction.text}` : undefined}
       onDragStart={(event) => {
         if (!editableAction) return;
         event.dataTransfer.setData("text/plain", editableAction.itemId);
@@ -174,6 +199,15 @@ function GuideCardBlockView({
         }
 
         editHandlers?.onDragEnd?.();
+      }}
+      onClick={() => {
+        if (!editableAction) return;
+        editHandlers?.onSelectItem?.(editableAction);
+      }}
+      onKeyDown={(event) => {
+        if (!editableAction || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        editHandlers?.onSelectItem?.(editableAction);
       }}
       tabIndex={editHandlers && editableAction ? 0 : undefined}
     >
@@ -214,7 +248,11 @@ function GuideCardBlockView({
         </ul>
       ) : null}
       {editHandlers && editableAction ? (
-        <div className="guide-card-item-controls" aria-label="Card item controls">
+        <div
+          className="guide-card-item-controls"
+          aria-label="Card item controls"
+          onClick={(event) => event.stopPropagation()}
+        >
           <button
             type="button"
             aria-label="Drag item"

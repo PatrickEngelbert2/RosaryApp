@@ -15,6 +15,9 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added regression coverage for selected-guide export, all-guide export, single-guide import, multi-guide import with customization remapping, and invalid backup rejection.
 - Fixed the Guide Backup panel layout so its explanatory copy no longer gets squeezed beside the backup buttons in narrower page columns.
 - Tightened repeated-prayer card incipits for Our Father, Hail Mary, Glory Be, Fatima Prayer, Hail Holy Queen, Memorare, and St. Michael Prayer.
+- Fixed mobile Guide Cards preview clipping by preserving print-sized preview faces inside scrollable preview frames.
+- Added mobile tap-to-select Guide Card preview items with a bottom action sheet for edit, add above/below, move up/down, full-short toggle, and remove actions.
+- Preserved desktop hover/focus preview controls and kept mobile/desktop preview controls out of print output.
 - Reworked Guide Cards preview and print layout to use client-side rendered card measurement as the final packing source of truth instead of rough fit estimates.
 - Updated Guide Cards packing to fill the front first, then the back, then continuation faces only when measured content no longer fits.
 - Preserved shared measured layout decisions between preview and `/cards/print`, including the polished preparing-layout states before cards render or print.

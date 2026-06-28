@@ -98,6 +98,22 @@ describe("prayer language resolution", () => {
     expect(getFullPrayerTextForCards(hailMary, "en")).toContain("Hail Mary, full of grace");
   });
 
+  it("uses compact English card incipits for common repeated prayers", () => {
+    expect(getCompactPrayerText(prayersById["our-father"], "en")).toBe("Our Father...");
+    expect(getCompactPrayerText(prayersById["hail-mary"], "en")).toBe("Hail Mary...");
+    expect(getCompactPrayerText(prayersById["glory-be"], "en")).toBe("Glory be...");
+    expect(getCompactPrayerText(prayersById["fatima-prayer"], "en")).toBe("O my Jesus...");
+    expect(getCompactPrayerText(prayersById["hail-holy-queen"], "en")).toBe(
+      "Hail, holy Queen, Mother of mercy...",
+    );
+    expect(getCompactPrayerText(prayersById["memorare"], "en")).toBe(
+      "Remember, O most gracious Virgin Mary...",
+    );
+    expect(getCompactPrayerText(prayersById["st-michael-prayer"], "en")).toBe(
+      "St. Michael the Archangel...",
+    );
+  });
+
   it.each(testedPrayerIds)("%s has short/full English and Latin text", (prayerId) => {
     const prayer = prayersById[prayerId];
 
@@ -223,7 +239,7 @@ describe("card content generation", () => {
     const text = generatedText(generated.cards[0]);
 
     expect(text).toContain("10x - Ave Maria, gratia plena...");
-    expect(text).toContain("Glory be to the Father...");
+    expect(text).toContain("Glory be...");
     expect(text).toContain("In the name of the Father, and of the Son, and of the Holy Spirit. Amen.");
     expect(text).not.toContain("Our Father:");
     expect(text).not.toContain("Sign of the Cross:");

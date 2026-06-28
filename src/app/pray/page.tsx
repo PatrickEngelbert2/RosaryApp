@@ -16,12 +16,11 @@ export default function PrayPage() {
           Pray the Rosary
         </p>
         <h1 className="mt-3 text-3xl font-bold text-blue-900 sm:text-4xl">
-          A beginner-friendly Rosary flow
+          Pray a simple Rosary
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-700">
-          Follow the prayers in order. This first version uses the Joyful
-          Mysteries as sample data and keeps the structure ready for future
-          previous and next navigation.
+          Follow the prayers in order with readable text and a steady rhythm.
+          For your own saved guide, use Pray My Rosary.
         </p>
       </header>
 

@@ -10,6 +10,10 @@ export default function CustomPrayPage() {
         <h1 className="mt-2 text-3xl font-bold text-blue-900">
           Follow your saved Rosary style
         </h1>
+        <p className="mt-3 leading-7 text-slate-700">
+          Choose a saved guide or use the default Rosary. Large text and collapsible prayers make
+          it easier to pray from your phone.
+        </p>
       </header>
       <PrayRosaryClient />
     </div>

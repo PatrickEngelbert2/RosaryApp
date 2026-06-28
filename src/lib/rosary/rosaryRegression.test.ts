@@ -18,6 +18,13 @@ import {
   packGuideCardBlocksByHeight,
 } from "@/lib/rosary/measuredGuideCardLayout";
 import {
+  createGuideBackupFile,
+  createGuideBackupFilename,
+  parseGuideBackupJson,
+  prepareGuideBackupImport,
+  validateGuideBackupFile,
+} from "@/lib/rosary/guideBackups";
+import {
   createGuideCardCustomItem,
   findDuplicateIds,
   getVisibleEditableItemIds,
@@ -602,6 +609,123 @@ describe("storage validation", () => {
     expect(normalized.items[0].customItems?.map((item) => item.id)).toEqual(["good-custom-item"]);
     expect(normalized.items[0].textOverrides).toEqual({ keep: "yes" });
     expect(normalizeStoredGuideCardLayoutOptions({ cardSize: "bad", cardCount: 999 }).cardSize).toBe("pocket-4");
+  });
+});
+
+describe("guide backup import and export", () => {
+  it("exports a selected guide with backup metadata and related card customization", () => {
+    const guide = createTestGuide();
+    const customization = createCustomization(guide.id, {
+      textOverrides: {
+        "opening:line-1": "Custom backup line.",
+      },
+    });
+    const backup = createGuideBackupFile({
+      type: "single-guide",
+      guides: [guide],
+      cardCustomizations: [customization, createCustomization("other-guide")],
+      exportedAt: fixedDate,
+    });
+
+    expect(backup.app).toBe("walk-the-rosary");
+    expect(backup.version).toBe(1);
+    expect(backup.exportedAt).toBe(fixedDate.toISOString());
+    expect(backup.type).toBe("single-guide");
+    expect(backup.guides).toHaveLength(1);
+    expect(backup.guides[0].id).toBe(guide.id);
+    expect(backup.cardCustomizations).toEqual([customization]);
+    expect(createGuideBackupFilename(guide.name, "single-guide")).toBe(
+      "walk-the-rosary-regression-test-guide.json",
+    );
+  });
+
+  it("exports all guides with matching card customizations", () => {
+    const firstGuide = createTestGuide({ id: "first-guide", name: "First Guide" });
+    const secondGuide = createTestGuide({ id: "second-guide", name: "Second Guide" });
+    const firstCustomization = createCustomization(firstGuide.id);
+    const secondCustomization = createCustomization(secondGuide.id);
+    const backup = createGuideBackupFile({
+      type: "all-guides",
+      guides: [firstGuide, secondGuide],
+      cardCustomizations: [firstCustomization, secondCustomization, createCustomization("orphan")],
+      exportedAt: fixedDate,
+    });
+
+    expect(backup.type).toBe("all-guides");
+    expect(backup.guides.map((guide) => guide.id)).toEqual(["first-guide", "second-guide"]);
+    expect(backup.cardCustomizations.map((customization) => customization.guideId)).toEqual([
+      "first-guide",
+      "second-guide",
+    ]);
+    expect(createGuideBackupFilename("", "all-guides")).toBe("walk-the-rosary-guides-backup.json");
+  });
+
+  it("imports a single guide and remaps duplicate guide IDs safely", () => {
+    const existingGuide = createTestGuide({ id: "test-guide", name: "Regression Test Guide" });
+    const backupGuide = createTestGuide({ id: "test-guide", name: "Regression Test Guide" });
+    const backup = createGuideBackupFile({
+      type: "single-guide",
+      guides: [backupGuide],
+      cardCustomizations: [createCustomization(backupGuide.id)],
+      exportedAt: fixedDate,
+    });
+    const parsed = validateGuideBackupFile(backup);
+
+    expect(parsed.ok).toBe(true);
+
+    const result = prepareGuideBackupImport({
+      backup,
+      existingGuides: [existingGuide],
+      existingCustomizations: [createCustomization(existingGuide.id)],
+      createId: () => "imported-guide-id",
+      now: fixedDate,
+    });
+
+    expect(result.importedGuideCount).toBe(1);
+    expect(result.guides).toHaveLength(2);
+    expect(result.guides[0].id).toBe(existingGuide.id);
+    expect(result.guides[1].id).toBe("imported-guide-id");
+    expect(result.guides[1].name).toBe("Regression Test Guide Copy");
+    expect(result.cardCustomizations.map((customization) => customization.guideId)).toEqual([
+      "test-guide",
+      "imported-guide-id",
+    ]);
+    expect(result.remappedGuideIds).toEqual({ "test-guide": "imported-guide-id" });
+  });
+
+  it("imports multiple guides and remaps related customizations", () => {
+    const firstGuide = createTestGuide({ id: "first-guide", name: "First Guide" });
+    const secondGuide = createTestGuide({ id: "second-guide", name: "Second Guide" });
+    const backup = createGuideBackupFile({
+      type: "all-guides",
+      guides: [firstGuide, secondGuide],
+      cardCustomizations: [createCustomization(firstGuide.id), createCustomization(secondGuide.id)],
+      exportedAt: fixedDate,
+    });
+    const result = prepareGuideBackupImport({
+      backup,
+      existingGuides: [createTestGuide({ id: "first-guide", name: "First Guide" })],
+      existingCustomizations: [],
+      createId: () => "first-guide-copy",
+      now: fixedDate,
+    });
+
+    expect(result.importedGuideCount).toBe(2);
+    expect(result.guides.map((guide) => guide.id)).toEqual([
+      "first-guide",
+      "first-guide-copy",
+      "second-guide",
+    ]);
+    expect(result.cardCustomizations.map((customization) => customization.guideId)).toEqual([
+      "first-guide-copy",
+      "second-guide",
+    ]);
+  });
+
+  it("rejects invalid backup JSON without producing import data", () => {
+    expect(parseGuideBackupJson("{bad json").ok).toBe(false);
+    expect(parseGuideBackupJson(JSON.stringify({ app: "other", guides: [] })).ok).toBe(false);
+    expect(parseGuideBackupJson(JSON.stringify({ app: "walk-the-rosary", version: 1, type: "single-guide", exportedAt: fixedDate.toISOString(), guides: [] })).ok).toBe(false);
   });
 });
 

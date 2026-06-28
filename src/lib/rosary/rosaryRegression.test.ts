@@ -14,6 +14,7 @@ import {
   buildDefaultEasyGuideName,
   createUserRosaryConfigFromWizardAnswers,
 } from "@/lib/rosary/easyGuideBuilder";
+import { findBestMatchingPrayerStepIndex } from "@/lib/rosary/prayerStepMatching";
 import {
   generateGuideCardsFromConfig,
   getRelevantGuidePrayerOptions,
@@ -57,6 +58,7 @@ import type {
   GuideCardBlock,
   GuideCardCustomization,
   GuideCardSide,
+  PrayerStep,
   PrayerId,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
@@ -222,6 +224,96 @@ describe("step-by-step prayer mode", () => {
     expect(decadeHailMaryGroups).toHaveLength(5);
     expect(decadeHailMaryGroups[0].title).toBe("Hail Mary x 10");
     expect(openingHailMaryGroups).toHaveLength(1);
+  });
+
+  it("maps counted Hail Mary progress to the matching grouped decade", () => {
+    const countSteps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "count" });
+    const groupSteps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "group" });
+    const currentIndex = countSteps.findIndex(
+      (step) => step.prayerId === "hail-mary" && step.decadeIndex === 1 && step.repeatIndex === 4,
+    );
+    const nextIndex = findBestMatchingPrayerStepIndex({
+      currentStep: countSteps[currentIndex],
+      nextSteps: groupSteps,
+      currentIndex,
+      currentTotal: countSteps.length,
+    });
+
+    expect(groupSteps[nextIndex].title).toBe("Hail Mary x 10");
+    expect(groupSteps[nextIndex].decadeIndex).toBe(1);
+    expect(groupSteps[nextIndex].repeatGroupId).toBe(countSteps[currentIndex].repeatGroupId);
+  });
+
+  it("maps grouped Hail Mary progress to the first counted step in the same decade", () => {
+    const groupSteps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "group" });
+    const countSteps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "count" });
+    const currentIndex = groupSteps.findIndex(
+      (step) => step.prayerId === "hail-mary" && step.decadeIndex === 2 && step.repeatCount === 10,
+    );
+    const nextIndex = findBestMatchingPrayerStepIndex({
+      currentStep: groupSteps[currentIndex],
+      nextSteps: countSteps,
+      currentIndex,
+      currentTotal: groupSteps.length,
+    });
+
+    expect(countSteps[nextIndex].title).toBe("Hail Mary 1 of 10");
+    expect(countSteps[nextIndex].decadeIndex).toBe(2);
+    expect(countSteps[nextIndex].repeatGroupId).toBe(groupSteps[currentIndex].repeatGroupId);
+  });
+
+  it("preserves non-repeated prayer position across repeated-prayer modes", () => {
+    const countSteps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "count" });
+    const groupSteps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "group" });
+    const ourFatherIndex = countSteps.findIndex(
+      (step) => step.prayerId === "our-father" && step.decadeIndex === 3,
+    );
+    const gloryBeIndex = countSteps.findIndex(
+      (step) => step.prayerId === "glory-be" && step.decadeIndex === 3,
+    );
+    const nextOurFatherIndex = findBestMatchingPrayerStepIndex({
+      currentStep: countSteps[ourFatherIndex],
+      nextSteps: groupSteps,
+      currentIndex: ourFatherIndex,
+      currentTotal: countSteps.length,
+    });
+    const nextGloryBeIndex = findBestMatchingPrayerStepIndex({
+      currentStep: countSteps[gloryBeIndex],
+      nextSteps: groupSteps,
+      currentIndex: gloryBeIndex,
+      currentTotal: countSteps.length,
+    });
+
+    expect(groupSteps[nextOurFatherIndex].prayerId).toBe("our-father");
+    expect(groupSteps[nextOurFatherIndex].decadeIndex).toBe(3);
+    expect(groupSteps[nextGloryBeIndex].prayerId).toBe("glory-be");
+    expect(groupSteps[nextGloryBeIndex].decadeIndex).toBe(3);
+  });
+
+  it("falls back to approximate progress when no logical match exists", () => {
+    const nextSteps: PrayerStep[] = Array.from({ length: 4 }, (_, index) => ({
+      id: `fallback-${index}`,
+      sourceFlowItemId: `fallback-${index}`,
+      logicalStepKey: `fallback-${index}`,
+      type: "text",
+      title: `Fallback ${index}`,
+    }));
+    const currentStep: PrayerStep = {
+      id: "missing",
+      sourceFlowItemId: "missing",
+      logicalStepKey: "missing",
+      type: "text",
+      title: "Missing",
+    };
+
+    expect(
+      findBestMatchingPrayerStepIndex({
+        currentStep,
+        nextSteps,
+        currentIndex: 5,
+        currentTotal: 10,
+      }),
+    ).toBe(2);
   });
 
   it("respects mixed English and Latin guide settings", () => {

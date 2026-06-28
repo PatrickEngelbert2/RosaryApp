@@ -156,10 +156,10 @@ export function PrayRosaryClient() {
               <button
                 type="button"
                 onClick={() => setViewMode("scroll")}
-                className={`rounded-md px-3 py-2.5 text-sm font-semibold ${
+                className={`step-prayer-mode-button ${
                   viewMode === "scroll"
-                    ? "bg-blue-900 text-white"
-                    : "text-blue-900 hover:bg-white focus:bg-white"
+                    ? "step-prayer-mode-button-active"
+                    : "step-prayer-mode-button-idle"
                 }`}
               >
                 Read guide
@@ -167,10 +167,10 @@ export function PrayRosaryClient() {
               <button
                 type="button"
                 onClick={() => setViewMode("step")}
-                className={`rounded-md px-3 py-2.5 text-sm font-semibold ${
+                className={`step-prayer-mode-button ${
                   viewMode === "step"
-                    ? "bg-blue-900 text-white"
-                    : "text-blue-900 hover:bg-white focus:bg-white"
+                    ? "step-prayer-mode-button-active"
+                    : "step-prayer-mode-button-idle"
                 }`}
               >
                 Pray step by step
@@ -285,7 +285,6 @@ export function PrayRosaryClient() {
         <StepByStepPrayerMode
           config={selectedConfig}
           showLeaderNotes={showLeaderNotes}
-          onExit={() => setViewMode("scroll")}
         />
       ) : (
         <ol className="space-y-3">

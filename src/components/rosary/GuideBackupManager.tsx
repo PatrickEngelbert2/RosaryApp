@@ -131,8 +131,8 @@ export function GuideBackupManager({
 
   return (
     <Card>
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div>
+      <div className="grid gap-5">
+        <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
             Guide backup
           </p>
@@ -156,7 +156,7 @@ export function GuideBackupManager({
             </p>
           ) : null}
         </div>
-        <div className="grid gap-3 sm:grid-cols-3 lg:min-w-96 lg:grid-cols-1">
+        <div className="grid gap-3 sm:grid-cols-3">
           <button
             type="button"
             disabled={!selectedGuide}

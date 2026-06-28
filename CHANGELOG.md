@@ -13,6 +13,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added a versioned Walk the Rosary guide backup JSON format that includes saved guides and related Guide Cards customizations.
 - Added guide backup import handling that validates backup files, remaps duplicate guide IDs, preserves existing guides, and reports friendly success or failure messages.
 - Added regression coverage for selected-guide export, all-guide export, single-guide import, multi-guide import with customization remapping, and invalid backup rejection.
+- Fixed the Guide Backup panel layout so its explanatory copy no longer gets squeezed beside the backup buttons in narrower page columns.
 - Reworked Guide Cards preview and print layout to use client-side rendered card measurement as the final packing source of truth instead of rough fit estimates.
 - Updated Guide Cards packing to fill the front first, then the back, then continuation faces only when measured content no longer fits.
 - Preserved shared measured layout decisions between preview and `/cards/print`, including the polished preparing-layout states before cards render or print.

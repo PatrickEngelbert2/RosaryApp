@@ -162,6 +162,41 @@ a {
   box-shadow: 0 0 0 3px rgb(16 42 86 / 0.12);
 }
 
+.step-prayer-primary-button,
+.step-prayer-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.step-prayer-primary-button {
+  background: #102a56;
+  color: white;
+}
+
+.step-prayer-secondary-button {
+  border: 1px solid rgb(16 42 86 / 0.18);
+  background: white;
+  color: #102a56;
+}
+
+.step-prayer-primary-button:focus-visible,
+.step-prayer-secondary-button:focus-visible {
+  outline: 2px solid rgb(16 42 86 / 0.32);
+  outline-offset: 2px;
+}
+
+.step-prayer-primary-button:disabled,
+.step-prayer-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 @keyframes easy-fade {
   from {
     opacity: 0;

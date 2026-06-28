@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CollapsiblePrayer } from "@/components/rosary/CollapsiblePrayer";
 import { MysteryPrayerCard } from "@/components/rosary/MysteryPrayerCard";
+import { StepByStepPrayerMode } from "@/components/rosary/StepByStepPrayerMode";
 import { Card } from "@/components/ui/Card";
 import {
   buildRosaryFlow,
@@ -22,9 +23,12 @@ import {
 } from "@/lib/rosary/storage";
 import type { RenderedRosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
 
+type PrayerViewMode = "scroll" | "step";
+
 export function PrayRosaryClient() {
   const [configs, setConfigs] = useState<UserRosaryConfig[]>([]);
   const [selectedConfigId, setSelectedConfigId] = useState("default");
+  const [viewMode, setViewMode] = useState<PrayerViewMode>("scroll");
   const [largeText, setLargeText] = useState(true);
   const [showLeaderNotes, setShowLeaderNotes] = useState(true);
   const [showRepeatedPrayers, setShowRepeatedPrayers] = useState(false);
@@ -41,6 +45,11 @@ export function PrayRosaryClient() {
         setLargeText(activeConfig.preferences.defaultLargeText);
         setShowLeaderNotes(activeConfig.preferences.showLeaderNotes);
         setShowRepeatedPrayers(activeConfig.preferences.showRepeatedPrayersIndividually);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("mode") === "step") {
+        setViewMode("step");
       }
     });
   }, []);
@@ -80,6 +89,8 @@ export function PrayRosaryClient() {
 
   function selectConfig(id: string) {
     setSelectedConfigId(id);
+    setExpandAll(false);
+    setCollapseAll(false);
     const config = configs.find((item) => item.id === id);
     if (config) {
       setActiveRosaryConfig(config.id);
@@ -140,6 +151,32 @@ export function PrayRosaryClient() {
               {selectedConfig.mysterySetMode === "today" ? ` - ${dateLabel}` : ""}
             </p>
           </div>
+          <div className="rounded-lg bg-cream-50 p-1" role="group" aria-label="Prayer view mode">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("scroll")}
+                className={`rounded-md px-3 py-2.5 text-sm font-semibold ${
+                  viewMode === "scroll"
+                    ? "bg-blue-900 text-white"
+                    : "text-blue-900 hover:bg-white focus:bg-white"
+                }`}
+              >
+                Read guide
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("step")}
+                className={`rounded-md px-3 py-2.5 text-sm font-semibold ${
+                  viewMode === "step"
+                    ? "bg-blue-900 text-white"
+                    : "text-blue-900 hover:bg-white focus:bg-white"
+                }`}
+              >
+                Pray step by step
+              </button>
+            </div>
+          </div>
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wide text-blue-900" htmlFor="saved-rosary">
               Saved guide
@@ -188,7 +225,8 @@ export function PrayRosaryClient() {
               </details>
             ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
+          {viewMode === "scroll" ? (
+            <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleExpandAll}
@@ -227,23 +265,43 @@ export function PrayRosaryClient() {
               />
               Leader notes
             </label>
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <label className="flex items-center gap-2 rounded-full bg-cream-50 px-3 py-2 text-sm font-medium text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={showLeaderNotes}
+                  onChange={(event) => setShowLeaderNotes(event.target.checked)}
+                />
+                Leader notes
+              </label>
+            </div>
+          )}
         </div>
       </Card>
 
-      <ol className="space-y-3">
-        {displayFlow.map(({ step, stepNumber }) => (
-          <li key={step.id}>
-            <PrayerFlowStep
-              step={step}
-              stepNumber={stepNumber}
-              largeText={largeText}
-              forceExpanded={expandAll}
-              forceCollapsed={collapseAll}
-            />
-          </li>
-        ))}
-      </ol>
+      {viewMode === "step" ? (
+        <StepByStepPrayerMode
+          config={selectedConfig}
+          showLeaderNotes={showLeaderNotes}
+          onExit={() => setViewMode("scroll")}
+        />
+      ) : (
+        <ol className="space-y-3">
+          {displayFlow.map(({ step, stepNumber }) => (
+            <li key={step.id}>
+              <PrayerFlowStep
+                step={step}
+                stepNumber={stepNumber}
+                largeText={largeText}
+                forceExpanded={expandAll}
+                forceCollapsed={collapseAll}
+              />
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

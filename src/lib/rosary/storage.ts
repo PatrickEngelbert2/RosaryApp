@@ -1,6 +1,7 @@
 import type {
   GuideCardCustomization,
   GuideCardLayoutOptions,
+  RepeatedPrayerStepMode,
   RosaryCardSet,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
@@ -24,6 +25,8 @@ const GUIDE_CARD_OPTIONS_KEY = "rosary-walks:guide-card-options:v1";
 const GUIDE_CARD_SELECTED_GUIDE_KEY = "rosary-walks:guide-card-selected-guide:v1";
 const GUIDE_CARD_CUSTOMIZATIONS_KEY = "rosary-walks:guide-card-customizations:v1";
 const STORAGE_RECOVERY_NOTICE_KEY = "rosary-walks:storage-recovery-notice:v1";
+const STEP_PRAYER_MODE_KEY = "rosary-walks:step-prayer-mode:v1";
+const STEP_PRAYER_PROGRESS_KEY = "rosary-walks:step-prayer-progress:v1";
 
 function canUseLocalStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -170,6 +173,31 @@ export function getActiveRosaryConfig(): UserRosaryConfig | undefined {
 
 export function setActiveRosaryConfig(id: string): boolean {
   return writeJson(ACTIVE_CONFIG_KEY, id);
+}
+
+export function getStepPrayerModePreference(): RepeatedPrayerStepMode {
+  return readJson<RepeatedPrayerStepMode>(STEP_PRAYER_MODE_KEY, "group") === "count"
+    ? "count"
+    : "group";
+}
+
+export function saveStepPrayerModePreference(mode: RepeatedPrayerStepMode): boolean {
+  return writeJson(STEP_PRAYER_MODE_KEY, mode === "count" ? "count" : "group");
+}
+
+export function getStepPrayerProgress(guideId: string): number {
+  const progress = readJson<Record<string, number>>(STEP_PRAYER_PROGRESS_KEY, {});
+  const stored = progress[guideId];
+
+  return typeof stored === "number" && Number.isFinite(stored) ? stored : 0;
+}
+
+export function saveStepPrayerProgress(guideId: string, stepIndex: number): boolean {
+  const progress = readJson<Record<string, number>>(STEP_PRAYER_PROGRESS_KEY, {});
+  return writeJson(STEP_PRAYER_PROGRESS_KEY, {
+    ...progress,
+    [guideId]: Math.max(0, Math.trunc(stepIndex)),
+  });
 }
 
 export function getSavedCardSets(): RosaryCardSet[] {

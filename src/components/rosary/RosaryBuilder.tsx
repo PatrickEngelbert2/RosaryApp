@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { mysterySets } from "@/content/mysteries";
 import { prayersById } from "@/content/prayers";
+import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import { RosaryFlowPreview } from "@/components/rosary/RosaryFlowPreview";
 import { Card } from "@/components/ui/Card";
 import { getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
@@ -248,6 +249,22 @@ export function RosaryBuilder() {
     }
   }
 
+  function handleBackupImported(importedGuideId: string | undefined) {
+    const saved = getSavedRosaryConfigs();
+    const importedGuide =
+      saved.find((guide) => guide.id === importedGuideId) ??
+      saved[0];
+
+    setSavedConfigs(saved);
+
+    if (importedGuide) {
+      const normalized = normalizeRosaryConfig(importedGuide);
+      setConfig(normalized);
+      setTemplateId(normalized.baseTemplateId);
+      setSaveMessage("Imported guide backup.");
+    }
+  }
+
   const customSteps = config.customGuidance;
 
   return (
@@ -315,6 +332,12 @@ export function RosaryBuilder() {
             Start a new guide
           </button>
         </Card>
+
+        <GuideBackupManager
+          guides={savedConfigs}
+          selectedGuideId={savedConfigs.some((guide) => guide.id === config.id) ? config.id : undefined}
+          onImported={handleBackupImported}
+        />
 
         <Card>
           <h2 className="text-2xl font-semibold text-blue-900">2. Name and mysteries</h2>

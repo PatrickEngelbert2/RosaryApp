@@ -2,20 +2,28 @@ import { Card } from "@/components/ui/Card";
 
 const resources = [
   {
-    title: "For first-time prayer",
+    title: "How to pray the Rosary",
     body: "Start slowly. It is fine to follow the words from the page, pause between prayers, and let the rhythm become familiar over time.",
   },
   {
-    title: "For walking groups",
+    title: "How to lead a Rosary walk",
     body: "Choose a safe route, set a gentle pace, and ask one clear voice to lead while the group responds together.",
   },
   {
-    title: "For families",
-    body: "Consider praying one decade at a time. A short faithful beginning is better than rushing through the whole Rosary.",
+    title: "Tips for guide cards",
+    body: "Print enough cards for leaders and visitors. Use short prompts for people who know the prayers, and larger cards when beginners need fuller text.",
   },
   {
-    title: "For parishes",
-    body: "Prepare a leader, a backup leader, and a simple printed handout so visitors can participate without feeling lost.",
+    title: "Beginner help",
+    body: "If a full Rosary feels like too much, begin with one decade. A short faithful beginning is better than rushing.",
+  },
+  {
+    title: "For parishes and groups",
+    body: "Prepare a leader, a backup leader, a simple meeting point, and a clear invitation so visitors can participate without feeling lost.",
+  },
+  {
+    title: "Catholic resources",
+    body: "For parish schedules, confession times, and local events, check your parish or diocesan website. Keep Walk the Rosary focused on the prayer guide itself.",
   },
 ];
 
@@ -30,7 +38,7 @@ export default function ResourcesPage() {
           Simple guidance for beginning well
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-700">
-          A few gentle notes for praying the Rosary with confidence and charity.
+          Practical notes for praying, leading, printing, and helping beginners feel welcome.
         </p>
       </header>
 

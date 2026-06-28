@@ -14,8 +14,8 @@ export function MysterySelector({ currentSet, todaysSet }: MysterySelectorProps)
       </p>
       <h2 className="mt-2 text-xl font-semibold text-blue-900">{currentSet.title}</h2>
       <p className="mt-3 leading-7 text-slate-700">
-        Today&apos;s traditional set is <strong>{todaysSet.title}</strong>. This
-        sample prayer flow currently renders the {currentSet.title}.
+        Today&apos;s traditional set is <strong>{todaysSet.title}</strong>. This page
+        currently follows the {currentSet.title}.
       </p>
     </Card>
   );

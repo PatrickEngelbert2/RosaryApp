@@ -8,11 +8,11 @@ export default function CardsPage() {
           Guide Cards
         </p>
         <h1 className="mt-3 text-3xl font-bold text-blue-900 sm:text-4xl">
-          Guide Cards
+          Print guide cards for your group
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-700">
-          Choose a saved rosary guide, card size, and prayer text options for your group. The
-          cards are generated from the prayers, mysteries, and options in the selected guide.
+          Choose a saved guide, decide how many cards you need, customize the preview if needed,
+          then print or save as PDF from your browser.
         </p>
       </header>
       <CardSetEditor />

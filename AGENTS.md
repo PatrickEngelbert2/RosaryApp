@@ -33,6 +33,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - For print features, prefer browser print behavior and CSS print rules before adding PDF libraries.
 - Guide Cards layout should use rendered measurement as the final source of truth for face packing. Do not reintroduce rough character or line estimates as the final preview/print packing decision.
 - Keep Guide Cards preview and `/cards/print` on the same layout model. Measurement hosts, loading states, and print CSS should stay hidden from printed output.
+- Guide backup import/export must stay local-only, validate files before saving, preserve existing guides, and include tests for duplicate IDs and invalid backup files.
 - Keep the code easy for future Codex sessions to understand and extend.
 
 ## Design Direction
@@ -46,6 +47,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Update `CHANGELOG.md` for every meaningful feature, fix, polish pass, rebrand, or architecture change.
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
 - Run the relevant Vitest tests when changing prayer language resolution, guide creation, guide card content generation, card layout packing, preview customization, print parity, or storage validation.
+- Run guide backup import/export tests when changing saved guide storage, card customization storage, or backup UI.
 - Do not change guide-card layout behavior without running the measured layout, card layout, content preservation, and print parity regression tests.
 - Mention whether lint, build, and relevant tests were run in the final response.
 - Keep documentation professional and accurate.

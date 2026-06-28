@@ -278,6 +278,21 @@ export function saveGuideCardCustomization(customization: GuideCardCustomization
   return writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, createStoredCollection(next));
 }
 
+export function saveImportedGuideBackup(result: {
+  guides: UserRosaryConfig[];
+  cardCustomizations: GuideCardCustomization[];
+}): boolean {
+  const normalizedGuides = normalizeStoredRosaryConfigs(createStoredCollection(result.guides)).items;
+  const normalizedCustomizations = normalizeStoredGuideCardCustomizations(
+    createStoredCollection(result.cardCustomizations),
+  ).items;
+
+  return (
+    writeJson(CONFIGS_KEY, createStoredCollection(normalizedGuides)) &&
+    writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, createStoredCollection(normalizedCustomizations))
+  );
+}
+
 export function resetGuideCardCustomization(guideId: string): boolean {
   return writeJson(
     GUIDE_CARD_CUSTOMIZATIONS_KEY,

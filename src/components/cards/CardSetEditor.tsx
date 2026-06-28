@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { prayersById } from "@/content/prayers";
 import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
 import { useMeasuredGuideCardLayout } from "@/components/cards/GuideCardMeasurementHost";
+import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import type {
   GuideCardDragState,
   GuideCardDropPosition,
@@ -217,6 +218,20 @@ export function CardSetEditor() {
     }
   }
 
+  function handleBackupImported(importedGuideId: string | undefined) {
+    const guides = getSavedRosaryConfigs();
+    const nextGuide = guides.find((guide) => guide.id === importedGuideId) ?? guides[0];
+
+    setSavedGuides(guides);
+
+    if (nextGuide) {
+      setSelectedGuideId(nextGuide.id);
+      setCustomization(getGuideCardCustomization(nextGuide.id));
+      saveGuideCardSelectedGuideId(nextGuide.id);
+      setActiveRosaryConfig(nextGuide.id);
+    }
+  }
+
   function updateLayoutOptions(nextOptions: Partial<GuideCardLayoutOptions>) {
     setLayoutOptions((current) => normalizeGuideCardLayoutOptions({ ...current, ...nextOptions }));
   }
@@ -398,12 +413,12 @@ export function CardSetEditor() {
           <div>
             <h2 className="text-2xl font-semibold text-blue-900">Generate from a saved guide</h2>
             <p className="mt-3 leading-7 text-slate-700">
-              These cards are generated from your selected rosary guide. Choose the card size and
-              which prayers print in full, then refine the preview before printing.
+              These cards are generated from your selected rosary guide. Choose the card count,
+              card size, and which prayers print in full, then refine the preview before printing.
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Card edits are stored locally as cards-only customizations, so your prayer guide
-              remains recoverable.
+              Hover or focus on preview items to edit, remove, add, or reorder them. Card edits are
+              stored locally as cards-only customizations, so your prayer guide remains unchanged.
             </p>
           </div>
           <div className="rounded-lg bg-cream-50 p-4">
@@ -417,6 +432,12 @@ export function CardSetEditor() {
           </div>
         </div>
       </Card>
+
+      <GuideBackupManager
+        guides={savedGuides}
+        selectedGuideId={selectedGuideIsSaved ? selectedGuide.id : undefined}
+        onImported={handleBackupImported}
+      />
 
       <Card>
         <div className="grid gap-5 lg:grid-cols-3">

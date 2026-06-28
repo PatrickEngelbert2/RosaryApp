@@ -22,20 +22,20 @@ export const metadata: Metadata = {
 const primaryLinks = [
   {
     href: "/pray/custom",
-    title: "Pray",
-    description: "Follow a saved guide with large, readable prayer text.",
+    title: "Pray Now",
+    description: "Follow the default Rosary or a saved guide with large, readable prayer text.",
     icon: "pray",
   },
   {
     href: "/builder",
     title: "Build a Guide",
-    description: "Choose mysteries, closing prayers, leader notes, and custom guidance.",
+    description: "Use the Easy Builder for a quick guide, or advanced settings for full control.",
     icon: "guide",
   },
   {
     href: "/cards",
     title: "Guide Cards",
-    description: "Create front/back printable cards for leaders and participants.",
+    description: "Print small front/back cards so leaders and participants can follow along.",
     icon: "cards",
   },
   {
@@ -81,17 +81,28 @@ export default function HomePage() {
             Walk the Rosary
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight text-blue-900 sm:text-5xl">
-            Walk the Rosary with confidence.
+            Pray, lead, and print rosary guides.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
-            Build a rosary guide, pray from your phone, and print simple cards
-            for your group.
+            Walk the Rosary helps you pray from your phone, build a simple guide for your group,
+            and print cards for a rosary walk.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Button href="/pray/custom">Pray Now</Button>
-            <Button href="/builder" variant="secondary">
-              Build a Guide
+            <Button href="/builder">Start Easy Builder</Button>
+            <Button href="/cards" variant="secondary">
+              Print Guide Cards
             </Button>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            New here? Start with the Easy Builder. Already have a guide saved? Open Pray or Guide Cards.
+          </p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <Link className="interactive-link font-semibold text-blue-900 underline" href="/pray/custom">
+              Pray now
+            </Link>
+            <Link className="interactive-link font-semibold text-blue-900 underline" href="/builder#advanced-builder">
+              Advanced builder
+            </Link>
           </div>
         </div>
         <Card className="bg-white/80">
@@ -104,19 +115,21 @@ export default function HomePage() {
               className="h-11 w-11 shrink-0 rounded-lg bg-blue-900 object-contain shadow-sm"
               aria-hidden="true"
             />
-            <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
-              {formattedDate}
-            </p>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
+                {formattedDate}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-blue-900">
+                Today&apos;s Rosary
+              </h2>
+            </div>
           </div>
-          <h2 className="mt-2 text-2xl font-semibold text-blue-900">
-            Today&apos;s Rosary
-          </h2>
           <p className="mt-3 text-lg font-semibold text-slate-900">
             {todaysMysteries.title}
           </p>
           <p className="mt-3 text-base leading-7 text-slate-700">
-            Pray the mysteries commonly assigned for today, or use them as the
-            starting point for a group walk guide.
+            These are the traditional mysteries for today. Use them for personal prayer or as a
+            starting point for a group walk.
           </p>
           <ol className="mt-5 space-y-2 text-sm text-slate-700">
             {todaysMysteries.mysteries.slice(0, 5).map((mystery, index) => (
@@ -139,13 +152,14 @@ export default function HomePage() {
 
       <section aria-labelledby="toolkit-flow" className="pb-12 lg:pb-14">
         <h2 id="toolkit-flow" className="text-2xl font-bold text-blue-900">
-          Pray, lead, and print
+          Start here
         </h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div className="mt-5 grid gap-4 md:grid-cols-4">
           {[
-            ["1", "Build your Rosary", "Start with a standard or leader template and save your group's preferred prayer order."],
-            ["2", "Pray your saved version", "Use large readable text and collapsible prayers while walking or leading."],
-            ["3", "Print guide cards", "Choose the exact number of front/back cards needed for leaders and participants."],
+            ["1", "Pray now", "Use the default Rosary immediately, or follow a saved guide once you have one."],
+            ["2", "Build with help", "Answer a few simple questions and let Easy Builder make the guide."],
+            ["3", "Print cards", "Choose a saved guide, card count, and card size, then print or save as PDF."],
+            ["4", "Fine-tune later", "Use the advanced builder for exact prayers, Latin choices, notes, and structure."],
           ].map(([number, title, body]) => (
             <Card key={number}>
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-900 font-bold text-white">

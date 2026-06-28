@@ -24,6 +24,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Choose Pocket, Tall, Wide, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
 - Save current guides locally in the browser.
+- Back up a selected guide, back up all guides, and import guide backup files.
 
 ## Tech Stack
 
@@ -83,7 +84,7 @@ $env:NO_OPEN="1"; npm start
 - `/lead` - Practical guidance for leading a walk
 - `/prayers` - Core Rosary prayers
 - `/mysteries` - Mystery sets
-- `/printables` - Placeholder printable metadata
+- `/printables` - Printable resource metadata
 - `/resources` - Beginner-friendly Rosary resources
 
 ## Project And Contact
@@ -108,6 +109,8 @@ Rosary transformation logic lives under `src/lib/rosary`. Pages should render st
 
 Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. The app is still in preview, so saved-guide and card-customization storage may change. Storage loading is versioned and validated; incompatible or malformed local app data is ignored and rewritten to safe defaults with an in-app recovery notice instead of crashing the page.
 
+Guide backups are local JSON downloads. The backup format includes an app identifier, version, export timestamp, guides, and related Guide Cards customizations. Import validates the file before saving, creates a new guide ID when an imported guide conflicts with an existing guide, and remaps related card customizations to the imported copy. Invalid or incompatible backup files are rejected with a friendly message instead of changing existing saved guides.
+
 ## Guide Building Workflow
 
 The Build a Guide page supports two paths:
@@ -118,6 +121,8 @@ The Build a Guide page supports two paths:
 Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by the advanced builder. Guides created in the wizard immediately work with `/pray/custom`, `/cards`, and `/cards/print`; no separate easy-guide format or backend is used.
 
 Saved guides can choose English or Latin per prayer. The Easy Guide Builder includes a simple optional Latin flow, while the advanced builder exposes per-prayer language controls. Missing language settings default to English so older saved guides continue to load normally. Spanish prayer variants are not implemented yet, but the prayer data is structured so they can be added later.
+
+The Build a Guide page also includes a Guide Backup section. Use it to download a backup of the selected saved guide, download all saved guides, or import a backup from this version of Walk the Rosary.
 
 ## Guide Card Workflow
 
@@ -143,6 +148,8 @@ Guide Card layout uses rendered measurement in the browser. The app renders the 
 Holy Father's Intentions renders as a compact movable group after the Rosary Closing Prayer by default, with each child prayer prefixed by `- `. The final Sign of the Cross renders as a standalone item instead of under a separate `Final` heading. Both remain part of the structured card content so card-only editing, reordering, deletion, preview customization, and print output continue to use the same model.
 
 The print view at `/cards/print` uses the same measured layout pipeline before rendering printable sheets. The browser print dialog handles copy count; the site only renders the selected number of card slots. Customized preview content is applied to the print view, but preview controls and measurement elements never print. Persistence is still browser-local; no guide or card data is uploaded.
+
+The Guide Cards page also exposes the same local backup controls so a user can back up the selected guide before printing or import a guide backup and immediately make cards from it.
 
 Custom user-defined card dimensions, card text-size controls, and font controls are not implemented yet. The measured layout architecture is designed for those later settings because it measures the active rendered styles instead of relying on hardcoded line counts as the final source of truth. Saving card preview edits back into the underlying guide is also deferred; current preview edits are intentionally cards-only. The current system intentionally uses a small set of tested US Letter layouts.
 

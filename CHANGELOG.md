@@ -8,6 +8,11 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Polished homepage, Builder, Guide Cards, Pray, and Resources copy so first-time users can more quickly understand how to pray, build, print, and lead.
+- Added local guide backup UI for backing up the selected guide, backing up all guides, and importing guide backup files without a backend.
+- Added a versioned Walk the Rosary guide backup JSON format that includes saved guides and related Guide Cards customizations.
+- Added guide backup import handling that validates backup files, remaps duplicate guide IDs, preserves existing guides, and reports friendly success or failure messages.
+- Added regression coverage for selected-guide export, all-guide export, single-guide import, multi-guide import with customization remapping, and invalid backup rejection.
 - Reworked Guide Cards preview and print layout to use client-side rendered card measurement as the final packing source of truth instead of rough fit estimates.
 - Updated Guide Cards packing to fill the front first, then the back, then continuation faces only when measured content no longer fits.
 - Preserved shared measured layout decisions between preview and `/cards/print`, including the polished preparing-layout states before cards render or print.
@@ -80,6 +85,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Fixed
 
+- Removed prototype-like "sample" wording from the default Pray page and clarified the saved-guide prayer flow.
 - Fixed Guide Cards prematurely moving content to back or continuation faces by measuring rendered card item heights before packing card faces.
 - Fixed continuation warnings so they are shown only when measured continuation faces are actually generated.
 - Reduced wasted Guide Cards space around Holy Father's Intentions and the final Sign of the Cross while keeping both as structured editable card content.

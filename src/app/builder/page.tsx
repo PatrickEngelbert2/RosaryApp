@@ -9,15 +9,15 @@ export default function BuilderPage() {
           Build My Rosary
         </p>
         <h1 className="mt-3 text-3xl font-bold text-blue-900 sm:text-4xl">
-          Create the way your group prays the Rosary
+          Build a Rosary guide without getting lost
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-700">
-          This builder lets you create the way your group prays the Rosary. Save
-          your version, follow it during a walk, or turn it into printable guide cards.
+          Start with the Easy Builder if you want a simple path. Use the advanced
+          builder when you want exact prayers, languages, saint invocations, and structure.
         </p>
       </header>
       <EasyGuideBuilder />
-      <section className="mb-6 rounded-xl border border-blue-900/10 bg-cream-100 px-5 py-4">
+      <section id="advanced-builder" className="mb-6 rounded-xl border border-blue-900/10 bg-cream-100 px-5 py-4">
         <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
           Want full control?
         </p>
@@ -25,8 +25,8 @@ export default function BuilderPage() {
           Continue with the advanced builder
         </h2>
         <p className="mt-2 leading-7 text-slate-700">
-          Fine-tune mysteries, closing prayers, saint invocations, leader notes, and
-          custom guidance in detail.
+          Choose exact prayers, mysteries, languages, saint invocations, leader notes,
+          and guide structure. You can also back up guides you save in this browser.
         </p>
       </section>
       <RosaryBuilder />

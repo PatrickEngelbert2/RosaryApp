@@ -67,6 +67,15 @@ export function insertEditableItemAfter(
   newItemId: string,
   targetItemId?: string,
 ): string[] {
+  return insertEditableItemRelative(visibleItemIds, newItemId, targetItemId, "after");
+}
+
+export function insertEditableItemRelative(
+  visibleItemIds: string[],
+  newItemId: string,
+  targetItemId: string | undefined,
+  position: GuideCardDropPosition,
+): string[] {
   const nextOrder = visibleItemIds.filter((id) => id !== newItemId);
 
   if (!targetItemId) {
@@ -79,7 +88,7 @@ export function insertEditableItemAfter(
     return [...nextOrder, newItemId];
   }
 
-  nextOrder.splice(targetIndex + 1, 0, newItemId);
+  nextOrder.splice(position === "before" ? targetIndex : targetIndex + 1, 0, newItemId);
   return nextOrder;
 }
 

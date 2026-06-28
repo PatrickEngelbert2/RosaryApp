@@ -56,7 +56,7 @@ export const prayers: Prayer[] = [
     title: "Our Father",
     incipit: "Our Father...",
     text: "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven.\n\nGive us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.",
-    shortText: "Our Father, who art in heaven, hallowed be thy name...",
+    shortText: "Our Father...",
     category: "decade",
     defaultLanguage: "en",
     variants: {
@@ -65,7 +65,7 @@ export const prayers: Prayer[] = [
         title: "Our Father",
         incipit: "Our Father...",
         text: "Our Father, who art in heaven, hallowed be thy name; thy kingdom come; thy will be done on earth as it is in heaven.\n\nGive us this day our daily bread; and forgive us our trespasses as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.",
-        shortText: "Our Father, who art in heaven, hallowed be thy name...",
+        shortText: "Our Father...",
       },
       la: {
         language: "la",
@@ -81,7 +81,7 @@ export const prayers: Prayer[] = [
     title: "Hail Mary",
     incipit: "Hail Mary...",
     text: "Hail Mary, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus.\n\nHoly Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
-    shortText: "Hail Mary, full of grace, the Lord is with thee...",
+    shortText: "Hail Mary...",
     category: "decade",
     defaultLanguage: "en",
     variants: {
@@ -90,7 +90,7 @@ export const prayers: Prayer[] = [
         title: "Hail Mary",
         incipit: "Hail Mary...",
         text: "Hail Mary, full of grace, the Lord is with thee; blessed art thou among women, and blessed is the fruit of thy womb, Jesus.\n\nHoly Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
-        shortText: "Hail Mary, full of grace, the Lord is with thee...",
+        shortText: "Hail Mary...",
       },
       la: {
         language: "la",
@@ -104,18 +104,18 @@ export const prayers: Prayer[] = [
   {
     id: "glory-be",
     title: "Glory Be",
-    incipit: "Glory be to the Father...",
+    incipit: "Glory be...",
     text: "Glory be to the Father, and to the Son, and to the Holy Spirit.\n\nAs it was in the beginning, is now, and ever shall be, world without end. Amen.",
-    shortText: "Glory be to the Father...",
+    shortText: "Glory be...",
     category: "decade",
     defaultLanguage: "en",
     variants: {
       en: {
         language: "en",
         title: "Glory Be",
-        incipit: "Glory be to the Father...",
+        incipit: "Glory be...",
         text: "Glory be to the Father, and to the Son, and to the Holy Spirit.\n\nAs it was in the beginning, is now, and ever shall be, world without end. Amen.",
-        shortText: "Glory be to the Father...",
+        shortText: "Glory be...",
       },
       la: {
         language: "la",
@@ -131,7 +131,7 @@ export const prayers: Prayer[] = [
     title: "Fatima Prayer",
     incipit: "O my Jesus...",
     text: "O my Jesus, forgive us our sins, save us from the fires of hell, lead all souls to heaven, especially those in most need of thy mercy. Amen.",
-    shortText: "O my Jesus, forgive us our sins, save us from the fires of hell...",
+    shortText: "O my Jesus...",
     category: "decade",
     defaultLanguage: "en",
     variants: {
@@ -140,7 +140,7 @@ export const prayers: Prayer[] = [
         title: "Fatima Prayer",
         incipit: "O my Jesus...",
         text: "O my Jesus, forgive us our sins, save us from the fires of hell, lead all souls to heaven, especially those in most need of thy mercy. Amen.",
-        shortText: "O my Jesus, forgive us our sins, save us from the fires of hell...",
+        shortText: "O my Jesus...",
       },
       la: {
         language: "la",
@@ -154,18 +154,18 @@ export const prayers: Prayer[] = [
   {
     id: "hail-holy-queen",
     title: "Hail Holy Queen",
-    incipit: "Hail, holy Queen...",
+    incipit: "Hail, holy Queen, Mother of mercy...",
     text: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope. To thee do we cry, poor banished children of Eve; to thee do we send up our sighs, mourning and weeping in this valley of tears.\n\nTurn then, most gracious advocate, thine eyes of mercy toward us; and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
-    shortText: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope...",
+    shortText: "Hail, holy Queen, Mother of mercy...",
     category: "closing",
     defaultLanguage: "en",
     variants: {
       en: {
         language: "en",
         title: "Hail Holy Queen",
-        incipit: "Hail, holy Queen...",
+        incipit: "Hail, holy Queen, Mother of mercy...",
         text: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope. To thee do we cry, poor banished children of Eve; to thee do we send up our sighs, mourning and weeping in this valley of tears.\n\nTurn then, most gracious advocate, thine eyes of mercy toward us; and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
-        shortText: "Hail, holy Queen, Mother of mercy, our life, our sweetness, and our hope...",
+        shortText: "Hail, holy Queen, Mother of mercy...",
       },
       la: {
         language: "la",
@@ -206,7 +206,7 @@ export const prayers: Prayer[] = [
     title: "Memorare",
     incipit: "Remember, O most gracious Virgin Mary...",
     text: "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thine intercession was left unaided.\n\nInspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother. To thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen.",
-    shortText: "Remember, O most gracious Virgin Mary, that never was it known...",
+    shortText: "Remember, O most gracious Virgin Mary...",
     category: "optional",
     defaultLanguage: "en",
     variants: {
@@ -215,7 +215,7 @@ export const prayers: Prayer[] = [
         title: "Memorare",
         incipit: "Remember, O most gracious Virgin Mary...",
         text: "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thine intercession was left unaided.\n\nInspired by this confidence, I fly unto thee, O Virgin of virgins, my Mother. To thee do I come, before thee I stand, sinful and sorrowful. O Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me. Amen.",
-        shortText: "Remember, O most gracious Virgin Mary, that never was it known...",
+        shortText: "Remember, O most gracious Virgin Mary...",
       },
       la: {
         language: "la",
@@ -231,7 +231,7 @@ export const prayers: Prayer[] = [
     title: "St. Michael Prayer",
     incipit: "St. Michael the Archangel...",
     text: "St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.\n\nMay God rebuke him, we humbly pray, and do thou, O Prince of the heavenly hosts, by the power of God, cast into hell Satan, and all the evil spirits, who prowl about the world seeking the ruin of souls. Amen.",
-    shortText: "St. Michael the Archangel, defend us in battle...",
+    shortText: "St. Michael the Archangel...",
     category: "optional",
     defaultLanguage: "en",
     variants: {
@@ -240,7 +240,7 @@ export const prayers: Prayer[] = [
         title: "St. Michael Prayer",
         incipit: "St. Michael the Archangel...",
         text: "St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.\n\nMay God rebuke him, we humbly pray, and do thou, O Prince of the heavenly hosts, by the power of God, cast into hell Satan, and all the evil spirits, who prowl about the world seeking the ruin of souls. Amen.",
-        shortText: "St. Michael the Archangel, defend us in battle...",
+        shortText: "St. Michael the Archangel...",
       },
       la: {
         language: "la",

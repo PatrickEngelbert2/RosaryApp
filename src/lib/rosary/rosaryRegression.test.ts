@@ -29,9 +29,11 @@ import {
   findDuplicateIds,
   getVisibleEditableItemIds,
   insertEditableItemAfter,
+  insertEditableItemRelative,
   moveEditableItem,
   reorderEditableItem,
 } from "@/lib/rosary/guideCardCustomizations";
+import { getMobileGuideCardActionItems } from "@/lib/rosary/mobileGuideCardActions";
 import {
   getCompactPrayerText,
   getFullPrayerTextForCards,
@@ -96,6 +98,22 @@ describe("prayer language resolution", () => {
     expect(getFullPrayerTextForCards(hailMary, "la")).toContain("Ave Maria, gratia plena");
     expect(getCompactPrayerText(hailMary, "en")).toContain("Hail Mary");
     expect(getFullPrayerTextForCards(hailMary, "en")).toContain("Hail Mary, full of grace");
+  });
+
+  it("uses compact English card incipits for common repeated prayers", () => {
+    expect(getCompactPrayerText(prayersById["our-father"], "en")).toBe("Our Father...");
+    expect(getCompactPrayerText(prayersById["hail-mary"], "en")).toBe("Hail Mary...");
+    expect(getCompactPrayerText(prayersById["glory-be"], "en")).toBe("Glory be...");
+    expect(getCompactPrayerText(prayersById["fatima-prayer"], "en")).toBe("O my Jesus...");
+    expect(getCompactPrayerText(prayersById["hail-holy-queen"], "en")).toBe(
+      "Hail, holy Queen, Mother of mercy...",
+    );
+    expect(getCompactPrayerText(prayersById["memorare"], "en")).toBe(
+      "Remember, O most gracious Virgin Mary...",
+    );
+    expect(getCompactPrayerText(prayersById["st-michael-prayer"], "en")).toBe(
+      "St. Michael the Archangel...",
+    );
   });
 
   it.each(testedPrayerIds)("%s has short/full English and Latin text", (prayerId) => {
@@ -223,7 +241,7 @@ describe("card content generation", () => {
     const text = generatedText(generated.cards[0]);
 
     expect(text).toContain("10x - Ave Maria, gratia plena...");
-    expect(text).toContain("Glory be to the Father...");
+    expect(text).toContain("Glory be...");
     expect(text).toContain("In the name of the Father, and of the Son, and of the Holy Spirit. Amen.");
     expect(text).not.toContain("Our Father:");
     expect(text).not.toContain("Sign of the Cross:");
@@ -411,6 +429,23 @@ describe("card ordering and reordering", () => {
     expect(insertEditableItemAfter(["a", "b", "c"], "new")).toEqual(["a", "b", "c", "new"]);
   });
 
+  it("inserts added items above or below a selected visible target", () => {
+    const ids = ["opening:heading", "opening:line-1", "opening:line-2"];
+
+    expect(insertEditableItemRelative(ids, "new", "opening:line-1", "before")).toEqual([
+      "opening:heading",
+      "new",
+      "opening:line-1",
+      "opening:line-2",
+    ]);
+    expect(insertEditableItemRelative(ids, "new", "opening:line-1", "after")).toEqual([
+      "opening:heading",
+      "opening:line-1",
+      "new",
+      "opening:line-2",
+    ]);
+  });
+
   it("treats section headings as editable standalone items", () => {
     const config = createTestGuide();
     const baseline = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate);
@@ -525,6 +560,52 @@ describe("card layout packing", () => {
       expect(generated.cards[0].front.blocks.length).toBeGreaterThan(0);
       expect(generated.cards[0].back?.blocks.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("mobile guide card actions", () => {
+  it("shows full/short toggle for prayer items only", () => {
+    const prayerActions = getMobileGuideCardActionItems(
+      {
+        itemType: "prayer",
+        prayerId: "hail-mary",
+        printMode: "short",
+      },
+      { canMoveUp: true, canMoveDown: true },
+    );
+    const headingActions = getMobileGuideCardActionItems(
+      {
+        itemType: "heading",
+      },
+      { canMoveUp: false, canMoveDown: true },
+    );
+
+    expect(prayerActions.map((action) => action.id)).toContain("toggle-full");
+    expect(prayerActions.find((action) => action.id === "toggle-full")?.label).toBe("Show full prayer");
+    expect(headingActions.map((action) => action.id)).not.toContain("toggle-full");
+    expect(headingActions.find((action) => action.id === "move-up")?.enabled).toBe(false);
+    expect(headingActions.find((action) => action.id === "move-down")?.enabled).toBe(true);
+  });
+
+  it("hides edit, remove, and full toggle when item capabilities do not support them", () => {
+    const actions = getMobileGuideCardActionItems(
+      {
+        itemType: "prayer",
+        prayerId: "our-father",
+        printMode: "full",
+        canToggleFullPrayer: false,
+        canEdit: false,
+        canDelete: false,
+      },
+      { canMoveUp: true, canMoveDown: false },
+    );
+    const actionIds = actions.map((action) => action.id);
+
+    expect(actionIds).not.toContain("edit");
+    expect(actionIds).not.toContain("toggle-full");
+    expect(actionIds).not.toContain("remove");
+    expect(actionIds).toEqual(["add-above", "add-below", "move-up", "move-down"]);
+    expect(actions.find((action) => action.id === "move-down")?.enabled).toBe(false);
   });
 });
 

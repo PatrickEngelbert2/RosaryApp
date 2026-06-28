@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { prayersById } from "@/content/prayers";
 import { GeneratedGuideCardPreview } from "@/components/cards/GeneratedGuideCardPreview";
 import { useMeasuredGuideCardLayout } from "@/components/cards/GuideCardMeasurementHost";
+import { MobileCardItemActionSheet } from "@/components/cards/MobileCardItemActionSheet";
 import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import type {
   GuideCardDragState,
@@ -35,10 +36,12 @@ import {
   getVisibleEditableItemIds,
   hasGuideCardCustomizationEdits,
   insertEditableItemAfter,
+  insertEditableItemRelative,
   moveEditableItem,
   removePrayerOverride,
   reorderEditableItem,
 } from "@/lib/rosary/guideCardCustomizations";
+import type { MobileGuideCardActionId } from "@/lib/rosary/mobileGuideCardActions";
 import {
   getActiveRosaryConfig,
   createEmptyGuideCardCustomization,
@@ -82,8 +85,10 @@ export function CardSetEditor() {
   const [addingItem, setAddingItem] = useState<{
     targetItemId?: string;
     sectionId?: string;
+    position?: GuideCardDropPosition;
   } | null>(null);
   const [dragState, setDragState] = useState<GuideCardDragState>({});
+  const [selectedMobileAction, setSelectedMobileAction] = useState<GuideCardEditAction | null>(null);
   const [hasLoadedOptions, setHasLoadedOptions] = useState(false);
   const defaultGuide = useMemo(() => createDefaultGeneratedGuideConfig(), []);
 
@@ -189,6 +194,10 @@ export function CardSetEditor() {
   )}`;
   const visibleEditableItemIds = useMemo(() => getVisibleEditableItemIds(previewSides), [previewSides]);
   const hasCardEdits = hasGuideCardCustomizationEdits(selectedCustomization);
+  const activeMobileAction =
+    selectedMobileAction && visibleEditableItemIds.includes(selectedMobileAction.itemId)
+      ? selectedMobileAction
+      : null;
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") {
@@ -210,6 +219,7 @@ export function CardSetEditor() {
 
   function handleGuideChange(id: string) {
     setSelectedGuideId(id);
+    setSelectedMobileAction(null);
     saveGuideCardSelectedGuideId(id);
     const nextGuide = savedGuides.find((guide) => guide.id === id) ?? defaultGuide;
     setCustomization(getGuideCardCustomization(nextGuide.id));
@@ -233,6 +243,7 @@ export function CardSetEditor() {
   }
 
   function updateLayoutOptions(nextOptions: Partial<GuideCardLayoutOptions>) {
+    setSelectedMobileAction(null);
     setLayoutOptions((current) => normalizeGuideCardLayoutOptions({ ...current, ...nextOptions }));
   }
 
@@ -309,6 +320,7 @@ export function CardSetEditor() {
   }
 
   function handleDeleteItem(itemId: string) {
+    setSelectedMobileAction((current) => (current?.itemId === itemId ? null : current));
     updateCustomization((current) => ({
       ...current,
       removedItemIds: [...new Set([...current.removedItemIds, itemId])],
@@ -340,6 +352,59 @@ export function CardSetEditor() {
     updateCustomization((current) => ({ ...current, itemOrder: nextOrder }));
   }
 
+  function canMovePreviewItem(itemId: string, direction: "up" | "down") {
+    const index = visibleEditableItemIds.indexOf(itemId);
+    return direction === "up"
+      ? index > 0
+      : index >= 0 && index < visibleEditableItemIds.length - 1;
+  }
+
+  function handleMobileCardAction(
+    actionId: MobileGuideCardActionId,
+    action: GuideCardEditAction,
+  ) {
+    if (actionId === "edit") {
+      setEditingText({
+        id: action.itemId,
+        label: "Edit card item",
+        value: action.text,
+        multiline: action.itemType !== "heading",
+      });
+      setSelectedMobileAction(null);
+      return;
+    }
+
+    if (actionId === "add-above") {
+      openAddCardItem(action, "before");
+      return;
+    }
+
+    if (actionId === "add-below") {
+      openAddCardItem(action, "after");
+      return;
+    }
+
+    if (actionId === "move-up") {
+      handleMoveItem(action.itemId, "up");
+      return;
+    }
+
+    if (actionId === "move-down") {
+      handleMoveItem(action.itemId, "down");
+      return;
+    }
+
+    if (actionId === "toggle-full") {
+      toggleFullPrayerFromPreview(action.prayerId, action.printMode !== "full");
+      setSelectedMobileAction(null);
+      return;
+    }
+
+    if (actionId === "remove") {
+      handleDeleteItem(action.itemId);
+    }
+  }
+
   function handleSaveEditedText() {
     if (!editingText) {
       return;
@@ -360,12 +425,14 @@ export function CardSetEditor() {
     setCustomization(createEmptyGuideCardCustomization(selectedGuide.id));
     setDragState({});
     setAddingItem(null);
+    setSelectedMobileAction(null);
   }
 
-  function openAddCardItem(target?: GuideCardEditAction) {
+  function openAddCardItem(target?: GuideCardEditAction, position: GuideCardDropPosition = "after") {
     setAddingItem({
       targetItemId: target?.itemId,
       sectionId: target?.sectionId,
+      position,
     });
   }
 
@@ -392,9 +459,17 @@ export function CardSetEditor() {
     updateCustomization((current) => ({
       ...current,
       customItems: [...(current.customItems ?? []), item],
-      itemOrder: insertEditableItemAfter(visibleEditableItemIds, itemId, addingItem?.targetItemId),
+      itemOrder: addingItem?.position
+        ? insertEditableItemRelative(
+            visibleEditableItemIds,
+            itemId,
+            addingItem.targetItemId,
+            addingItem.position,
+          )
+        : insertEditableItemAfter(visibleEditableItemIds, itemId, addingItem?.targetItemId),
     }));
     setAddingItem(null);
+    setSelectedMobileAction(null);
   }
 
   function persistPrintState() {
@@ -684,14 +759,20 @@ export function CardSetEditor() {
                     : current,
                 ),
               onToggleFullPrayer: toggleFullPrayerFromPreview,
+              onSelectItem: setSelectedMobileAction,
+              selectedItemId: activeMobileAction?.itemId,
               dragState,
-              canMoveItem: (itemId, direction) => {
-                const index = visibleEditableItemIds.indexOf(itemId);
-                return direction === "up"
-                  ? index > 0
-                  : index >= 0 && index < visibleEditableItemIds.length - 1;
-              },
+              canMoveItem: canMovePreviewItem,
             }}
+          />
+        ) : null}
+        {activeMobileAction ? (
+          <MobileCardItemActionSheet
+            action={activeMobileAction}
+            canMoveUp={canMovePreviewItem(activeMobileAction.itemId, "up")}
+            canMoveDown={canMovePreviewItem(activeMobileAction.itemId, "down")}
+            onAction={handleMobileCardAction}
+            onClose={() => setSelectedMobileAction(null)}
           />
         ) : null}
         <div className="no-print mt-6 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">

@@ -4,6 +4,12 @@ import { buildRosaryFlow } from "@/lib/rosary/buildRosaryFlow";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import { createDefaultUserConfigFromTemplate, normalizePrayerLanguageById } from "@/lib/rosary/configUtils";
 import {
+  clampPrayerStepIndex,
+  createPrayerSteps,
+  getNextPrayerStepIndex,
+  getPreviousPrayerStepIndex,
+} from "@/lib/rosary/createPrayerSteps";
+import {
   defaultEasyGuideAnswers,
   buildDefaultEasyGuideName,
   createUserRosaryConfigFromWizardAnswers,
@@ -162,6 +168,87 @@ describe("guide creation and builder output", () => {
       "our-father": "la",
       "fatima-prayer": "la",
     });
+  });
+});
+
+describe("step-by-step prayer mode", () => {
+  it("creates stable unique steps with mysteries, closings, and saint invocations", () => {
+    const steps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "group" });
+    const ids = steps.map((step) => step.id);
+
+    expect(steps.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(steps.some((step) => step.prayerId === "apostles-creed")).toBe(true);
+    expect(steps.some((step) => step.type === "mystery" && step.mysteryName === "The Agony in the Garden")).toBe(true);
+    expect(steps.some((step) => step.prayerId === "hail-holy-queen")).toBe(true);
+    expect(steps.some((step) => step.prayerId === "st-michael-prayer")).toBe(true);
+    expect(steps.some((step) => step.type === "saint-invocation" && step.body?.includes("Saint Joseph"))).toBe(true);
+  });
+
+  it("does not carry mystery context into closing prayers", () => {
+    const steps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "group" });
+    const closingPrayer = steps.find((step) => step.prayerId === "hail-holy-queen");
+    const saintInvocations = steps.find((step) => step.type === "saint-invocation");
+
+    expect(closingPrayer?.mysteryName).toBeUndefined();
+    expect(closingPrayer?.decadeIndex).toBeUndefined();
+    expect(saintInvocations?.mysteryName).toBeUndefined();
+  });
+
+  it("expands repeated prayers when counting each prayer", () => {
+    const steps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "count" });
+    const decadeHailMarys = steps.filter(
+      (step) => step.prayerId === "hail-mary" && step.repeatTotal === 10,
+    );
+    const openingHailMarys = steps.filter(
+      (step) => step.prayerId === "hail-mary" && step.repeatTotal === 3,
+    );
+
+    expect(decadeHailMarys).toHaveLength(50);
+    expect(decadeHailMarys.slice(0, 10).map((step) => step.repeatIndex)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(decadeHailMarys[3].title).toContain("4 of 10");
+    expect(openingHailMarys).toHaveLength(3);
+  });
+
+  it("groups repeated prayers when using a physical rosary", () => {
+    const steps = createPrayerSteps(createTestGuide(), { repeatedPrayerMode: "group" });
+    const decadeHailMaryGroups = steps.filter(
+      (step) => step.type === "repeated-prayer" && step.prayerId === "hail-mary" && step.repeatCount === 10,
+    );
+    const openingHailMaryGroups = steps.filter(
+      (step) => step.type === "repeated-prayer" && step.prayerId === "hail-mary" && step.repeatCount === 3,
+    );
+
+    expect(decadeHailMaryGroups).toHaveLength(5);
+    expect(decadeHailMaryGroups[0].title).toBe("Hail Mary x 10");
+    expect(openingHailMaryGroups).toHaveLength(1);
+  });
+
+  it("respects mixed English and Latin guide settings", () => {
+    const steps = createPrayerSteps(
+      createTestGuide({
+        prayerLanguageById: {
+          "our-father": "la",
+          "hail-mary": "en",
+          "fatima-prayer": "la",
+        },
+      }),
+      { repeatedPrayerMode: "group" },
+    );
+
+    expect(steps.some((step) => step.prayerId === "our-father" && step.body?.includes("Pater noster"))).toBe(true);
+    expect(steps.some((step) => step.prayerId === "hail-mary" && step.body?.includes("Hail Mary"))).toBe(true);
+    expect(steps.some((step) => step.prayerId === "fatima-prayer" && step.body?.includes("O mi Iesu"))).toBe(true);
+  });
+
+  it("handles navigation boundaries", () => {
+    expect(getNextPrayerStepIndex(0, 3)).toBe(1);
+    expect(getNextPrayerStepIndex(2, 3)).toBe(3);
+    expect(getNextPrayerStepIndex(3, 3)).toBe(3);
+    expect(getPreviousPrayerStepIndex(2, 3)).toBe(1);
+    expect(getPreviousPrayerStepIndex(0, 3)).toBe(0);
+    expect(clampPrayerStepIndex(99, 3)).toBe(3);
+    expect(clampPrayerStepIndex(-4, 3)).toBe(0);
   });
 });
 

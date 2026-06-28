@@ -29,6 +29,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Keep card templates, card content, user rosary configuration shapes, and printable metadata structured and easy to transform.
 - Do not hardcode long prayer flows directly into page components.
 - Prefer small helper functions under `src/lib/rosary` for transforming structured content into display flows.
+- Keep Custom Pray scroll/read mode and step-by-step prayer mode built from the same structured rosary flow; do not duplicate long prayer sequencing logic by hand.
 - Assume printable PDFs will later live under `/public/printables`.
 - For print features, prefer browser print behavior and CSS print rules before adding PDF libraries.
 - Guide Cards layout should use rendered measurement as the final source of truth for face packing. Do not reintroduce rough character or line estimates as the final preview/print packing decision.
@@ -47,6 +48,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Update `CHANGELOG.md` for every meaningful feature, fix, polish pass, rebrand, or architecture change.
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
 - Run the relevant Vitest tests when changing prayer language resolution, guide creation, guide card content generation, card layout packing, preview customization, print parity, or storage validation.
+- Run the step-by-step prayer mode regression tests when changing rosary flow generation, repeated-prayer behavior, prayer language resolution, saved guide prayer rendering, or Custom Pray navigation.
 - Run guide backup import/export tests when changing saved guide storage, card customization storage, or backup UI.
 - Do not change guide-card layout behavior without running the measured layout, card layout, content preservation, and print parity regression tests.
 - Mention whether lint, build, and relevant tests were run in the final response.

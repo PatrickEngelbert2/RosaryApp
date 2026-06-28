@@ -119,6 +119,39 @@ export type RenderedRosaryStep = {
   order: number;
 };
 
+export type RepeatedPrayerStepMode = "count" | "group";
+
+export type PrayerStepModeType =
+  | "section"
+  | "mystery"
+  | "instruction"
+  | "leader-note"
+  | "prayer"
+  | "repeated-prayer"
+  | "saint-invocation"
+  | "pause"
+  | "text";
+
+export type PrayerStep = {
+  id: string;
+  type: PrayerStepModeType;
+  title: string;
+  subtitle?: string;
+  body?: string;
+  prayerId?: PrayerId;
+  language?: PrayerLanguage;
+  repeatCount?: number;
+  repeatIndex?: number;
+  repeatTotal?: number;
+  decadeIndex?: number;
+  mysteryName?: string;
+  mysteryTitle?: string;
+  fruit?: string;
+  scriptureReference?: string;
+  sectionId?: string;
+  leaderOnly?: boolean;
+};
+
 export type CustomGuidance = {
   id: string;
   title: string;

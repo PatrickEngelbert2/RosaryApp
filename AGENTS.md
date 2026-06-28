@@ -31,6 +31,8 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Prefer small helper functions under `src/lib/rosary` for transforming structured content into display flows.
 - Assume printable PDFs will later live under `/public/printables`.
 - For print features, prefer browser print behavior and CSS print rules before adding PDF libraries.
+- Guide Cards layout should use rendered measurement as the final source of truth for face packing. Do not reintroduce rough character or line estimates as the final preview/print packing decision.
+- Keep Guide Cards preview and `/cards/print` on the same layout model. Measurement hosts, loading states, and print CSS should stay hidden from printed output.
 - Keep the code easy for future Codex sessions to understand and extend.
 
 ## Design Direction
@@ -43,6 +45,8 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 
 - Update `CHANGELOG.md` for every meaningful feature, fix, polish pass, rebrand, or architecture change.
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
+- Run the relevant Vitest tests when changing prayer language resolution, guide creation, guide card content generation, card layout packing, preview customization, print parity, or storage validation.
+- Do not change guide-card layout behavior without running the measured layout, card layout, content preservation, and print parity regression tests.
 - Mention whether lint, build, and relevant tests were run in the final response.
 - Keep documentation professional and accurate.
 - Do not claim features are complete unless they were implemented and tested.

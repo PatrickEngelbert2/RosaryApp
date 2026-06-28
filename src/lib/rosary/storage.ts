@@ -1,14 +1,20 @@
 import type {
   GuideCardCustomization,
   GuideCardLayoutOptions,
-  PrayerId,
-  PrayerLanguage,
   RosaryCardSet,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
-import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import { normalizeRosaryConfig } from "@/lib/rosary/configUtils";
-import { isPrayerId, normalizePrayerLanguage } from "@/lib/rosary/prayerText";
+import {
+  STORAGE_RECOVERY_MESSAGE,
+  createStoredCollection,
+  normalizeStoredCardSets,
+  normalizeStoredGuideCardCustomizations,
+  normalizeStoredGuideCardLayoutOptions,
+  normalizeStoredGuideCardSelectedGuideId,
+  normalizeStoredRosaryConfigs,
+  normalizeStoredGuideCardCustomization,
+} from "@/lib/rosary/storageSchema";
 
 const CONFIGS_KEY = "rosary-walks:rosary-configs:v1";
 const ACTIVE_CONFIG_KEY = "rosary-walks:active-config:v1";
@@ -17,6 +23,7 @@ const ACTIVE_CARD_SET_KEY = "rosary-walks:active-card-set:v1";
 const GUIDE_CARD_OPTIONS_KEY = "rosary-walks:guide-card-options:v1";
 const GUIDE_CARD_SELECTED_GUIDE_KEY = "rosary-walks:guide-card-selected-guide:v1";
 const GUIDE_CARD_CUSTOMIZATIONS_KEY = "rosary-walks:guide-card-customizations:v1";
+const STORAGE_RECOVERY_NOTICE_KEY = "rosary-walks:storage-recovery-notice:v1";
 
 function canUseLocalStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -39,6 +46,25 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+function readUnknownJson(key: string): { value: unknown; invalid: boolean } {
+  if (!canUseLocalStorage()) {
+    return { value: undefined, invalid: false };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return { value: undefined, invalid: false };
+    }
+
+    return { value: JSON.parse(raw), invalid: false };
+  } catch {
+    window.localStorage.removeItem(key);
+    recordStorageRecovery();
+    return { value: undefined, invalid: true };
+  }
+}
+
 function writeJson<T>(key: string, value: T): boolean {
   if (!canUseLocalStorage()) {
     return false;
@@ -52,9 +78,52 @@ function writeJson<T>(key: string, value: T): boolean {
   }
 }
 
+function recordStorageRecovery() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage?.setItem(STORAGE_RECOVERY_NOTICE_KEY, STORAGE_RECOVERY_MESSAGE);
+  } catch {
+    // Recovery notices are helpful but not required for app safety.
+  }
+}
+
+export function getStorageRecoveryNotice(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage?.getItem(STORAGE_RECOVERY_NOTICE_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearStorageRecoveryNotice(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage?.removeItem(STORAGE_RECOVERY_NOTICE_KEY);
+  } catch {
+    // Ignore storage access failures.
+  }
+}
+
 export function getSavedRosaryConfigs(): UserRosaryConfig[] {
-  const configs = readJson<UserRosaryConfig[]>(CONFIGS_KEY, []);
-  return Array.isArray(configs) ? configs.map(normalizeRosaryConfig) : [];
+  const stored = readUnknownJson(CONFIGS_KEY);
+  const result = normalizeStoredRosaryConfigs(stored.value);
+
+  if (stored.invalid || result.recovered) {
+    recordStorageRecovery();
+    writeJson(CONFIGS_KEY, createStoredCollection(result.items));
+  }
+
+  return result.items;
 }
 
 export function saveRosaryConfig(config: UserRosaryConfig): boolean {
@@ -69,7 +138,7 @@ export function saveRosaryConfig(config: UserRosaryConfig): boolean {
     createdAt: existing?.createdAt ?? normalizedConfig.createdAt,
   };
   const next = [...configs.filter((item) => item.id !== nextConfig.id), nextConfig];
-  const saved = writeJson(CONFIGS_KEY, next);
+  const saved = writeJson(CONFIGS_KEY, createStoredCollection(next));
   setActiveRosaryConfig(nextConfig.id);
   return saved;
 }
@@ -80,7 +149,7 @@ export function updateRosaryConfig(config: UserRosaryConfig): boolean {
 
 export function deleteRosaryConfig(id: string): boolean {
   const configs = getSavedRosaryConfigs().filter((config) => config.id !== id);
-  const saved = writeJson(CONFIGS_KEY, configs);
+  const saved = writeJson(CONFIGS_KEY, createStoredCollection(configs));
   const activeId = readJson<string | null>(ACTIVE_CONFIG_KEY, null);
 
   if (activeId === id) {
@@ -104,14 +173,21 @@ export function setActiveRosaryConfig(id: string): boolean {
 }
 
 export function getSavedCardSets(): RosaryCardSet[] {
-  const cardSets = readJson<RosaryCardSet[]>(CARD_SETS_KEY, []);
-  return Array.isArray(cardSets) ? cardSets : [];
+  const stored = readUnknownJson(CARD_SETS_KEY);
+  const result = normalizeStoredCardSets(stored.value);
+
+  if (stored.invalid || result.recovered) {
+    recordStorageRecovery();
+    writeJson(CARD_SETS_KEY, createStoredCollection(result.items));
+  }
+
+  return result.items;
 }
 
 export function saveCardSet(cardSet: RosaryCardSet): boolean {
   const cardSets = getSavedCardSets();
   const next = [...cardSets.filter((item) => item.id !== cardSet.id), cardSet];
-  const saved = writeJson(CARD_SETS_KEY, next);
+  const saved = writeJson(CARD_SETS_KEY, createStoredCollection(next));
   setActiveCardSet(cardSet.id);
   return saved;
 }
@@ -122,7 +198,7 @@ export function updateCardSet(cardSet: RosaryCardSet): boolean {
 
 export function deleteCardSet(id: string): boolean {
   const cardSets = getSavedCardSets().filter((cardSet) => cardSet.id !== id);
-  return writeJson(CARD_SETS_KEY, cardSets);
+  return writeJson(CARD_SETS_KEY, createStoredCollection(cardSets));
 }
 
 export function getActiveCardSet(): RosaryCardSet | undefined {
@@ -135,15 +211,15 @@ export function setActiveCardSet(id: string): boolean {
 }
 
 export function getGuideCardLayoutOptions(): GuideCardLayoutOptions {
-  return normalizeGuideCardLayoutOptions(readJson<Partial<GuideCardLayoutOptions>>(GUIDE_CARD_OPTIONS_KEY, {}));
+  return normalizeStoredGuideCardLayoutOptions(readJson<unknown>(GUIDE_CARD_OPTIONS_KEY, {}));
 }
 
 export function saveGuideCardLayoutOptions(options: GuideCardLayoutOptions): boolean {
-  return writeJson(GUIDE_CARD_OPTIONS_KEY, normalizeGuideCardLayoutOptions(options));
+  return writeJson(GUIDE_CARD_OPTIONS_KEY, normalizeStoredGuideCardLayoutOptions(options));
 }
 
 export function getGuideCardSelectedGuideId(): string | null {
-  return readJson<string | null>(GUIDE_CARD_SELECTED_GUIDE_KEY, null);
+  return normalizeStoredGuideCardSelectedGuideId(readJson<unknown>(GUIDE_CARD_SELECTED_GUIDE_KEY, null));
 }
 
 export function saveGuideCardSelectedGuideId(id: string): boolean {
@@ -157,17 +233,22 @@ export function createEmptyGuideCardCustomization(guideId: string): GuideCardCus
     removedItemIds: [],
     fullPrayerOverrides: {},
     prayerLanguageOverrides: {},
+    customItems: [],
     textOverrides: {},
     updatedAt: new Date().toISOString(),
   };
 }
 
 export function getGuideCardCustomizations(): GuideCardCustomization[] {
-  const customizations = readJson<GuideCardCustomization[]>(GUIDE_CARD_CUSTOMIZATIONS_KEY, []);
+  const stored = readUnknownJson(GUIDE_CARD_CUSTOMIZATIONS_KEY);
+  const result = normalizeStoredGuideCardCustomizations(stored.value);
 
-  return Array.isArray(customizations)
-    ? customizations.filter((customization) => Boolean(customization.guideId)).map(normalizeGuideCardCustomization)
-    : [];
+  if (stored.invalid || result.recovered) {
+    recordStorageRecovery();
+    writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, createStoredCollection(result.items));
+  }
+
+  return result.items;
 }
 
 export function getGuideCardCustomization(guideId: string): GuideCardCustomization {
@@ -178,13 +259,14 @@ export function getGuideCardCustomization(guideId: string): GuideCardCustomizati
 }
 
 export function saveGuideCardCustomization(customization: GuideCardCustomization): boolean {
-  const nextCustomization = {
-    ...customization,
-    itemOrder: [...new Set(customization.itemOrder)],
-    removedItemIds: [...new Set(customization.removedItemIds)],
-    fullPrayerOverrides: { ...customization.fullPrayerOverrides },
-    prayerLanguageOverrides: normalizePrayerLanguageOverrides(customization.prayerLanguageOverrides),
-    textOverrides: { ...customization.textOverrides },
+  const normalizedCustomization = normalizeStoredGuideCardCustomization(customization);
+
+  if (!normalizedCustomization) {
+    return false;
+  }
+
+  const nextCustomization: GuideCardCustomization = {
+    ...normalizedCustomization,
     updatedAt: new Date().toISOString(),
   };
   const customizations = getGuideCardCustomizations();
@@ -193,41 +275,14 @@ export function saveGuideCardCustomization(customization: GuideCardCustomization
     nextCustomization,
   ];
 
-  return writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, next);
-}
-
-function normalizeGuideCardCustomization(customization: GuideCardCustomization): GuideCardCustomization {
-  return {
-    ...customization,
-    itemOrder: Array.isArray(customization.itemOrder) ? customization.itemOrder : [],
-    removedItemIds: Array.isArray(customization.removedItemIds) ? customization.removedItemIds : [],
-    fullPrayerOverrides: customization.fullPrayerOverrides ?? {},
-    prayerLanguageOverrides: normalizePrayerLanguageOverrides(customization.prayerLanguageOverrides),
-    textOverrides: customization.textOverrides ?? {},
-    updatedAt: customization.updatedAt ?? new Date().toISOString(),
-  };
-}
-
-function normalizePrayerLanguageOverrides(
-  overrides: Partial<Record<PrayerId, PrayerLanguage | "guide-default">> | undefined,
-): Partial<Record<PrayerId, PrayerLanguage | "guide-default">> {
-  if (!overrides) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    Object.entries(overrides)
-      .filter(([prayerId]) => isPrayerId(prayerId))
-      .map(([prayerId, language]) => [
-        prayerId,
-        language === "guide-default" ? "guide-default" : normalizePrayerLanguage(language),
-      ]),
-  ) as Partial<Record<PrayerId, PrayerLanguage | "guide-default">>;
+  return writeJson(GUIDE_CARD_CUSTOMIZATIONS_KEY, createStoredCollection(next));
 }
 
 export function resetGuideCardCustomization(guideId: string): boolean {
   return writeJson(
     GUIDE_CARD_CUSTOMIZATIONS_KEY,
-    getGuideCardCustomizations().filter((customization) => customization.guideId !== guideId),
+    createStoredCollection(
+      getGuideCardCustomizations().filter((customization) => customization.guideId !== guideId),
+    ),
   );
 }

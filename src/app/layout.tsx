@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
+import { StorageRecoveryNotice } from "@/components/site/StorageRecoveryNotice";
 
 const description =
   "Walk the Rosary helps individuals and groups pray the Rosary, lead rosary walks, customize prayer guides, and print simple guide cards.";
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-cream-50 text-ink-900 antialiased">
         <div className="flex min-h-screen flex-col">
           <Header />
+          <StorageRecoveryNotice />
           <main className="flex-1">{children}</main>
           <Footer />
         </div>

@@ -7,6 +7,7 @@ import {
 } from "@/lib/rosary/cardUtils";
 import { createDefaultUserConfigFromTemplate, normalizeRosaryConfig } from "@/lib/rosary/configUtils";
 import {
+  ensureEllipsis,
   getCompactPrayerText,
   getFullPrayerTextForCards,
   getPrayerLanguage,
@@ -20,6 +21,7 @@ import type {
   GeneratedGuideCard,
   GeneratedGuideCardSet,
   GuideCardBlock,
+  GuideCardCustomItem,
   GuideCardCustomization,
   GuideCardEditableItem,
   GuideCardEditableItemType,
@@ -44,6 +46,13 @@ type GuideCardGeneratedLine = {
   canDelete?: boolean;
 };
 
+type EditableBlockEntry = {
+  block: GuideCardBlock;
+  blockIndex: number;
+  lineIndex: number;
+  item: GuideCardEditableItem;
+};
+
 const openingPrayerIds: PrayerId[] = [
   "sign-of-the-cross",
   "apostles-creed",
@@ -53,6 +62,7 @@ const openingPrayerIds: PrayerId[] = [
 ];
 
 const prayerOptionOrder: PrayerId[] = [
+  "sign-of-the-cross",
   "apostles-creed",
   "our-father",
   "hail-mary",
@@ -130,7 +140,7 @@ export function generateGuideCardsFromConfig(
     customization,
   );
   const cards = Array.from({ length: cardCount }, (_, index) =>
-    buildGeneratedGuideCard(index + 1, front, back, extraSides, layoutOptions),
+    buildGeneratedGuideCard(index + 1, front, back, extraSides, layoutOptions, blocks),
   );
 
   return {
@@ -194,6 +204,7 @@ function buildGeneratedGuideCard(
   back: GuideCardSide | undefined,
   extraSides: GuideCardSide[],
   layoutOptions: GuideCardLayoutOptions,
+  sourceBlocks: GuideCardBlock[],
 ): GeneratedGuideCard {
   return {
     id: `generated-card-${cardNumber}`,
@@ -201,6 +212,7 @@ function buildGeneratedGuideCard(
     front,
     back,
     extraSides,
+    sourceBlocks,
     layoutOptions,
   };
 }
@@ -214,10 +226,12 @@ function buildOrderedGuideBlocks(
   customization?: GuideCardCustomization,
 ): GuideCardBlock[] {
   const closingLines = buildClosingSummary(config, options, customization);
+  const { primaryClosingLines, additionalClosingLines } = splitClosingLinesAroundClosingPrayer(closingLines);
   const saintBlock = buildSaintInvocationBlock(config, layout);
   const guidanceLines = buildConciseGuidance(config, guidancePointsForBack, warnings);
   const leaderLines = buildLeaderNoteSummary(config, warnings);
   const mysteryLines = buildMysterySummary(mysterySet);
+  const mysteryEditableItems = makeEditableItems("mystery-set", mysterySet.title, mysteryLines);
 
   const blocks: GuideCardBlock[] = [
     sectionBlock("opening", "Opening", buildOpeningSummary(config, options, customization), layout, "prayer"),
@@ -240,20 +254,23 @@ function buildOrderedGuideBlocks(
       heading: mysterySet.title,
       lines: mysteryLines.map((line) => line.text),
       estimatedWeight: estimateBlockWeight(mysteryLines.map((line) => line.text), layout, false),
-      sourceItemIds: makeLineSourceItemIds("mystery-set", mysteryLines.map((line) => line.text)),
-      editableItems: makeEditableItems("mystery-set", mysterySet.title, mysteryLines),
+      sourceItemIds: mysteryEditableItems.map((item) => item.id),
+      editableItems: mysteryEditableItems,
       keepTogether: true,
       priority: "required",
       sectionGroup: "mysteries",
     } satisfies GuideCardBlock,
-    ...(closingLines.length > 0
-      ? [sectionBlock("closing", "Closing", closingLines, layout, "prayer")]
+    ...(primaryClosingLines.length > 0
+      ? [sectionBlock("closing", "Closing", primaryClosingLines, layout, "prayer")]
       : []),
-    sectionBlock("holy-father-intentions", "Holy Father's Intentions", [
-      formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father"), config, customization),
-      formatPrayerLineForCard("hail-mary", options.fullPrayerIds.includes("hail-mary"), config, customization),
-      formatPrayerLineForCard("glory-be", options.fullPrayerIds.includes("glory-be"), config, customization),
+    compactGroupBlock("holy-father-intentions", "Holy Father's Intentions", [
+      prefixCompactGroupLine(formatPrayerForCard("our-father", options.fullPrayerIds.includes("our-father"), config, customization)),
+      prefixCompactGroupLine(formatPrayerForCard("hail-mary", options.fullPrayerIds.includes("hail-mary"), config, customization)),
+      prefixCompactGroupLine(formatPrayerForCard("glory-be", options.fullPrayerIds.includes("glory-be"), config, customization)),
     ], layout),
+    ...additionalClosingLines.map((line, index) =>
+      lineOnlyBlock(`additional-closing-${line.prayerId ?? index}`, line, layout, "prayer"),
+    ),
     ...(saintBlock ? [saintBlock] : []),
     ...(guidanceLines.length > 0
       ? [sectionBlock(
@@ -276,16 +293,34 @@ function buildOrderedGuideBlocks(
           true,
         )]
       : []),
-    sectionBlock(
+    lineOnlyBlock(
       "final-sign",
-      "Final",
-      [formatPrayerLineForCard("sign-of-the-cross", false, config, customization)],
+      formatPrayerLineForCard("sign-of-the-cross", options.fullPrayerIds.includes("sign-of-the-cross"), config, customization),
       layout,
       "prayer",
     ),
   ];
 
   return blocks.filter((block) => block.lines?.length || block.body);
+}
+
+function splitClosingLinesAroundClosingPrayer(lines: GuideCardGeneratedLine[]): {
+  primaryClosingLines: GuideCardGeneratedLine[];
+  additionalClosingLines: GuideCardGeneratedLine[];
+} {
+  const closingPrayerIndex = lines.findIndex((line) => line.prayerId === "closing-prayer");
+
+  if (closingPrayerIndex < 0) {
+    return {
+      primaryClosingLines: lines,
+      additionalClosingLines: [],
+    };
+  }
+
+  return {
+    primaryClosingLines: lines.slice(0, closingPrayerIndex + 1),
+    additionalClosingLines: lines.slice(closingPrayerIndex + 1),
+  };
 }
 
 function applyFullPrayerOverrides(
@@ -326,11 +361,12 @@ function materializeEditableBlocks(
     removedItemIds: [],
     fullPrayerOverrides: {},
     prayerLanguageOverrides: {},
+    customItems: [],
     textOverrides: {},
     updatedAt: "",
   };
   const removedItemIds = new Set(customizationForGuide.removedItemIds);
-  const flattenedItems = blocks.flatMap((block, blockIndex) =>
+  const generatedItems: EditableBlockEntry[] = blocks.flatMap((block, blockIndex) =>
     (block.editableItems ?? []).map((item, lineIndex) => ({
       block,
       blockIndex,
@@ -338,59 +374,230 @@ function materializeEditableBlocks(
       item,
     })),
   );
+  const customItems = buildCustomItemEntries(customizationForGuide.customItems ?? [], layout);
+  const flattenedItems = [...generatedItems, ...customItems];
   const itemById = new Map(flattenedItems.map((entry) => [entry.item.id, entry]));
   const orderedIds = [
     ...customizationForGuide.itemOrder.filter((id) => itemById.has(id)),
     ...flattenedItems.map((entry) => entry.item.id).filter((id) => !customizationForGuide.itemOrder.includes(id)),
   ];
-  const renderedSectionIds = new Set<string>();
 
   return orderedIds
     .map((id) => itemById.get(id))
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
     .filter((entry) => !removedItemIds.has(entry.item.id))
     .map((entry, order) => {
-      const sectionHeadingKey = getSectionHeadingOverrideKey(entry.item.sectionId);
-      const heading =
-        renderedSectionIds.has(entry.item.sectionId)
-          ? undefined
-          : customizationForGuide.textOverrides[sectionHeadingKey] ?? entry.block.heading;
       const text = customizationForGuide.textOverrides[entry.item.id] ?? entry.item.currentText;
       const lineItem: GuideCardEditableItem = {
         ...entry.item,
         currentText: text,
         order,
       };
-      const block = createMaterializedBlock(entry.block, lineItem, text, heading, layout);
-
-      renderedSectionIds.add(entry.item.sectionId);
-      return block;
+      return createMaterializedBlock(entry.block, lineItem, text, layout);
     });
 }
 
-function getSectionHeadingOverrideKey(sectionId: string): string {
-  return `${sectionId}:heading`;
+function buildCustomItemEntries(
+  customItems: GuideCardCustomItem[],
+  layout: GuideCardLayoutDefinition,
+): EditableBlockEntry[] {
+  return customItems.map((customItem, index) => {
+    const itemType = getCustomEditableItemType(customItem);
+    const currentText = getCustomItemText(customItem);
+    const blockType = getCustomBlockType(customItem);
+    const editableItem: GuideCardEditableItem = {
+      id: customItem.id,
+      type: itemType,
+      sectionId: customItem.sectionId,
+      prayerId: customItem.prayerId,
+      title: getCustomItemTitle(customItem),
+      shortText: customItem.prayerId
+        ? formatCardPrayerText(customItem.prayerId, customItem.prayerLanguage ?? "en", "short")
+        : undefined,
+      fullText: customItem.prayerId
+        ? formatCardPrayerText(customItem.prayerId, customItem.prayerLanguage ?? "en", "full")
+        : undefined,
+      currentText,
+      printMode: customItem.printMode,
+      order: index,
+      canToggleFullPrayer: false,
+      canEdit: true,
+      canDelete: true,
+    };
+    const lines = customItem.kind === "section" ? [] : [currentText];
+    const block: GuideCardBlock = {
+      id: customItem.id,
+      type: blockType,
+      heading: customItem.kind === "section" ? currentText : getCustomBlockHeading(customItem),
+      lines,
+      estimatedWeight:
+        customItem.kind === "section"
+          ? layout.headingWeight + layout.sectionGapWeight
+          : estimateBlockWeight(lines, layout, true),
+      sourceItemIds: [customItem.id],
+      editableItems: [editableItem],
+      keepTogether: true,
+      priority: "required",
+      compact: true,
+      leaderOnly: customItem.kind === "leader-note",
+      sectionGroup: customItem.sectionId,
+    };
+
+    return {
+      block,
+      blockIndex: Number.MAX_SAFE_INTEGER,
+      lineIndex: index,
+      item: editableItem,
+    };
+  });
+}
+
+function getCustomEditableItemType(customItem: GuideCardCustomItem): GuideCardEditableItemType {
+  if (customItem.kind === "section") {
+    return "heading";
+  }
+
+  if (customItem.kind === "prayer") {
+    return "prayer";
+  }
+
+  if (customItem.kind === "saint-invocation") {
+    return "saint-invocation";
+  }
+
+  return customItem.kind === "custom-text" ? "text" : "instruction";
+}
+
+function getCustomBlockType(customItem: GuideCardCustomItem): GuideCardBlock["type"] {
+  if (customItem.kind === "section") {
+    return "heading";
+  }
+
+  if (customItem.kind === "prayer") {
+    return "prayer";
+  }
+
+  if (customItem.kind === "saint-invocation") {
+    return "invocation-list";
+  }
+
+  return customItem.kind === "leader-note" ? "custom-guidance" : "instruction";
+}
+
+function getCustomItemTitle(customItem: GuideCardCustomItem): string {
+  if (customItem.kind === "prayer" && customItem.prayerId) {
+    return getPrayerVariant(prayersById[customItem.prayerId], customItem.prayerLanguage ?? "en").title;
+  }
+
+  return getCustomBlockHeading(customItem) ?? customItem.text;
+}
+
+function getCustomBlockHeading(customItem: GuideCardCustomItem): string | undefined {
+  if (customItem.kind === "section") {
+    return customItem.text || "New Section";
+  }
+
+  if (customItem.kind === "leader-note") {
+    return "Leader Note";
+  }
+
+  if (customItem.kind === "intention") {
+    return "Intention";
+  }
+
+  return undefined;
+}
+
+function getCustomItemText(customItem: GuideCardCustomItem): string {
+  const fallbackText = customItem.text.trim() || "New card item";
+
+  if (customItem.kind === "section") {
+    return fallbackText;
+  }
+
+  if (customItem.kind === "prayer" && customItem.prayerId) {
+    return formatCardPrayerText(
+      customItem.prayerId,
+      customItem.prayerLanguage ?? "en",
+      customItem.printMode ?? "short",
+    );
+  }
+
+  if (customItem.kind === "saint-invocation") {
+    const normalized = fallbackText.replace(/[.\s]+$/u, "");
+    return /pray for us$/iu.test(normalized) ? `${normalized}.` : `${normalized}, pray for us.`;
+  }
+
+  return fallbackText;
 }
 
 function createMaterializedBlock(
   sourceBlock: GuideCardBlock,
   item: GuideCardEditableItem,
   text: string,
-  heading: string | undefined,
   layout: GuideCardLayoutDefinition,
 ): GuideCardBlock {
-  const lines = [text];
   const layoutInstanceId = createLayoutInstanceId(item);
+
+  if (item.type === "heading") {
+    return {
+      ...sourceBlock,
+      id: layoutInstanceId,
+      layoutInstanceId,
+      type: "heading",
+      heading: text,
+      lines: undefined,
+      body: undefined,
+      sourceItemIds: [item.id],
+      editableItems: [item],
+      estimatedWeight: layout.headingWeight + layout.sectionGapWeight,
+    };
+  }
+
+  if (sourceBlock.type === "compact-group") {
+    const { heading, lines } = parseCompactGroupText(text, sourceBlock.heading, sourceBlock.lines ?? []);
+
+    return {
+      ...sourceBlock,
+      id: layoutInstanceId,
+      layoutInstanceId,
+      type: "compact-group",
+      heading,
+      lines,
+      body: undefined,
+      sourceItemIds: [item.id],
+      editableItems: [item],
+      estimatedWeight: estimateBlockWeight(lines, layout, true) + layout.sectionGapWeight,
+    };
+  }
+
+  const lines = [text];
 
   return {
     ...sourceBlock,
     id: layoutInstanceId,
     layoutInstanceId,
-    heading,
+    heading: undefined,
     lines,
     sourceItemIds: [item.id],
     editableItems: [item],
-    estimatedWeight: estimateMaterializedBlockWeight(sourceBlock, lines, heading, layout),
+    estimatedWeight: estimateMaterializedBlockWeight(sourceBlock, lines, layout),
+  };
+}
+
+function parseCompactGroupText(
+  text: string,
+  fallbackHeading: string | undefined,
+  fallbackLines: string[],
+): { heading: string; lines: string[] } {
+  const [firstLine, ...remainingLines] = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return {
+    heading: firstLine?.replace(/:$/u, "") || fallbackHeading || "Card Notes",
+    lines: remainingLines.length > 0 ? remainingLines.map(prefixCompactGroupLine) : fallbackLines,
   };
 }
 
@@ -401,17 +608,15 @@ function createLayoutInstanceId(item: GuideCardEditableItem): string {
 function estimateMaterializedBlockWeight(
   sourceBlock: GuideCardBlock,
   lines: string[],
-  heading: string | undefined,
   layout: GuideCardLayoutDefinition,
 ): number {
   const charsPerLine =
     sourceBlock.type === "mystery-list"
       ? layout.compactCharsPerLine
       : getCharsPerLine(layout, sourceBlock.compact);
-  const headingWeight = heading ? layout.headingWeight : 0;
-  const spacingWeight = heading ? layout.sectionGapWeight : layout.sectionGapWeight * 0.35;
+  const spacingWeight = layout.sectionGapWeight * 0.35;
 
-  return estimateLines(lines, charsPerLine) + headingWeight + spacingWeight;
+  return estimateLines(lines, charsPerLine) + spacingWeight;
 }
 
 function layoutBlocksAcrossSides(
@@ -477,6 +682,26 @@ function packBlocksIntoSides(
     queue = rest;
 
     const remainingCapacity = capacity - currentWeight;
+    const nextBlock = rest[0];
+
+    if (block.type === "heading" && nextBlock) {
+      const combinedWeight = block.estimatedWeight + nextBlock.estimatedWeight;
+
+      if (combinedWeight <= remainingCapacity) {
+        current = [...current, block, nextBlock];
+        currentWeight += combinedWeight;
+        queue = rest.slice(1);
+        continue;
+      }
+
+      if (current.length > 0 && block.estimatedWeight <= remainingCapacity) {
+        sides.push(current);
+        current = [];
+        currentWeight = 0;
+        queue = [block, ...rest];
+        continue;
+      }
+    }
 
     if (block.estimatedWeight <= remainingCapacity) {
       current = [...current, block];
@@ -693,6 +918,7 @@ function sectionBlock(
 ): GuideCardBlock {
   const generatedLines = normalizeGeneratedLines(lines, type);
   const textLines = generatedLines.map((line) => line.text);
+  const editableItems = makeEditableItems(id, heading, generatedLines);
 
   return {
     id,
@@ -700,14 +926,88 @@ function sectionBlock(
     heading,
     lines: textLines,
     estimatedWeight: estimateBlockWeight(textLines, layout, compact),
-    sourceItemIds: makeLineSourceItemIds(id, textLines),
-    editableItems: makeEditableItems(id, heading, generatedLines),
+    sourceItemIds: editableItems.map((item) => item.id),
+    editableItems,
     keepTogether: true,
     priority: type === "custom-guidance" ? "optional" : "required",
     compact,
     leaderOnly,
     sectionGroup: id,
   };
+}
+
+function compactGroupBlock(
+  id: string,
+  heading: string,
+  lines: string[],
+  layout: GuideCardLayoutDefinition,
+): GuideCardBlock {
+  const currentText = [heading, ...lines].join("\n");
+  const editableItem: GuideCardEditableItem = {
+    id: `${id}:group`,
+    type: "text",
+    sectionId: id,
+    title: heading,
+    currentText,
+    order: 0,
+    canToggleFullPrayer: false,
+    canEdit: true,
+    canDelete: true,
+  };
+
+  return {
+    id,
+    type: "compact-group",
+    heading,
+    lines,
+    estimatedWeight: estimateBlockWeight(lines, layout, true) + layout.sectionGapWeight,
+    sourceItemIds: [editableItem.id],
+    editableItems: [editableItem],
+    keepTogether: false,
+    priority: "required",
+    compact: true,
+    sectionGroup: id,
+  };
+}
+
+function lineOnlyBlock(
+  id: string,
+  line: GuideCardGeneratedLine,
+  layout: GuideCardLayoutDefinition,
+  type: GuideCardBlock["type"] = "instruction",
+): GuideCardBlock {
+  const editableItem: GuideCardEditableItem = {
+    id: `${id}:line-1`,
+    type: line.type,
+    sectionId: id,
+    prayerId: line.prayerId,
+    title: line.title,
+    shortText: line.prayerId ? ensureEllipsis(getCompactPrayerText(prayersById[line.prayerId])) : undefined,
+    fullText: line.prayerId ? getFullPrayerTextForCards(prayersById[line.prayerId]) : undefined,
+    currentText: line.text,
+    printMode: line.printMode,
+    order: 0,
+    canToggleFullPrayer: line.canToggleFullPrayer ?? Boolean(line.prayerId),
+    canEdit: line.canEdit ?? true,
+    canDelete: line.canDelete ?? true,
+  };
+
+  return {
+    id,
+    type,
+    lines: [line.text],
+    estimatedWeight: estimateMaterializedBlockWeight({ id, type, estimatedWeight: 0 }, [line.text], layout),
+    sourceItemIds: [editableItem.id],
+    editableItems: [editableItem],
+    keepTogether: false,
+    priority: "required",
+    compact: true,
+    sectionGroup: id,
+  };
+}
+
+function prefixCompactGroupLine(text: string): string {
+  return text.startsWith("- ") ? text : `- ${text}`;
 }
 
 function normalizeGeneratedLines(
@@ -749,21 +1049,36 @@ function makeEditableItems(
   heading: string,
   lines: GuideCardGeneratedLine[],
 ): GuideCardEditableItem[] {
-  return lines.map((line, index) => ({
-    id: `${sectionId}:line-${index + 1}`,
-    type: line.type,
+  const headingItem: GuideCardEditableItem = {
+    id: `${sectionId}:heading`,
+    type: "heading",
     sectionId,
-    prayerId: line.prayerId,
-    title: line.title ?? heading,
-    shortText: line.prayerId ? getCompactPrayerText(prayersById[line.prayerId]) : undefined,
-    fullText: line.prayerId ? getFullPrayerTextForCards(prayersById[line.prayerId]) : undefined,
-    currentText: line.text,
-    printMode: line.printMode,
-    order: index,
-    canToggleFullPrayer: line.canToggleFullPrayer ?? Boolean(line.prayerId),
-    canEdit: line.canEdit ?? true,
-    canDelete: line.canDelete ?? true,
-  }));
+    title: heading,
+    currentText: heading,
+    order: 0,
+    canToggleFullPrayer: false,
+    canEdit: true,
+    canDelete: true,
+  };
+
+  return [
+    headingItem,
+    ...lines.map((line, index) => ({
+      id: `${sectionId}:line-${index + 1}`,
+      type: line.type,
+      sectionId,
+      prayerId: line.prayerId,
+      title: line.title ?? heading,
+      shortText: line.prayerId ? ensureEllipsis(getCompactPrayerText(prayersById[line.prayerId])) : undefined,
+      fullText: line.prayerId ? getFullPrayerTextForCards(prayersById[line.prayerId]) : undefined,
+      currentText: line.text,
+      printMode: line.printMode,
+      order: index + 1,
+      canToggleFullPrayer: line.canToggleFullPrayer ?? Boolean(line.prayerId),
+      canEdit: line.canEdit ?? true,
+      canDelete: line.canDelete ?? true,
+    })),
+  ];
 }
 
 function editableLine(
@@ -794,10 +1109,6 @@ function createSide(
     blocks,
     overflowWarnings: [],
   };
-}
-
-function makeLineSourceItemIds(blockId: string, lines: string[]): string[] {
-  return lines.map((_, index) => `${blockId}:line-${index + 1}`);
 }
 
 function collectSourceItemCounts(blocks: GuideCardBlock[]): Map<string, number> {
@@ -941,7 +1252,7 @@ function findFrontFirstPlacementWarnings(
       return;
     }
 
-    const firstRenderableWeight = getMinimumRenderableBlockWeight(side.blocks[0], layout);
+    const firstRenderableWeight = getMinimumRenderableSideWeight(side.blocks, layout);
 
     sides.slice(0, sideIndex).forEach((previousSide, previousIndex) => {
       const remainingCapacity = layout.capacity - getBlocksWeight(previousSide.blocks);
@@ -999,6 +1310,23 @@ function getMinimumRenderableBlockWeight(
   return block.estimatedWeight;
 }
 
+function getMinimumRenderableSideWeight(
+  blocks: GuideCardBlock[],
+  layout: GuideCardLayoutDefinition,
+): number {
+  const [firstBlock, secondBlock] = blocks;
+
+  if (!firstBlock) {
+    return 0;
+  }
+
+  if (firstBlock.type === "heading" && secondBlock) {
+    return firstBlock.estimatedWeight + getMinimumRenderableBlockWeight(secondBlock, layout);
+  }
+
+  return getMinimumRenderableBlockWeight(firstBlock, layout);
+}
+
 function buildOpeningSummary(
   config: UserRosaryConfig,
   options: GuideCardLayoutOptions = normalizeGuideCardLayoutOptions({}),
@@ -1029,7 +1357,7 @@ function formatOpeningStep(
   if (step.prayerId === "hail-mary" && (step.repeatCount ?? step.repeat ?? 1) === 3) {
     return formatRepeatedPrayerLineForCard(
       "hail-mary",
-      getRepeatedPrayerLabel("Three Hail Marys for faith, hope, and charity", "hail-mary", config, customization),
+      3,
       options.fullPrayerIds.includes("hail-mary"),
       config,
       customization,
@@ -1086,7 +1414,7 @@ export function buildDecadeSummary(
     formatPrayerLineForCard("our-father", options.fullPrayerIds.includes("our-father"), config, customization),
     formatRepeatedPrayerLineForCard(
       "hail-mary",
-      getRepeatedPrayerLabel("10 Hail Marys", "hail-mary", config, customization),
+      10,
       options.fullPrayerIds.includes("hail-mary"),
       config,
       customization,
@@ -1111,13 +1439,11 @@ function formatPrayerForCard(
   config: UserRosaryConfig,
   customization?: GuideCardCustomization,
 ): string {
-  const prayer = getCardPrayerVariant(prayerId, config, customization);
-
-  if (!full) {
-    return compactPrayerText(prayerId, config, customization);
-  }
-
-  return `${prayer.title}: ${getFullPrayerTextForCards(prayersById[prayerId], prayer.language)}`;
+  return formatCardPrayerText(
+    prayerId,
+    getCardPrayerLanguage(prayerId, config, customization),
+    full ? "full" : "short",
+  );
 }
 
 function formatPrayerLineForCard(
@@ -1132,48 +1458,56 @@ function formatPrayerLineForCard(
     prayerId,
     title: prayer.title,
     printMode: full ? "full" : "short",
-    canToggleFullPrayer: prayerId !== "sign-of-the-cross",
+    canToggleFullPrayer: true,
   });
 }
 
 function formatRepeatedPrayerForCard(
   prayerId: PrayerId,
-  label: string,
+  count: number,
   full: boolean,
   config: UserRosaryConfig,
   customization?: GuideCardCustomization,
 ): string {
-  if (!full) {
-    return `${label}: ${compactPrayerText(prayerId, config, customization)}`;
-  }
-
-  return `${label}: ${getFullPrayerTextForCards(
-    prayersById[prayerId],
+  return formatCardPrayerText(
+    prayerId,
     getCardPrayerLanguage(prayerId, config, customization),
-  )}`;
+    full ? "full" : "short",
+    count,
+  );
 }
 
 function formatRepeatedPrayerLineForCard(
   prayerId: PrayerId,
-  label: string,
+  count: number,
   full: boolean,
   config: UserRosaryConfig,
   customization?: GuideCardCustomization,
 ): GuideCardGeneratedLine {
-  return editableLine(formatRepeatedPrayerForCard(prayerId, label, full, config, customization), "prayer", {
+  return editableLine(formatRepeatedPrayerForCard(prayerId, count, full, config, customization), "prayer", {
     prayerId,
-    title: label,
+    title: getCardPrayerVariant(prayerId, config, customization).title,
     printMode: full ? "full" : "short",
     canToggleFullPrayer: true,
   });
 }
 
-function compactPrayerText(
+function formatCardPrayerText(
   prayerId: PrayerId,
-  config: UserRosaryConfig,
-  customization?: GuideCardCustomization,
+  language: PrayerLanguage,
+  printMode: "short" | "full",
+  repeatCount?: number,
 ): string {
-  return getCompactPrayerText(prayersById[prayerId], getCardPrayerLanguage(prayerId, config, customization));
+  const prayer = prayersById[prayerId];
+  const variant = getPrayerVariant(prayer, language);
+  const text =
+    printMode === "full"
+      ? getFullPrayerTextForCards(prayer, language)
+      : prayerId === "sign-of-the-cross"
+        ? variant.title
+        : ensureEllipsis(getCompactPrayerText(prayer, language));
+
+  return repeatCount ? `${repeatCount}x - ${text}` : text;
 }
 
 function getCardPrayerVariant(
@@ -1196,27 +1530,6 @@ function getCardPrayerLanguage(
   }
 
   return getPrayerLanguage(prayerId, config.prayerLanguageById);
-}
-
-function getRepeatedPrayerLabel(
-  englishLabel: string,
-  prayerId: PrayerId,
-  config: UserRosaryConfig,
-  customization?: GuideCardCustomization,
-): string {
-  const prayer = getCardPrayerVariant(prayerId, config, customization);
-
-  if (prayer.language === "en") {
-    return englishLabel;
-  }
-
-  if (prayerId === "hail-mary") {
-    return englishLabel
-      .replace("Three Hail Marys", "Three Ave Maria prayers")
-      .replace("10 Hail Marys", "10 Ave Maria prayers");
-  }
-
-  return englishLabel.replace(prayersById[prayerId].title, prayer.title);
 }
 
 function buildSaintInvocationBlock(

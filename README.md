@@ -19,6 +19,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Group repeated Hail Marys or show them individually.
 - Generate printable front/back guide cards.
 - Customize guide card previews before printing.
+- Add card-only sections, notes, leader notes, intentions, saint invocations, prayers, and custom text from the guide card preview.
 - Adjust guide card prayer language per prayer without changing the saved guide.
 - Choose Pocket, Tall, Wide, or Full page guide-card layouts.
 - Choose which prayers print in full on guide cards.
@@ -66,8 +67,10 @@ $env:NO_OPEN="1"; npm start
 - `npm run build` creates a production build.
 - `npm run start:production` runs `next start` after a production build.
 - `npm run lint` runs ESLint.
+- `npm test` runs the Vitest regression suite once.
+- `npm run test:watch` runs Vitest in watch mode.
 - `npm run typecheck` runs TypeScript without emitting files.
-- `npm run check` runs typecheck, lint, and build.
+- `npm run check` runs typecheck, lint, tests, and build.
 
 ## Important Routes
 
@@ -103,7 +106,7 @@ Long-form prayer and Rosary content should stay in structured files:
 
 Rosary transformation logic lives under `src/lib/rosary`. Pages should render structured data instead of hardcoding long prayer flows.
 
-Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. Existing localStorage keys intentionally remain stable to avoid breaking saved guides.
+Custom Rosary guides and card sets are saved in browser localStorage. They are not synced or uploaded. The app is still in preview, so saved-guide and card-customization storage may change. Storage loading is versioned and validated; incompatible or malformed local app data is ignored and rewritten to safe defaults with an in-app recovery notice instead of crashing the page.
 
 ## Guide Building Workflow
 
@@ -120,7 +123,7 @@ Saved guides can choose English or Latin per prayer. The Easy Guide Builder incl
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English or Latin. The preview can also be customized before printing: card items can be edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a canonical prayer ID is available. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English or Latin. The preview can also be customized before printing: card items can be added, edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a generated canonical prayer ID is available. Added preview items can be sections, notes, leader notes, intentions, saint invocations, prayers, or custom text. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
 
 Supported layouts are:
 
@@ -133,13 +136,15 @@ Supported layouts are:
 
 The Number of cards needed field controls how many card slots the site generates. It does not control duplicate print copies; use the browser print dialog's Copies setting to print more sets. When a layout changes, the card count auto-adjusts to that layout's cards-per-page default only if the current count still appears to be the previous layout default. If the user has typed a custom count, the app preserves that count. Blank print slots remain invisible so front/back alignment is preserved.
 
-Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Preview full/short toggles use the same canonical prayer IDs, which keeps the data model ready for later Latin or Spanish prayer variants without adding language selection in this pass.
+Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Repeated prayers print in compact form such as `10x - Hail Mary, full of grace...` or `10x - Ave Maria, gratia plena...`. Full prayer lines print as the prayer text without a title prefix. Preview full/short toggles use the same canonical prayer IDs, which keeps the data model ready for later Latin or Spanish prayer variants without adding language selection in this pass.
 
-Overflow handling is block-based and estimate-driven. The app keeps prayer and guide sections together where possible, balances ordered guide blocks across card faces when a second side is needed, and warns when a selected card size or full-prayer combination may be too dense. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not yet a dedicated PDF layout engine.
+Guide Card layout uses rendered measurement in the browser. The app renders the same card face typography and spacing offscreen, measures each structured card item, then packs items front-first with the fewest measured faces possible. The front is filled before the back, and continuation faces are created only when measured content no longer fits. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not a dedicated PDF layout engine.
 
-The print view at `/cards/print` uses browser print / Save as PDF. The browser print dialog handles copy count; the site only renders the selected number of card slots. Customized preview content is applied to the print view, but preview controls never print. Persistence is still browser-local; no guide or card data is uploaded.
+Holy Father's Intentions renders as a compact movable group after the Rosary Closing Prayer by default, with each child prayer prefixed by `- `. The final Sign of the Cross renders as a standalone item instead of under a separate `Final` heading. Both remain part of the structured card content so card-only editing, reordering, deletion, preview customization, and print output continue to use the same model.
 
-Custom user-defined card dimensions are not implemented yet. Saving card preview edits back into the underlying guide is also deferred; current preview edits are intentionally cards-only. The current system intentionally uses a small set of tested US Letter layouts.
+The print view at `/cards/print` uses the same measured layout pipeline before rendering printable sheets. The browser print dialog handles copy count; the site only renders the selected number of card slots. Customized preview content is applied to the print view, but preview controls and measurement elements never print. Persistence is still browser-local; no guide or card data is uploaded.
+
+Custom user-defined card dimensions, card text-size controls, and font controls are not implemented yet. The measured layout architecture is designed for those later settings because it measures the active rendered styles instead of relying on hardcoded line counts as the final source of truth. Saving card preview edits back into the underlying guide is also deferred; current preview edits are intentionally cards-only. The current system intentionally uses a small set of tested US Letter layouts.
 
 ## Scripture Readings
 
@@ -155,6 +160,7 @@ Walk the Rosary uses subtle CSS-based hover, focus, and active states for button
 
 - Update `README.md` when setup steps, scripts, project purpose, major features, deployment notes, or architecture change.
 - Update `CHANGELOG.md` for meaningful features, fixes, polish passes, rebrands, or architecture changes.
+- Run the Vitest regression suite when changing prayer language resolution, guide creation, guide cards, card layout, preview customization, print content, or storage validation.
 - Keep documentation professional, accurate, and current.
 
 ## Security And Privacy
@@ -170,6 +176,7 @@ Before shipping changes, run:
 
 ```bash
 npm run check
+npm test
 npm audit
 ```
 

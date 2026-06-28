@@ -97,25 +97,25 @@ export const prayers: Prayer[] = [
         title: "Ave Maria",
         incipit: "Ave Maria...",
         text: "Ave Maria, gratia plena, Dominus tecum; benedicta tu in mulieribus, et benedictus fructus ventris tui, Iesus.\n\nSancta Maria, Mater Dei, ora pro nobis peccatoribus, nunc et in hora mortis nostrae. Amen.",
-        shortText: "Ave Maria...",
+        shortText: "Ave Maria, gratia plena...",
       },
     },
   },
   {
     id: "glory-be",
     title: "Glory Be",
-    incipit: "Glory be...",
+    incipit: "Glory be to the Father...",
     text: "Glory be to the Father, and to the Son, and to the Holy Spirit.\n\nAs it was in the beginning, is now, and ever shall be, world without end. Amen.",
-    shortText: "Glory be to the Father, and to the Son, and to the Holy Spirit.",
+    shortText: "Glory be to the Father...",
     category: "decade",
     defaultLanguage: "en",
     variants: {
       en: {
         language: "en",
         title: "Glory Be",
-        incipit: "Glory be...",
+        incipit: "Glory be to the Father...",
         text: "Glory be to the Father, and to the Son, and to the Holy Spirit.\n\nAs it was in the beginning, is now, and ever shall be, world without end. Amen.",
-        shortText: "Glory be to the Father, and to the Son, and to the Holy Spirit.",
+        shortText: "Glory be to the Father...",
       },
       la: {
         language: "la",
@@ -231,7 +231,7 @@ export const prayers: Prayer[] = [
     title: "St. Michael Prayer",
     incipit: "St. Michael the Archangel...",
     text: "St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.\n\nMay God rebuke him, we humbly pray, and do thou, O Prince of the heavenly hosts, by the power of God, cast into hell Satan, and all the evil spirits, who prowl about the world seeking the ruin of souls. Amen.",
-    shortText: "St. Michael the Archangel, defend us in battle.",
+    shortText: "St. Michael the Archangel, defend us in battle...",
     category: "optional",
     defaultLanguage: "en",
     variants: {
@@ -240,7 +240,7 @@ export const prayers: Prayer[] = [
         title: "St. Michael Prayer",
         incipit: "St. Michael the Archangel...",
         text: "St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.\n\nMay God rebuke him, we humbly pray, and do thou, O Prince of the heavenly hosts, by the power of God, cast into hell Satan, and all the evil spirits, who prowl about the world seeking the ruin of souls. Amen.",
-        shortText: "St. Michael the Archangel, defend us in battle.",
+        shortText: "St. Michael the Archangel, defend us in battle...",
       },
       la: {
         language: "la",

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useMeasuredGuideCardLayout } from "@/components/cards/GuideCardMeasurementHost";
 import { PrintCardPage } from "@/components/cards/PrintCardPage";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 import {
@@ -72,15 +73,19 @@ export function PrintCardsClient() {
     () => generateGuideCardsFromConfig(guide, layoutOptions, undefined, customization),
     [customization, guide, layoutOptions],
   );
+  const measuredLayout = useMeasuredGuideCardLayout(generatedCardSet);
+  const printCardSet = measuredLayout.cardSet;
   const printGroups = useMemo(
-    () => chunkCardsForPrint(generatedCardSet.cards, generatedCardSet.cardsPerPage),
-    [generatedCardSet.cards, generatedCardSet.cardsPerPage],
+    () => (printCardSet ? chunkCardsForPrint(printCardSet.cards, printCardSet.cardsPerPage) : []),
+    [printCardSet],
   );
-  const hasBackSide = Boolean(generatedCardSet.cards[0]?.back);
-  const extraSideCount = generatedCardSet.cards[0]?.extraSides?.length ?? 0;
+  const hasBackSide = Boolean(printCardSet?.cards[0]?.back);
+  const extraSideCount = printCardSet?.cards[0]?.extraSides?.length ?? 0;
   const cardSizeLabel = getGuideCardLayout(generatedCardSet.layoutOptions.cardSize).shortLabel;
   const printSideSummary =
-    extraSideCount > 0
+    measuredLayout.isMeasuring
+      ? "a measured layout that is still being prepared."
+      : extraSideCount > 0
       ? `front/back grid slots plus ${extraSideCount} extra ${
           extraSideCount === 1 ? "side" : "sides"
         } for dense cards.`
@@ -109,14 +114,19 @@ export function PrintCardsClient() {
             {" "}
             {printSideSummary}
           </p>
+          {measuredLayout.isMeasuring ? (
+            <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
+              Preparing print layout...
+            </p>
+          ) : null}
           {usedFallback ? (
             <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
               No saved guide was found, so this page is showing a default generated guide.
             </p>
           ) : null}
-          {generatedCardSet.warnings.length > 0 ? (
+          {printCardSet && printCardSet.warnings.length > 0 ? (
             <div className="mt-3 space-y-2 rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
-              {generatedCardSet.warnings.map((warning) => (
+              {printCardSet.warnings.map((warning) => (
                 <p key={warning}>{warning}</p>
               ))}
             </div>
@@ -124,8 +134,9 @@ export function PrintCardsClient() {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
+              disabled={measuredLayout.isMeasuring}
               onClick={() => window.print()}
-              className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+              className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Print / Save as PDF
             </button>
@@ -139,39 +150,42 @@ export function PrintCardsClient() {
         </div>
       </div>
 
-      <div className="print-document">
-        {printGroups.map((cards, index) => (
-          <div key={`print-group-${index}`}>
-            <PrintCardPage
-              cards={cards}
-              side="front"
-              pageLabel={`Sheet ${index + 1} fronts`}
-              cardsPerPage={generatedCardSet.cardsPerPage}
-              cardSize={generatedCardSet.layoutOptions.cardSize}
-            />
-            {hasBackSide ? (
+      {printCardSet ? (
+        <div className="print-document">
+          {printGroups.map((cards, index) => (
+            <div key={`print-group-${index}`}>
               <PrintCardPage
                 cards={cards}
-                side="back"
-                pageLabel={`Sheet ${index + 1} backs`}
-                cardsPerPage={generatedCardSet.cardsPerPage}
-                cardSize={generatedCardSet.layoutOptions.cardSize}
+                side="front"
+                pageLabel={`Sheet ${index + 1} fronts`}
+                cardsPerPage={printCardSet.cardsPerPage}
+                cardSize={printCardSet.layoutOptions.cardSize}
               />
-            ) : null}
-            {Array.from({ length: extraSideCount }, (_, extraIndex) => (
-              <PrintCardPage
-                key={`extra-${extraIndex}`}
-                cards={cards}
-                side="back"
-                extraSideIndex={extraIndex}
-                pageLabel={`Sheet ${index + 1} extra side ${extraIndex + 1}`}
-                cardsPerPage={generatedCardSet.cardsPerPage}
-                cardSize={generatedCardSet.layoutOptions.cardSize}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
+              {hasBackSide ? (
+                <PrintCardPage
+                  cards={cards}
+                  side="back"
+                  pageLabel={`Sheet ${index + 1} backs`}
+                  cardsPerPage={printCardSet.cardsPerPage}
+                  cardSize={printCardSet.layoutOptions.cardSize}
+                />
+              ) : null}
+              {Array.from({ length: extraSideCount }, (_, extraIndex) => (
+                <PrintCardPage
+                  key={`extra-${extraIndex}`}
+                  cards={cards}
+                  side="back"
+                  extraSideIndex={extraIndex}
+                  pageLabel={`Sheet ${index + 1} extra side ${extraIndex + 1}`}
+                  cardsPerPage={printCardSet.cardsPerPage}
+                  cardSize={printCardSet.layoutOptions.cardSize}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {measuredLayout.measurementHost}
     </>
   );
 }

@@ -7,7 +7,8 @@ import { prayersById } from "@/content/prayers";
 import { CollapsibleBuilderSection } from "@/components/rosary/BuilderSection";
 import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import { RosaryFlowPreview } from "@/components/rosary/RosaryFlowPreview";
-import { appendCommonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
+import { SaintPickerDialog } from "@/components/rosary/SaintPickerDialog";
+import { commonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
 import { getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
 import {
   createDefaultUserConfigFromTemplate,
@@ -25,6 +26,13 @@ import {
   prayerLanguageOptions,
   prayerLanguagePrayerIds,
 } from "@/lib/rosary/prayerText";
+import {
+  addCommonSaintInvocations,
+  addManualSaintInvocation,
+  getSaintInvocationNames,
+  removeSaintInvocation as removeSaintInvocationFromConfig,
+  setSelectedSaintInvocationIds,
+} from "@/lib/rosary/saintInvocations";
 import {
   deleteRosaryConfig,
   getActiveRosaryConfig,
@@ -70,6 +78,7 @@ export function RosaryBuilder() {
   const [leaderNoteInsertionPoint, setLeaderNoteInsertionPoint] =
     useState<CustomGuidanceInsertionPoint>("before-opening");
   const [saintName, setSaintName] = useState("");
+  const [saintPickerOpen, setSaintPickerOpen] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
 
   useEffect(() => {
@@ -115,6 +124,7 @@ export function RosaryBuilder() {
       : `Using selected mysteries: ${mysterySet.title}`;
   const leaderNotes = config.customGuidance.filter((step) => step.stepType === "leader-note");
   const customGuidanceSteps = config.customGuidance.filter((step) => step.stepType !== "leader-note");
+  const selectedSaintNames = getSaintInvocationNames(config.saintInvocations);
   const nonEnglishPrayerCount = Object.values(config.prayerLanguageById ?? {}).filter(
     (language) => language === "la" || language === "es",
   ).length;
@@ -271,10 +281,7 @@ export function RosaryBuilder() {
 
     setConfig((current) => ({
       ...current,
-      saintInvocations: {
-        enabled: true,
-        saints: appendCommonSaintInvocations(current.saintInvocations.saints, [nextSaint]),
-      },
+      saintInvocations: addManualSaintInvocation(current.saintInvocations, nextSaint),
       updatedAt: new Date().toISOString(),
     }));
     setSaintName("");
@@ -283,10 +290,10 @@ export function RosaryBuilder() {
   function addCommonSaints() {
     setConfig((current) => ({
       ...current,
-      saintInvocations: {
-        enabled: true,
-        saints: appendCommonSaintInvocations(current.saintInvocations.saints),
-      },
+      saintInvocations: addCommonSaintInvocations(
+        current.saintInvocations,
+        commonSaintInvocations,
+      ),
       updatedAt: new Date().toISOString(),
     }));
   }
@@ -294,12 +301,18 @@ export function RosaryBuilder() {
   function removeSaintInvocation(saint: string) {
     setConfig((current) => ({
       ...current,
-      saintInvocations: {
-        ...current.saintInvocations,
-        saints: current.saintInvocations.saints.filter((item) => item !== saint),
-      },
+      saintInvocations: removeSaintInvocationFromConfig(current.saintInvocations, saint),
       updatedAt: new Date().toISOString(),
     }));
+  }
+
+  function applySelectedSaints(selectedSaintIds: string[]) {
+    setConfig((current) => ({
+      ...current,
+      saintInvocations: setSelectedSaintInvocationIds(current.saintInvocations, selectedSaintIds),
+      updatedAt: new Date().toISOString(),
+    }));
+    setSaintPickerOpen(false);
   }
 
   function saveConfig() {
@@ -620,7 +633,7 @@ export function RosaryBuilder() {
         helpText="Add short petitions such as Saint Joseph, pray for us. These are optional and often reflect a group's devotion or intention."
         status={
           config.saintInvocations.enabled
-            ? `${config.saintInvocations.saints.length} saint invocations`
+            ? `${selectedSaintNames.length} saint invocations`
             : "Saint invocations off"
         }
       >
@@ -648,23 +661,33 @@ export function RosaryBuilder() {
           </span>
         </label>
 
-        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-4 grid gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:grid-cols-[1fr_auto] sm:items-center">
           <p className="text-sm leading-6 text-slate-700">
-            Add a short common set without duplicating names already in this guide.
+            Choose from a searchable saint list, or add a short common set without duplicating names
+            already in this guide.
           </p>
-          <button
-            type="button"
-            onClick={addCommonSaints}
-            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
-          >
-            Add common invocations
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setSaintPickerOpen(true)}
+              className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30"
+            >
+              Choose saints
+            </button>
+            <button
+              type="button"
+              onClick={addCommonSaints}
+              className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30"
+            >
+              Add common invocations
+            </button>
+          </div>
         </div>
 
-        {config.saintInvocations.enabled ? (
+        {config.saintInvocations.enabled || selectedSaintNames.length > 0 ? (
           <div className="mt-4">
             <label className="block text-sm font-semibold text-blue-900" htmlFor="saint-name">
-              Saint or title
+              Add a custom saint or title
             </label>
             <div className="mt-2 flex flex-col gap-2 sm:flex-row">
               <input
@@ -682,9 +705,9 @@ export function RosaryBuilder() {
                 Add
               </button>
             </div>
-            {config.saintInvocations.saints.length > 0 ? (
+            {selectedSaintNames.length > 0 ? (
               <ul className="mt-3 space-y-2">
-                {config.saintInvocations.saints.map((saint) => (
+                {selectedSaintNames.map((saint) => (
                   <li key={saint} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
                     <span className="text-sm text-slate-800">{saint}, pray for us.</span>
                     <button
@@ -920,6 +943,13 @@ export function RosaryBuilder() {
           onImported={handleBackupImported}
         />
       </CollapsibleBuilderSection>
+
+      <SaintPickerDialog
+        open={saintPickerOpen}
+        selectedSaintIds={config.saintInvocations.selectedSaintIds}
+        onCancel={() => setSaintPickerOpen(false)}
+        onDone={applySelectedSaints}
+      />
     </div>
   );
 }

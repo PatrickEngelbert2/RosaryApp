@@ -14,7 +14,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Choose today's mysteries or manually select a mystery set.
 - Customize closing prayers.
 - Mix English, Latin, and Spanish prayer texts per prayer in saved guides.
-- Add saint invocations.
+- Add saint invocations manually or from a searchable tagged saint directory.
 - Follow prayers with collapsible text.
 - Pray saved guides one step at a time with mobile-friendly Back, Next, Finish, and protected restart controls.
 - Group repeated Hail Marys or show them individually.
@@ -124,7 +124,9 @@ Quick Builder output is saved as the same `UserRosaryConfig` shape used by the C
 
 Saved guides can choose English, Latin, or Spanish per prayer. The Quick Builder keeps this beginner-friendly with an optional language-selection step, while the Custom Builder exposes per-prayer language controls directly. Missing language settings default to English so older saved guides continue to load normally. The interface, mysteries, fruits, labels, and page copy remain English in this pass; Spanish support is for prayer variants only.
 
-The Custom Builder is organized as a guided flow: guide basics, repeated-prayer behavior, leader notes, closing prayers, saint invocations, custom guidance, prayer languages, full flow preview, browser save, and guide backup. Larger optional sections collapse so the page stays approachable while preserving all form state.
+The Custom Builder is organized as a guided flow: guide basics, repeated-prayer behavior, closing prayers, prayer languages, saint invocations, leader notes, custom guidance, full flow preview, browser save, and guide backup. Larger optional sections collapse so the page stays approachable while preserving all form state.
+
+Saint invocations can be added by typing a custom saint or title, adding the common invocation set, or opening the searchable Choose saints picker. The picker uses a local tagged saint directory, searches names and patronage/theme tags, and stores selected saints alongside manual custom invocations in the saved guide.
 
 The Build a Guide page also includes a Guide Backup section. Use it to download a backup of the selected saved guide, download all saved guides, or import a backup from this version of Walk the Rosary.
 

@@ -6,6 +6,7 @@ import {
 } from "@/lib/rosary/configUtils";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
 import { getPrayerLanguage, getPrayerVariant } from "@/lib/rosary/prayerText";
+import { getSaintInvocationNames } from "@/lib/rosary/saintInvocations";
 import type {
   CustomGuidanceInsertionPoint,
   Mystery,
@@ -297,9 +298,7 @@ function renderSaintInvocations(
     return [];
   }
 
-  const saints = config.saintInvocations.saints
-    .map((saint) => saint.trim())
-    .filter(Boolean);
+  const saints = getSaintInvocationNames(config.saintInvocations);
 
   if (saints.length === 0) {
     return [];

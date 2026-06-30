@@ -8,6 +8,9 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added a searchable Saint Invocation picker to the Custom Builder with checkbox selection, selected counts, name/tag search, and a clear search control.
+- Added a structured tagged saint directory and saint invocation helpers that preserve manual custom entries, prevent duplicate invocations, and map common invocations to directory entries where possible.
+- Preserved selected saint invocations in saved guides, Custom Pray, step-by-step prayer mode, Guide Cards, and guide backup import/export.
 - Renamed the user-facing Easy Builder to Quick Builder and Advanced Builder to Custom Builder.
 - Reorganized the Custom Builder into a clearer flow for guide basics, repeated-prayer behavior, leader notes, closing prayers, saint invocations, custom guidance, prayer languages, full preview, browser save, and guide backup.
 - Moved guide backup controls after browser save and added concise copy explaining that browser-saved guides can be backed up for a more portable copy.

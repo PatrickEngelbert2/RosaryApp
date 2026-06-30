@@ -14,6 +14,7 @@ import {
   getPrayerVariant,
   normalizePrayerTextForCards,
 } from "@/lib/rosary/prayerText";
+import { getSaintInvocationNames } from "@/lib/rosary/saintInvocations";
 import { getGuideCardLayout } from "@/lib/rosary/guideCardLayouts";
 import type { GuideCardLayoutDefinition } from "@/lib/rosary/guideCardLayouts";
 import type {
@@ -1540,7 +1541,7 @@ function buildSaintInvocationBlock(
     return undefined;
   }
 
-  const saints = config.saintInvocations.saints.map((saint) => saint.trim()).filter(Boolean);
+  const saints = getSaintInvocationNames(config.saintInvocations);
 
   if (saints.length === 0) {
     return undefined;

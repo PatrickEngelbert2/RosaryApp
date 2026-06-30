@@ -87,6 +87,8 @@ export function createUserRosaryConfigFromWizardAnswers(
     saintInvocations: {
       enabled: saints.length > 0,
       saints,
+      selectedSaintIds: [],
+      customSaintInvocations: saints,
     },
     prayerLanguageById: buildPrayerLanguageById(answers),
     preferences: {

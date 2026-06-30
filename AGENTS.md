@@ -30,6 +30,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Public builder names are Quick Builder for the guided question flow and Custom Builder for detailed guide editing. Avoid reintroducing Easy Builder or Advanced Builder in user-facing UI.
 - Keep Custom Builder prompts scoped. Do not bundle later saint picker modals, preview drag/drop editing, deep teaching panels, card dimension controls, or unrelated systems into small organization passes unless explicitly requested.
 - Keep card templates, card content, user rosary configuration shapes, and printable metadata structured and easy to transform.
+- Keep saint picker options in the structured saint directory with stable IDs, exact display names, searchable tags, and optional aliases. Preserve manual custom saint invocations separately from curated picker selections.
 - Do not hardcode long prayer flows directly into page components.
 - Prefer small helper functions under `src/lib/rosary` for transforming structured content into display flows.
 - Keep Custom Pray scroll/read mode and step-by-step prayer mode built from the same structured rosary flow; do not duplicate long prayer sequencing logic by hand.

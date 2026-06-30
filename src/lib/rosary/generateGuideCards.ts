@@ -313,6 +313,7 @@ function buildEditedFlowGuideBlocks(
   customization?: GuideCardCustomization,
 ): GuideCardBlock[] {
   return buildRosaryFlow(config)
+    .filter((step) => config.preferences.showLeaderNotes || !step.leaderOnly)
     .filter((step) => step.cardEligible || step.type === "section-heading")
     .map((step, index) => createEditedFlowGuideBlock(step, index, config, options, layout, customization))
     .filter((block): block is GuideCardBlock => Boolean(block));
@@ -1668,6 +1669,10 @@ function buildConciseGuidance(
 }
 
 function buildLeaderNoteSummary(config: UserRosaryConfig, warnings: string[]): string[] {
+  if (!config.preferences.showLeaderNotes) {
+    return [];
+  }
+
   const stepNotes = config.steps
     .filter((step) => step.enabled !== false && step.leaderOnly && step.text)
     .slice(0, 3)

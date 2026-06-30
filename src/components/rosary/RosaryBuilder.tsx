@@ -24,8 +24,16 @@ import {
   setGuideFlowItemTitle,
 } from "@/lib/rosary/guideFlowEdits";
 import {
-  getMissingCommonLeaderNoteTemplates,
-} from "@/lib/rosary/leaderNoteTemplates";
+  addLeaderNoteToConfig,
+  addMissingCommonLeaderNotesToConfig,
+  deleteLeaderNoteFromConfig,
+  formatLeaderNoteStatus,
+  getActiveLeaderNotesForBuilder,
+  getLeaderNotesForBuilder,
+  getMissingCommonLeaderNoteTemplatesForConfig,
+  updateLeaderNoteInConfig,
+  type BuilderLeaderNote,
+} from "@/lib/rosary/leaderNotes";
 import {
   getPrayerLanguage,
   getPrayerLanguageLabel,
@@ -84,6 +92,11 @@ export function RosaryBuilder() {
   const [leaderNoteBody, setLeaderNoteBody] = useState("");
   const [leaderNoteInsertionPoint, setLeaderNoteInsertionPoint] =
     useState<CustomGuidanceInsertionPoint>("before-opening");
+  const [editingLeaderNoteId, setEditingLeaderNoteId] = useState<string | null>(null);
+  const [editingLeaderNoteTitle, setEditingLeaderNoteTitle] = useState("");
+  const [editingLeaderNoteBody, setEditingLeaderNoteBody] = useState("");
+  const [editingLeaderNoteInsertionPoint, setEditingLeaderNoteInsertionPoint] =
+    useState<CustomGuidanceInsertionPoint>("before-opening");
   const [saintName, setSaintName] = useState("");
   const [saintPickerOpen, setSaintPickerOpen] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
@@ -129,13 +142,15 @@ export function RosaryBuilder() {
     config.mysterySetMode === "today"
       ? `Using today's mysteries: ${mysterySet.title}`
       : `Using selected mysteries: ${mysterySet.title}`;
-  const leaderNotes = config.customGuidance.filter((step) => step.stepType === "leader-note");
+  const allLeaderNotes = getLeaderNotesForBuilder(config);
+  const leaderNotes = getActiveLeaderNotesForBuilder(config);
+  const hiddenByPreviewEditCount = allLeaderNotes.length - leaderNotes.length;
   const customGuidanceSteps = config.customGuidance.filter((step) => step.stepType !== "leader-note");
   const selectedSaintNames = getSaintInvocationNames(config.saintInvocations);
   const nonEnglishPrayerCount = Object.values(config.prayerLanguageById ?? {}).filter(
     (language) => language === "la" || language === "es",
   ).length;
-  const missingCommonLeaderNotes = getMissingCommonLeaderNoteTemplates(config.customGuidance);
+  const missingCommonLeaderNotes = getMissingCommonLeaderNoteTemplatesForConfig(config);
 
   function changeTemplate(nextTemplateId: string) {
     setTemplateId(nextTemplateId);
@@ -223,13 +238,18 @@ export function RosaryBuilder() {
       return;
     }
 
-    addCustomGuidance({
-      title: leaderNoteTitle.trim(),
-      text: leaderNoteBody.trim(),
-      stepType: "leader-note",
-      insertionPoint: leaderNoteInsertionPoint,
-    });
-    updateShowLeaderNotes(true);
+    setConfig((current) =>
+      addLeaderNoteToConfig(
+        current,
+        {
+          title: leaderNoteTitle.trim(),
+          text: leaderNoteBody.trim(),
+          stepType: "leader-note",
+          insertionPoint: leaderNoteInsertionPoint,
+        },
+        createId("leader-note"),
+      ),
+    );
     setLeaderNoteTitle("");
     setLeaderNoteBody("");
   }
@@ -239,24 +259,7 @@ export function RosaryBuilder() {
       return;
     }
 
-    setConfig((current) => ({
-      ...current,
-      customGuidance: [
-        ...current.customGuidance,
-        ...getMissingCommonLeaderNoteTemplates(current.customGuidance).map((note) => ({
-          id: createId("leader-note"),
-          title: note.title,
-          text: note.text,
-          stepType: "leader-note" as const,
-          insertionPoint: note.insertionPoint,
-        })),
-      ],
-      preferences: {
-        ...current.preferences,
-        showLeaderNotes: true,
-      },
-      updatedAt: new Date().toISOString(),
-    }));
+    setConfig((current) => addMissingCommonLeaderNotesToConfig(current, createId));
   }
 
   function addCustomGuidance(input: Omit<CustomGuidance, "id">) {
@@ -278,6 +281,43 @@ export function RosaryBuilder() {
       customGuidance: current.customGuidance.filter((step) => step.id !== stepId),
       updatedAt: new Date().toISOString(),
     }));
+  }
+
+  function startEditingLeaderNote(note: BuilderLeaderNote) {
+    setEditingLeaderNoteId(note.id);
+    setEditingLeaderNoteTitle(note.title);
+    setEditingLeaderNoteBody(note.text);
+    setEditingLeaderNoteInsertionPoint(note.insertionPoint);
+  }
+
+  function cancelEditingLeaderNote() {
+    setEditingLeaderNoteId(null);
+    setEditingLeaderNoteTitle("");
+    setEditingLeaderNoteBody("");
+    setEditingLeaderNoteInsertionPoint("before-opening");
+  }
+
+  function saveEditingLeaderNote() {
+    if (!editingLeaderNoteId || !editingLeaderNoteTitle.trim()) {
+      return;
+    }
+
+    setConfig((current) =>
+      updateLeaderNoteInConfig(current, editingLeaderNoteId, {
+        title: editingLeaderNoteTitle.trim(),
+        text: editingLeaderNoteBody.trim(),
+        insertionPoint: editingLeaderNoteInsertionPoint,
+      }),
+    );
+    cancelEditingLeaderNote();
+  }
+
+  function deleteLeaderNote(noteId: string) {
+    setConfig((current) => deleteLeaderNoteFromConfig(current, noteId));
+
+    if (editingLeaderNoteId === noteId) {
+      cancelEditingLeaderNote();
+    }
   }
 
   function addSaintInvocation() {
@@ -788,11 +828,7 @@ export function RosaryBuilder() {
         description="Add cues for the person leading a group Rosary or Rosary walk."
         helpLabel="Leader notes help"
         helpText="Add cues for the person leading a group Rosary or Rosary walk."
-        status={
-          config.preferences.showLeaderNotes
-            ? `${leaderNotes.length} leader notes enabled`
-            : `${leaderNotes.length} leader notes hidden by default`
-        }
+        status={formatLeaderNoteStatus(leaderNotes.length, config.preferences.showLeaderNotes)}
       >
         <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
           <input
@@ -869,7 +905,30 @@ export function RosaryBuilder() {
         </button>
 
         {leaderNotes.length > 0 ? (
-          <GuidanceList items={leaderNotes} onRemove={removeCustomStep} />
+          <LeaderNotesList
+            editingNoteId={editingLeaderNoteId}
+            editingTitle={editingLeaderNoteTitle}
+            editingText={editingLeaderNoteBody}
+            editingInsertionPoint={editingLeaderNoteInsertionPoint}
+            enabled={config.preferences.showLeaderNotes}
+            items={leaderNotes}
+            onCancelEdit={cancelEditingLeaderNote}
+            onDelete={deleteLeaderNote}
+            onEdit={startEditingLeaderNote}
+            onSaveEdit={saveEditingLeaderNote}
+            onEditingInsertionPointChange={setEditingLeaderNoteInsertionPoint}
+            onEditingTextChange={setEditingLeaderNoteBody}
+            onEditingTitleChange={setEditingLeaderNoteTitle}
+          />
+        ) : (
+          <p className="mt-4 rounded-md bg-cream-50 px-4 py-3 text-sm leading-6 text-slate-700">
+            No active leader notes are currently in this guide.
+          </p>
+        )}
+        {hiddenByPreviewEditCount > 0 ? (
+          <p className="mt-3 rounded-md bg-cream-100 px-4 py-3 text-sm leading-6 text-slate-700">
+            {hiddenByPreviewEditCount} leader {hiddenByPreviewEditCount === 1 ? "note was" : "notes were"} removed in Preview the flow. Use Reset flow edits in the preview to restore {hiddenByPreviewEditCount === 1 ? "it" : "them"}.
+          </p>
         ) : null}
       </CollapsibleBuilderSection>
 
@@ -1060,6 +1119,133 @@ function GuidanceList({
           </button>
         </li>
       ))}
+    </ul>
+  );
+}
+
+function LeaderNotesList({
+  editingInsertionPoint,
+  editingNoteId,
+  editingText,
+  editingTitle,
+  enabled,
+  items,
+  onCancelEdit,
+  onDelete,
+  onEdit,
+  onEditingInsertionPointChange,
+  onEditingTextChange,
+  onEditingTitleChange,
+  onSaveEdit,
+}: {
+  editingInsertionPoint: CustomGuidanceInsertionPoint;
+  editingNoteId: string | null;
+  editingText: string;
+  editingTitle: string;
+  enabled: boolean;
+  items: BuilderLeaderNote[];
+  onCancelEdit: () => void;
+  onDelete: (id: string) => void;
+  onEdit: (note: BuilderLeaderNote) => void;
+  onEditingInsertionPointChange: (point: CustomGuidanceInsertionPoint) => void;
+  onEditingTextChange: (text: string) => void;
+  onEditingTitleChange: (title: string) => void;
+  onSaveEdit: () => void;
+}) {
+  return (
+    <ul className="mt-5 space-y-3">
+      {items.map((note) => {
+        const isEditing = editingNoteId === note.id;
+
+        return (
+          <li
+            key={note.id}
+            className={`rounded-lg border border-blue-900/10 bg-cream-50 p-4 ${
+              enabled ? "" : "opacity-75"
+            }`}
+          >
+            {isEditing ? (
+              <div className="grid gap-4">
+                <label className="block text-sm font-semibold text-blue-900" htmlFor={`${note.id}-edit-title`}>
+                  Title
+                  <input
+                    id={`${note.id}-edit-title`}
+                    value={editingTitle}
+                    onChange={(event) => onEditingTitleChange(event.target.value)}
+                    className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                  />
+                </label>
+                <label className="block text-sm font-semibold text-blue-900" htmlFor={`${note.id}-edit-position`}>
+                  Placement
+                  <select
+                    id={`${note.id}-edit-position`}
+                    value={editingInsertionPoint}
+                    onChange={(event) =>
+                      onEditingInsertionPointChange(event.target.value as CustomGuidanceInsertionPoint)
+                    }
+                    className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+                  >
+                    <BuilderPositionOptions />
+                  </select>
+                </label>
+                <label className="block text-sm font-semibold text-blue-900" htmlFor={`${note.id}-edit-text`}>
+                  Text
+                  <textarea
+                    id={`${note.id}-edit-text`}
+                    value={editingText}
+                    onChange={(event) => onEditingTextChange(event.target.value)}
+                    rows={3}
+                    className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                  />
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={onCancelEdit}
+                    className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onSaveEdit}
+                    className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-2 font-semibold text-white"
+                  >
+                    Save leader note
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+                <div>
+                  <p className="font-semibold text-blue-900">{note.title}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gold-500">
+                    {note.insertionPoint.replaceAll("-", " ")}
+                    {note.source === "step" ? " - guide starter note" : ""}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{note.text}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(note)}
+                    className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm font-semibold text-blue-900"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(note.id)}
+                    className="interactive-button interactive-button-secondary rounded-md border border-gold-500/40 bg-cream-100 px-3 py-2 text-sm font-semibold text-blue-900"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

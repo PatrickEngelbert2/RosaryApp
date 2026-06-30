@@ -21,6 +21,15 @@ import {
   getMissingCommonLeaderNoteTemplates,
 } from "@/lib/rosary/leaderNoteTemplates";
 import {
+  addMissingCommonLeaderNotesToConfig,
+  deleteLeaderNoteFromConfig,
+  formatLeaderNoteStatus,
+  getActiveLeaderNotesForBuilder,
+  getLeaderNotesForBuilder,
+  getMissingCommonLeaderNoteTemplatesForConfig,
+  updateLeaderNoteInConfig,
+} from "@/lib/rosary/leaderNotes";
+import {
   generateGuideCardsFromConfig,
   getRelevantGuidePrayerOptions,
 } from "@/lib/rosary/generateGuideCards";
@@ -412,6 +421,103 @@ describe("guide creation and builder output", () => {
 
     expect(flow.length).toBeGreaterThan(24);
     expect(flow.some((step) => step.type === "leader-note" && step.title === "Quiet start cue")).toBe(true);
+  });
+
+  it("lists template and quick-builder leader notes in the builder leader-note resolver", () => {
+    const templateGuide = createDefaultUserConfigFromTemplate("rosary-walk-leader");
+    const quickBuilderGuide = createUserRosaryConfigFromWizardAnswers(
+      {
+        ...defaultEasyGuideAnswers,
+        purpose: "walk-group",
+      },
+      fixedDate,
+    ).config;
+
+    expect(getActiveLeaderNotesForBuilder(templateGuide).map((note) => note.title)).toEqual([
+      "Gather and orient the group",
+      "Outdoor pacing reminder",
+      "Thank the group",
+    ]);
+    expect(getActiveLeaderNotesForBuilder(quickBuilderGuide)).toHaveLength(3);
+    expect(formatLeaderNoteStatus(1, true)).toBe("1 leader note enabled");
+    expect(formatLeaderNoteStatus(3, false)).toBe("3 leader notes hidden");
+  });
+
+  it("edits a template-created leader note and persists it through normalized saved guide data", () => {
+    const guide = createDefaultUserConfigFromTemplate("rosary-walk-leader");
+    const edited = updateLeaderNoteInConfig(guide, "leader-gather", {
+      title: "Edited gathering note",
+      text: "Invite everyone to gather near the church steps.",
+      insertionPoint: "before-decades",
+    });
+    const normalized = normalizeStoredRosaryConfigs(createStoredCollection([edited])).items[0];
+    const notes = getActiveLeaderNotesForBuilder(normalized);
+    const flow = buildRosaryFlow(normalized);
+
+    expect(normalized.steps.some((step) => step.id === "leader-gather")).toBe(false);
+    expect(notes.some((note) => note.id === "leader-gather" && note.insertionPoint === "before-decades")).toBe(true);
+    expect(flow.some((step) => step.id === "leader-gather" && step.title === "Edited gathering note")).toBe(true);
+    expect(flow.some((step) => step.text === "Invite everyone to gather near the church steps.")).toBe(true);
+  });
+
+  it("deletes template and manual leader notes without resurrecting them after save/load", () => {
+    const guide = createDefaultUserConfigFromTemplate("rosary-walk-leader");
+    const withManual = {
+      ...guide,
+      customGuidance: [
+        ...guide.customGuidance,
+        {
+          id: "manual-leader-note",
+          title: "Manual leader note",
+          text: "A manual note.",
+          stepType: "leader-note" as const,
+          insertionPoint: "after-opening" as const,
+        },
+      ],
+    };
+    const withoutTemplate = deleteLeaderNoteFromConfig(withManual, "leader-gather");
+    const withoutBoth = deleteLeaderNoteFromConfig(withoutTemplate, "manual-leader-note");
+    const normalized = normalizeStoredRosaryConfigs(createStoredCollection([withoutBoth])).items[0];
+    const flow = buildRosaryFlow(normalized);
+
+    expect(getActiveLeaderNotesForBuilder(normalized).map((note) => note.id)).not.toContain("leader-gather");
+    expect(getActiveLeaderNotesForBuilder(normalized).map((note) => note.id)).not.toContain("manual-leader-note");
+    expect(flow.some((step) => step.id === "leader-gather")).toBe(false);
+    expect(flow.some((step) => step.id === "manual-leader-note")).toBe(false);
+  });
+
+  it("avoids duplicate common notes and treats preview-deleted leader notes as inactive until reset", () => {
+    const guide = createDefaultUserConfigFromTemplate("rosary-walk-leader");
+    const afterCommon = addMissingCommonLeaderNotesToConfig(guide, (prefix) => `${prefix}-test`);
+    const previewDeleted = {
+      ...afterCommon,
+      guideFlowEdits: deleteGuideFlowItem(undefined, "leader-gather"),
+    };
+
+    expect(getMissingCommonLeaderNoteTemplatesForConfig(guide)).toHaveLength(0);
+    expect(getActiveLeaderNotesForBuilder(afterCommon)).toHaveLength(3);
+    expect(getLeaderNotesForBuilder(previewDeleted)).toHaveLength(3);
+    expect(getActiveLeaderNotesForBuilder(previewDeleted).map((note) => note.id)).not.toContain("leader-gather");
+    expect(buildRosaryFlow(previewDeleted).some((step) => step.id === "leader-gather")).toBe(false);
+    expect(getActiveLeaderNotesForBuilder({ ...previewDeleted, guideFlowEdits: undefined })).toHaveLength(3);
+  });
+
+  it("hides disabled leader notes in generated guide-card output without deleting them", () => {
+    const guide = createDefaultUserConfigFromTemplate("rosary-walk-leader");
+    const hidden = {
+      ...guide,
+      preferences: {
+        ...guide.preferences,
+        showLeaderNotes: false,
+      },
+    };
+    const hiddenCards = generateGuideCardsFromConfig(hidden, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+    const visibleCards = generateGuideCardsFromConfig(guide, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+
+    expect(getActiveLeaderNotesForBuilder(hidden)).toHaveLength(3);
+    expect(generatedText(hiddenCards.cards[0])).not.toContain("Gather and orient the group");
+    expect(generatedText(visibleCards.cards[0])).toContain("Gather and orient the group");
+    expect(createPrayerSteps(hidden, { includeLeaderNotes: false }).some((step) => step.type === "leader-note")).toBe(false);
   });
 });
 

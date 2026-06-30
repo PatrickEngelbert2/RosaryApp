@@ -266,4 +266,3 @@ export function InfoPopover({ label, children }: InfoPopoverProps) {
     </span>
   );
 }
-

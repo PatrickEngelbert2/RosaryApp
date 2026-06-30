@@ -27,6 +27,8 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 
 - Keep prayer text, mysteries, rosary sequences, leader guides, and printable resource metadata in structured content files under `src/content`.
 - Preserve prayer language support as a per-prayer variant system. Do not replace it with a global all-or-nothing language mode.
+- Public builder names are Quick Builder for the guided question flow and Custom Builder for detailed guide editing. Avoid reintroducing Easy Builder or Advanced Builder in user-facing UI.
+- Keep Custom Builder prompts scoped. Do not bundle later saint picker modals, preview drag/drop editing, deep teaching panels, card dimension controls, or unrelated systems into small organization passes unless explicitly requested.
 - Keep card templates, card content, user rosary configuration shapes, and printable metadata structured and easy to transform.
 - Do not hardcode long prayer flows directly into page components.
 - Prefer small helper functions under `src/lib/rosary` for transforming structured content into display flows.

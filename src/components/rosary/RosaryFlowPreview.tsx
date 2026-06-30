@@ -4,12 +4,16 @@ import type { RenderedRosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
 type RosaryFlowPreviewProps = {
   config: UserRosaryConfig;
   compact?: boolean;
+  includeLeaderNotes?: boolean;
 };
 
-export function RosaryFlowPreview({ config, compact = false }: RosaryFlowPreviewProps) {
+export function RosaryFlowPreview({
+  config,
+  includeLeaderNotes = true,
+}: RosaryFlowPreviewProps) {
   const flow = buildRosaryFlow(config);
   const mysterySet = getMysterySetForConfig(config);
-  const visibleFlow = compact ? flow.slice(0, 24) : flow;
+  const visibleFlow = includeLeaderNotes ? flow : flow.filter((step) => !step.leaderOnly);
 
   return (
     <div className="space-y-3">
@@ -23,11 +27,6 @@ export function RosaryFlowPreview({ config, compact = false }: RosaryFlowPreview
       {visibleFlow.map((step, index) => (
         <PreviewStep key={step.id} step={step} number={index + 1} />
       ))}
-      {compact && flow.length > visibleFlow.length ? (
-        <p className="rounded-md bg-cream-100 px-4 py-3 text-sm font-medium text-slate-700">
-          Showing the first {visibleFlow.length} of {flow.length} steps.
-        </p>
-      ) : null}
     </div>
   );
 }

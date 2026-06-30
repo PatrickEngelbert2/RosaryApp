@@ -9,6 +9,7 @@ import {
   createDefaultUserConfigFromTemplate,
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
+import { commonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 
@@ -43,11 +44,7 @@ export const standardEasyClosingPrayerIds: PrayerId[] = [
   "closing-prayer",
 ];
 
-export const commonSaintInvocations = [
-  "Saint Joseph",
-  "Our Lady of the Rosary",
-  "All holy angels and saints",
-];
+export { commonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
 
 export const defaultEasyGuideAnswers: EasyGuideAnswers = {
   purpose: "simple",

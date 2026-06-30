@@ -9,7 +9,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 ## Core Features
 
 - Pray the Rosary from the website.
-- Create a saved guide quickly with the Easy Guide Builder wizard.
+- Create a saved guide quickly with the Quick Builder wizard.
 - Build custom rosary guides.
 - Choose today's mysteries or manually select a mystery set.
 - Customize closing prayers.
@@ -78,7 +78,7 @@ $env:NO_OPEN="1"; npm start
 ## Important Routes
 
 - `/` - Home
-- `/builder` - Build and save a custom Rosary guide with the easy wizard or advanced builder
+- `/builder` - Build and save a Rosary guide with the Quick Builder or Custom Builder
 - `/pray` - Static default Rosary flow
 - `/pray/custom` - Pray a saved custom Rosary
 - `/cards` - Build printable guide cards
@@ -117,12 +117,14 @@ Guide backups are local JSON downloads. The backup format includes an app identi
 
 The Build a Guide page supports two paths:
 
-- Easy Guide Builder: a low-friction wizard for beginners who want to answer a few simple questions and get a usable saved guide.
-- Advanced Builder: the detailed editor for changing mysteries, closing prayers, saint invocations, custom guidance, leader notes, and preferences directly.
+- Quick Builder: a low-friction wizard for beginners who want to answer a few simple questions and get a usable saved guide.
+- Custom Builder: the detailed editor for changing mysteries, repeated-prayer behavior, leader notes, closing prayers, saint invocations, custom guidance, prayer languages, preview, save, and backup options directly.
 
-Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by the advanced builder. Guides created in the wizard immediately work with `/pray/custom`, `/cards`, and `/cards/print`; no separate easy-guide format or backend is used.
+Quick Builder output is saved as the same `UserRosaryConfig` shape used by the Custom Builder. Guides created in the wizard immediately work with `/pray/custom`, `/cards`, and `/cards/print`; no separate quick-guide format or backend is used.
 
-Saved guides can choose English, Latin, or Spanish per prayer. The Easy Guide Builder keeps this beginner-friendly with an optional language-selection step, while the advanced builder exposes per-prayer language controls directly. Missing language settings default to English so older saved guides continue to load normally. The interface, mysteries, fruits, labels, and page copy remain English in this pass; Spanish support is for prayer variants only.
+Saved guides can choose English, Latin, or Spanish per prayer. The Quick Builder keeps this beginner-friendly with an optional language-selection step, while the Custom Builder exposes per-prayer language controls directly. Missing language settings default to English so older saved guides continue to load normally. The interface, mysteries, fruits, labels, and page copy remain English in this pass; Spanish support is for prayer variants only.
+
+The Custom Builder is organized as a guided flow: guide basics, repeated-prayer behavior, leader notes, closing prayers, saint invocations, custom guidance, prayer languages, full flow preview, browser save, and guide backup. Larger optional sections collapse so the page stays approachable while preserving all form state.
 
 The Build a Guide page also includes a Guide Backup section. Use it to download a backup of the selected saved guide, download all saved guides, or import a backup from this version of Walk the Rosary.
 

@@ -29,7 +29,7 @@ const primaryLinks = [
   {
     href: "/builder",
     title: "Build a Guide",
-    description: "Use the Easy Builder for a quick guide, or advanced settings for full control.",
+    description: "Use the Quick Builder for a simple guide, or the Custom Builder for full control.",
     icon: "guide",
   },
   {
@@ -88,20 +88,20 @@ export default function HomePage() {
             and print cards for a rosary walk.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Button href="/builder">Start Easy Builder</Button>
+            <Button href="/builder">Start Quick Builder</Button>
             <Button href="/cards" variant="secondary">
               Print Guide Cards
             </Button>
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-600">
-            New here? Start with the Easy Builder. Already have a guide saved? Open Pray or Guide Cards.
+            New here? Start with the Quick Builder. Already have a guide saved? Open Pray or Guide Cards.
           </p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <Link className="interactive-link font-semibold text-blue-900 underline" href="/pray/custom">
               Pray now
             </Link>
-            <Link className="interactive-link font-semibold text-blue-900 underline" href="/builder#advanced-builder">
-              Advanced builder
+            <Link className="interactive-link font-semibold text-blue-900 underline" href="/builder#custom-builder">
+              Custom Builder
             </Link>
           </div>
         </div>
@@ -157,9 +157,9 @@ export default function HomePage() {
         <div className="mt-5 grid gap-4 md:grid-cols-4">
           {[
             ["1", "Pray now", "Use the default Rosary immediately, or follow a saved guide once you have one."],
-            ["2", "Build with help", "Answer a few simple questions and let Easy Builder make the guide."],
+            ["2", "Build with help", "Answer a few simple questions and let Quick Builder make the guide."],
             ["3", "Print cards", "Choose a saved guide, card count, and card size, then print or save as PDF."],
-            ["4", "Fine-tune later", "Use the advanced builder for exact prayers, Latin choices, notes, and structure."],
+            ["4", "Fine-tune later", "Use the Custom Builder for exact prayers, languages, notes, and structure."],
           ].map(([number, title, body]) => (
             <Card key={number}>
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-900 font-bold text-white">

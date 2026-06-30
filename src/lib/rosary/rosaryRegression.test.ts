@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { prayersById } from "@/content/prayers";
 import { buildRosaryFlow } from "@/lib/rosary/buildRosaryFlow";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
+import { appendCommonSaintInvocations, commonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
 import { createDefaultUserConfigFromTemplate, normalizePrayerLanguageById } from "@/lib/rosary/configUtils";
 import {
   clampPrayerStepIndex,
@@ -15,6 +16,10 @@ import {
   createUserRosaryConfigFromWizardAnswers,
 } from "@/lib/rosary/easyGuideBuilder";
 import { findBestMatchingPrayerStepIndex } from "@/lib/rosary/prayerStepMatching";
+import {
+  commonLeaderNoteTemplates,
+  getMissingCommonLeaderNoteTemplates,
+} from "@/lib/rosary/leaderNoteTemplates";
 import {
   generateGuideCardsFromConfig,
   getRelevantGuidePrayerOptions,
@@ -54,6 +59,7 @@ import {
   normalizeStoredRosaryConfigs,
 } from "@/lib/rosary/storageSchema";
 import type {
+  CustomGuidance,
   GeneratedGuideCard,
   GuideCardBlock,
   GuideCardCustomization,
@@ -152,7 +158,7 @@ describe("prayer language resolution", () => {
 });
 
 describe("guide creation and builder output", () => {
-  it("advanced-builder-style config can represent per-prayer language choices", () => {
+  it("custom-builder-style config can represent per-prayer language choices", () => {
     const config = createTestGuide({
       prayerLanguageById: {
         "our-father": "la",
@@ -190,6 +196,80 @@ describe("guide creation and builder output", () => {
       "our-father": "la",
       "hail-mary": "es",
     });
+  });
+
+  it("preserves repeated-prayer display preference in normalized saved guide config", () => {
+    const config = createTestGuide({
+      preferences: {
+        ...createTestGuide().preferences,
+        showRepeatedPrayersIndividually: true,
+      },
+    });
+
+    expect(config.preferences.showRepeatedPrayersIndividually).toBe(true);
+  });
+
+  it("adds common saint invocations without duplicating or removing custom names", () => {
+    const saints = appendCommonSaintInvocations([
+      "Saint Joseph",
+      "St. Teresa of Calcutta",
+      " saint john paul ii ",
+    ]);
+
+    expect(commonSaintInvocations).toContain("Saint Michael the Archangel");
+    expect(saints).toContain("St. Teresa of Calcutta");
+    expect(saints.filter((saint) => saint === "Saint Joseph")).toHaveLength(1);
+    expect(saints.some((saint) => saint === "Saint John Paul II")).toBe(false);
+    expect(saints).toEqual([
+      "Saint Joseph",
+      "St. Teresa of Calcutta",
+      "saint john paul ii",
+      "Our Lady of the Rosary",
+      "Saint Michael the Archangel",
+      "All holy angels and saints",
+    ]);
+  });
+
+  it("detects which common leader notes are missing from custom guide guidance", () => {
+    const existing: CustomGuidance[] = [
+      {
+        id: "existing-note",
+        title: commonLeaderNoteTemplates[0].title,
+        text: commonLeaderNoteTemplates[0].text,
+        stepType: "leader-note",
+        insertionPoint: commonLeaderNoteTemplates[0].insertionPoint,
+      },
+      {
+        id: "regular-guidance",
+        title: commonLeaderNoteTemplates[1].title,
+        text: "A regular note with the same title should not count as a leader note.",
+        stepType: "instruction",
+        insertionPoint: "before-decades",
+      },
+    ];
+
+    expect(getMissingCommonLeaderNoteTemplates(existing).map((note) => note.key)).toEqual([
+      "outdoor-pacing",
+      "closing-thanks",
+    ]);
+  });
+
+  it("renders custom builder leader notes and makes the full guide flow available", () => {
+    const config = createTestGuide({
+      customGuidance: [
+        {
+          id: "custom-leader-note",
+          title: "Quiet start cue",
+          text: "Invite everyone to silence their phones before beginning.",
+          stepType: "leader-note",
+          insertionPoint: "before-opening",
+        },
+      ],
+    });
+    const flow = buildRosaryFlow(config);
+
+    expect(flow.length).toBeGreaterThan(24);
+    expect(flow.some((step) => step.type === "leader-note" && step.title === "Quiet start cue")).toBe(true);
   });
 });
 

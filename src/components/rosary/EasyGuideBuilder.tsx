@@ -174,7 +174,7 @@ export function EasyGuideBuilder() {
             Need something quick?
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-blue-900">
-            Start with the Easy Guide Builder
+            Start with the Quick Builder
           </h2>
           <p className="mt-3 leading-7 text-slate-700">
             Answer a few simple questions and we&apos;ll build a saved guide you can pray
@@ -187,10 +187,10 @@ export function EasyGuideBuilder() {
             onClick={openWizard}
             className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-5 py-3 text-base font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
           >
-            Start Easy Builder
+            Start Quick Builder
           </button>
           <p className="text-sm leading-6 text-slate-700">
-            Want full control? The advanced builder is still below.
+            Want full control? The Custom Builder is still below.
           </p>
         </div>
       </section>
@@ -212,7 +212,7 @@ export function EasyGuideBuilder() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gold-500">
-                    Easy Guide Builder
+                    Quick Builder
                   </p>
                   <h2 id="easy-builder-title" className="mt-1 text-2xl font-bold text-blue-900">
                     {createdGuide ? "Your guide is ready." : getStepTitle(currentStep)}
@@ -454,7 +454,7 @@ function WizardStepContent({
             selected={answers.languageChoice === "unsure"}
             onClick={() => onUpdate({ languageChoice: "unsure", prayerLanguageById: {} })}
             title="I'm not sure - keep it in English"
-            description="You can change this later in the advanced builder."
+            description="You can change this later in the Custom Builder."
           />
         </OptionGrid>
         {answers.languageChoice === "choose" ? (
@@ -682,7 +682,7 @@ function CompletionState({
         <h3 className="mt-2 text-2xl font-bold text-blue-900">{guide.name}</h3>
         <p className="mt-3 leading-7 text-slate-700">
           Your guide has been saved as a normal Walk the Rosary guide. You can pray it,
-          print cards from it, or keep refining it in the advanced builder.
+          print cards from it, or keep refining it in the Custom Builder.
         </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -707,7 +707,7 @@ function CompletionState({
           onClick={onClose}
           className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-5 py-3 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
         >
-          Edit advanced settings
+          Edit in Custom Builder
         </button>
         <button
           type="button"

@@ -15,13 +15,17 @@ import {
   type EasyGuideAnswers,
 } from "@/lib/rosary/easyGuideBuilder";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
-import { getPrayerVariant, latinPrayerIds } from "@/lib/rosary/prayerText";
+import {
+  getPrayerVariant,
+  prayerLanguageOptions,
+  prayerLanguagePrayerIds,
+} from "@/lib/rosary/prayerText";
 import {
   saveGuideCardLayoutOptions,
   saveGuideCardSelectedGuideId,
   saveRosaryConfig,
 } from "@/lib/rosary/storage";
-import type { MysterySetId, PrayerId, UserRosaryConfig } from "@/lib/rosary/types";
+import type { MysterySetId, PrayerId, PrayerLanguage, UserRosaryConfig } from "@/lib/rosary/types";
 
 const closingPrayerOptions: PrayerId[] = [
   "hail-holy-queen",
@@ -34,7 +38,7 @@ type WizardStep =
   | "purpose"
   | "mysteries"
   | "help"
-  | "latin"
+  | "language"
   | "closing"
   | "saints"
   | "print"
@@ -44,7 +48,7 @@ const wizardSteps: WizardStep[] = [
   "purpose",
   "mysteries",
   "help",
-  "latin",
+  "language",
   "closing",
   "saints",
   "print",
@@ -110,12 +114,16 @@ export function EasyGuideBuilder() {
     updateAnswers({ closingPrayerIds: nextIds });
   }
 
-  function toggleLatinPrayer(prayerId: PrayerId) {
-    const nextIds = answers.latinPrayerIds.includes(prayerId)
-      ? answers.latinPrayerIds.filter((id) => id !== prayerId)
-      : [...answers.latinPrayerIds, prayerId];
+  function updatePrayerLanguage(prayerId: PrayerId, language: PrayerLanguage) {
+    const nextLanguages = { ...answers.prayerLanguageById };
 
-    updateAnswers({ latinPrayerIds: nextIds });
+    if (language === "en") {
+      delete nextLanguages[prayerId];
+    } else {
+      nextLanguages[prayerId] = language;
+    }
+
+    updateAnswers({ prayerLanguageById: nextLanguages });
   }
 
   function addSaint() {
@@ -256,7 +264,7 @@ export function EasyGuideBuilder() {
                     onRemoveSaint={removeSaint}
                     onUpdate={updateAnswers}
                     onToggleClosing={toggleClosingPrayer}
-                    onToggleLatinPrayer={toggleLatinPrayer}
+                    onPrayerLanguageChange={updatePrayerLanguage}
                   />
                   {saveError ? (
                     <p className="mt-4 rounded-md bg-white px-4 py-3 text-sm font-semibold text-red-700">
@@ -311,7 +319,7 @@ function WizardStepContent({
   onRemoveSaint,
   onUpdate,
   onToggleClosing,
-  onToggleLatinPrayer,
+  onPrayerLanguageChange,
 }: {
   step: WizardStep;
   answers: EasyGuideAnswers;
@@ -323,7 +331,7 @@ function WizardStepContent({
   onRemoveSaint: (saint: string) => void;
   onUpdate: (answers: Partial<EasyGuideAnswers>) => void;
   onToggleClosing: (prayerId: PrayerId) => void;
-  onToggleLatinPrayer: (prayerId: PrayerId) => void;
+  onPrayerLanguageChange: (prayerId: PrayerId, language: PrayerLanguage) => void;
 }) {
   if (step === "purpose") {
     return (
@@ -422,56 +430,66 @@ function WizardStepContent({
     );
   }
 
-  if (step === "latin") {
+  if (step === "language") {
     return (
       <QuestionFrame
-        description="You can keep everything in English, or choose a few familiar prayers to pray in Latin."
-        infoLabel="About Latin"
-        info="Latin is the traditional language of the Roman Church. Some groups like to pray certain familiar prayers in Latin while keeping the rest in English."
+        description="You can keep everything in English, or choose a few familiar prayers to pray in Latin or Spanish."
+        infoLabel="About prayer languages"
+        info="Some groups pray certain familiar prayers in Latin or Spanish while keeping the rest in English. You can mix languages in the same guide."
       >
         <OptionGrid>
           <OptionCard
-            selected={answers.latinChoice === "none"}
-            onClick={() => onUpdate({ latinChoice: "none", latinPrayerIds: [] })}
+            selected={answers.languageChoice === "none"}
+            onClick={() => onUpdate({ languageChoice: "none", prayerLanguageById: {} })}
             title="No, keep everything in English"
             description="A simple default that works for everyone."
           />
           <OptionCard
-            selected={answers.latinChoice === "choose"}
-            onClick={() => onUpdate({ latinChoice: "choose" })}
-            title="Yes, let me choose which prayers"
-            description="Mix English and Latin in the same guide."
+            selected={answers.languageChoice === "choose"}
+            onClick={() => onUpdate({ languageChoice: "choose" })}
+            title="Yes, let me choose prayer languages"
+            description="Mix English, Latin, and Spanish in the same guide."
           />
           <OptionCard
-            selected={answers.latinChoice === "unsure"}
-            onClick={() => onUpdate({ latinChoice: "unsure", latinPrayerIds: [] })}
+            selected={answers.languageChoice === "unsure"}
+            onClick={() => onUpdate({ languageChoice: "unsure", prayerLanguageById: {} })}
             title="I'm not sure - keep it in English"
             description="You can change this later in the advanced builder."
           />
         </OptionGrid>
-        {answers.latinChoice === "choose" ? (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {latinPrayerIds.map((prayerId) => {
+        {answers.languageChoice === "choose" ? (
+          <div className="mt-5 grid gap-3">
+            {prayerLanguagePrayerIds.map((prayerId) => {
               const prayer = prayersById[prayerId];
               const latinVariant = getPrayerVariant(prayer, "la");
+              const spanishVariant = getPrayerVariant(prayer, "es");
+              const selectedLanguage = answers.prayerLanguageById[prayerId] ?? "en";
 
               return (
                 <label
                   key={prayerId}
-                  className="interactive-card-link flex cursor-pointer gap-3 rounded-lg border border-blue-900/10 bg-white p-4 shadow-sm"
+                  className="grid gap-3 rounded-lg border border-blue-900/10 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center"
                 >
-                  <input
-                    type="checkbox"
-                    checked={answers.latinPrayerIds.includes(prayerId)}
-                    onChange={() => onToggleLatinPrayer(prayerId)}
-                    className="mt-1 h-4 w-4"
-                  />
                   <span>
                     <span className="block font-semibold text-blue-900">{prayer.title}</span>
                     <span className="mt-1 block text-sm leading-6 text-slate-700">
-                      {latinVariant.incipit}
+                      Latin: {latinVariant.incipit} Spanish: {spanishVariant.incipit}
                     </span>
                   </span>
+                  <select
+                    value={selectedLanguage}
+                    onChange={(event) =>
+                      onPrayerLanguageChange(prayerId, event.target.value as PrayerLanguage)
+                    }
+                    className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
+                    aria-label={`${prayer.title} language`}
+                  >
+                    {prayerLanguageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               );
             })}
@@ -708,7 +726,7 @@ function getStepTitle(step: WizardStep): string {
   if (step === "mysteries") return "Which mysteries would you like to pray?";
   if (step === "help") return "How much help should the guide give?";
   if (step === "closing") return "Which closing prayers should be included?";
-  if (step === "latin") return "Would you like any prayers in Latin?";
+  if (step === "language") return "Would you like any prayers in Latin or Spanish?";
   if (step === "saints") return "Would you like to add saint invocations?";
   if (step === "print") return "Will you print cards?";
   return "Name your guide";

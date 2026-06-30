@@ -14,7 +14,13 @@ import {
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
 import { rosaryTemplates } from "@/lib/rosary/defaultTemplates";
-import { getPrayerLanguage, getPrayerVariant, latinPrayerIds } from "@/lib/rosary/prayerText";
+import {
+  getPrayerLanguage,
+  getPrayerLanguageLabel,
+  getPrayerVariant,
+  prayerLanguageOptions,
+  prayerLanguagePrayerIds,
+} from "@/lib/rosary/prayerText";
 import {
   deleteRosaryConfig,
   getActiveRosaryConfig,
@@ -579,12 +585,14 @@ export function RosaryBuilder() {
         <Card>
           <h2 className="text-2xl font-semibold text-blue-900">5. Prayer languages</h2>
           <p className="mt-3 leading-7 text-slate-700">
-            Choose English or Latin for each prayer. You can mix languages in the same guide.
+            Choose English, Latin, or Spanish for each prayer. You can mix languages in the same
+            guide.
           </p>
           <div className="mt-5 grid gap-3">
-            {latinPrayerIds.map((prayerId) => {
+            {prayerLanguagePrayerIds.map((prayerId) => {
               const prayer = prayersById[prayerId];
               const latinVariant = getPrayerVariant(prayer, "la");
+              const spanishVariant = getPrayerVariant(prayer, "es");
 
               return (
                 <label
@@ -595,7 +603,8 @@ export function RosaryBuilder() {
                   <span>
                     <span className="block font-semibold text-blue-900">{prayer.title}</span>
                     <span className="block text-sm leading-6 text-slate-700">
-                      English: {prayer.incipit} Latin: {latinVariant.incipit}
+                      English: {prayer.incipit} Latin: {latinVariant.incipit} Spanish:{" "}
+                      {spanishVariant.incipit}
                     </span>
                   </span>
                   <select
@@ -604,8 +613,11 @@ export function RosaryBuilder() {
                     onChange={(event) => updatePrayerLanguage(prayerId, event.target.value as PrayerLanguage)}
                     className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
                   >
-                    <option value="en">English</option>
-                    <option value="la">Latin</option>
+                    {prayerLanguageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {getPrayerLanguageLabel(option.value)}
+                      </option>
+                    ))}
                   </select>
                 </label>
               );

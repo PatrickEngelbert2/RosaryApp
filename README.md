@@ -13,7 +13,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 - Build custom rosary guides.
 - Choose today's mysteries or manually select a mystery set.
 - Customize closing prayers.
-- Mix English and Latin prayer texts per prayer in saved guides.
+- Mix English, Latin, and Spanish prayer texts per prayer in saved guides.
 - Add saint invocations.
 - Follow prayers with collapsible text.
 - Pray saved guides one step at a time with mobile-friendly Back, Next, Finish, and protected restart controls.
@@ -122,7 +122,7 @@ The Build a Guide page supports two paths:
 
 Easy Guide Builder output is saved as the same `UserRosaryConfig` shape used by the advanced builder. Guides created in the wizard immediately work with `/pray/custom`, `/cards`, and `/cards/print`; no separate easy-guide format or backend is used.
 
-Saved guides can choose English or Latin per prayer. The Easy Guide Builder includes a simple optional Latin flow, while the advanced builder exposes per-prayer language controls. Missing language settings default to English so older saved guides continue to load normally. Spanish prayer variants are not implemented yet, but the prayer data is structured so they can be added later.
+Saved guides can choose English, Latin, or Spanish per prayer. The Easy Guide Builder keeps this beginner-friendly with an optional language-selection step, while the advanced builder exposes per-prayer language controls directly. Missing language settings default to English so older saved guides continue to load normally. The interface, mysteries, fruits, labels, and page copy remain English in this pass; Spanish support is for prayer variants only.
 
 The Build a Guide page also includes a Guide Backup section. Use it to download a backup of the selected saved guide, download all saved guides, or import a backup from this version of Walk the Rosary.
 
@@ -133,7 +133,7 @@ The Custom Pray page at `/pray/custom` has two prayer views for saved guides:
 - Read guide: the original scroll-based prayer view with collapsible prayer text, large-text controls, repeated-prayer display controls, and optional leader notes.
 - Pray step by step: a focused prayer mode that shows one prayer, mystery announcement, instruction, leader note, pause, saint invocation, or closing action at a time.
 
-Step-by-step mode is generated from the same structured rosary flow as the scroll view, so selected mysteries, closing prayers, saint invocations, leader notes, custom guidance, and English/Latin prayer choices stay consistent with the saved guide. The mode stores progress locally per guide in the browser and keeps the repeated-prayer pacing preference locally. Restart is a secondary action that asks for confirmation before resetting progress.
+Step-by-step mode is generated from the same structured rosary flow as the scroll view, so selected mysteries, closing prayers, saint invocations, leader notes, custom guidance, and English/Latin/Spanish prayer choices stay consistent with the saved guide. The mode stores progress locally per guide in the browser and keeps the repeated-prayer pacing preference locally. Restart is a secondary action that asks for confirmation before resetting progress.
 
 Repeated prayers can be handled two ways:
 
@@ -146,7 +146,7 @@ Switching between these two pacing modes preserves the current logical prayer po
 
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
-Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English or Latin. The preview can also be customized before printing: card items can be added, edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a generated canonical prayer ID is available. Added preview items can be sections, notes, leader notes, intentions, saint invocations, prayers, or custom text. Desktop users can use hover/focus controls; touch users can tap an item and use the mobile action sheet. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English, Latin, or Spanish. The preview can also be customized before printing: card items can be added, edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a generated canonical prayer ID is available. Added preview items can be sections, notes, leader notes, intentions, saint invocations, prayers, or custom text. Desktop users can use hover/focus controls; touch users can tap an item and use the mobile action sheet. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
 
 Supported layouts are:
 
@@ -159,7 +159,7 @@ Supported layouts are:
 
 The Number of cards needed field controls how many card slots the site generates. It does not control duplicate print copies; use the browser print dialog's Copies setting to print more sets. When a layout changes, the card count auto-adjusts to that layout's cards-per-page default only if the current count still appears to be the previous layout default. If the user has typed a custom count, the app preserves that count. Blank print slots remain invisible so front/back alignment is preserved.
 
-Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Repeated prayers print in compact form such as `10x - Hail Mary, full of grace...` or `10x - Ave Maria, gratia plena...`. Full prayer lines print as the prayer text without a title prefix. Preview full/short toggles use the same canonical prayer IDs, which keeps the data model ready for later Latin or Spanish prayer variants without adding language selection in this pass.
+Full-prayer controls show both the prayer title and recognizable first words, such as `Apostles' Creed - I believe in God...`. Short card references use those first words instead of generic labels like `Closing Prayer...`. Repeated prayers print in compact form such as `10x - Hail Mary...`, `10x - Ave Maria, gratia plena...`, or `10x - Dios te salve, María...`. Full prayer lines print as the prayer text without a title prefix. Preview full/short toggles use canonical prayer IDs, so card edits and reset behavior resolve against the selected English, Latin, or Spanish prayer variant.
 
 Guide Card layout uses rendered measurement in the browser. The app renders the same card face typography and spacing offscreen, measures each structured card item, then packs items front-first with the fewest measured faces possible. The front is filled before the back, and continuation faces are created only when measured content no longer fits. If the guide fits on one side, the print page renders front pages only. Browser print is still the output path; this is not a dedicated PDF layout engine.
 

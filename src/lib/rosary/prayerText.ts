@@ -71,7 +71,17 @@ export function hasPrayerVariant(prayer: Prayer, language: PrayerLanguage): bool
   return Boolean(prayer.variants?.[language]);
 }
 
-export const latinPrayerIds: PrayerId[] = [
+export const prayerLanguageOptions: { value: PrayerLanguage; label: string }[] = [
+  { value: "en", label: "English" },
+  { value: "la", label: "Latin" },
+  { value: "es", label: "Spanish" },
+];
+
+export function getPrayerLanguageLabel(language: PrayerLanguage): string {
+  return prayerLanguageOptions.find((option) => option.value === language)?.label ?? "English";
+}
+
+export const prayerLanguagePrayerIds: PrayerId[] = [
   "sign-of-the-cross",
   "apostles-creed",
   "our-father",

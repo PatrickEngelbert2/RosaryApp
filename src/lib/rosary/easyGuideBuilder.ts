@@ -15,7 +15,7 @@ import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
 export type EasyGuidePurpose = "self" | "walk-group" | "printable-cards" | "simple";
 export type EasyGuideMysteryChoice = "today" | MysterySetId;
 export type EasyGuideHelpLevel = "simple" | "complete" | "beginner";
-export type EasyGuideLatinChoice = "none" | "choose" | "unsure";
+export type EasyGuideLanguageChoice = "none" | "choose" | "unsure";
 export type EasyGuideSaintChoice = "none" | "common" | "custom";
 export type EasyGuidePrintIntent = "not-now" | "pocket" | "larger" | "unsure";
 
@@ -23,8 +23,8 @@ export type EasyGuideAnswers = {
   purpose: EasyGuidePurpose;
   mysteryChoice: EasyGuideMysteryChoice;
   helpLevel: EasyGuideHelpLevel;
-  latinChoice: EasyGuideLatinChoice;
-  latinPrayerIds: PrayerId[];
+  languageChoice: EasyGuideLanguageChoice;
+  prayerLanguageById: Partial<Record<PrayerId, PrayerLanguage>>;
   closingPrayerIds: PrayerId[];
   saintChoice: EasyGuideSaintChoice;
   customSaints: string[];
@@ -53,8 +53,8 @@ export const defaultEasyGuideAnswers: EasyGuideAnswers = {
   purpose: "simple",
   mysteryChoice: "today",
   helpLevel: "complete",
-  latinChoice: "none",
-  latinPrayerIds: [],
+  languageChoice: "none",
+  prayerLanguageById: {},
   closingPrayerIds: standardEasyClosingPrayerIds,
   saintChoice: "none",
   customSaints: [],
@@ -109,12 +109,13 @@ export function createUserRosaryConfigFromWizardAnswers(
 }
 
 function buildPrayerLanguageById(answers: EasyGuideAnswers): Partial<Record<PrayerId, PrayerLanguage>> {
-  if (answers.latinChoice !== "choose") {
+  if (answers.languageChoice !== "choose") {
     return {};
   }
 
   return Object.fromEntries(
-    [...new Set(answers.latinPrayerIds)].map((prayerId) => [prayerId, "la" satisfies PrayerLanguage]),
+    Object.entries(answers.prayerLanguageById)
+      .filter((entry): entry is [PrayerId, PrayerLanguage] => entry[1] === "la" || entry[1] === "es"),
   ) as Partial<Record<PrayerId, PrayerLanguage>>;
 }
 

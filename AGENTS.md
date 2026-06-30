@@ -26,6 +26,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 ## Content Guidance
 
 - Keep prayer text, mysteries, rosary sequences, leader guides, and printable resource metadata in structured content files under `src/content`.
+- Preserve prayer language support as a per-prayer variant system. Do not replace it with a global all-or-nothing language mode.
 - Keep card templates, card content, user rosary configuration shapes, and printable metadata structured and easy to transform.
 - Do not hardcode long prayer flows directly into page components.
 - Prefer small helper functions under `src/lib/rosary` for transforming structured content into display flows.

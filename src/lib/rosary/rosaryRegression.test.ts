@@ -297,6 +297,20 @@ describe("guide creation and builder output", () => {
     expect(getSaintInvocationNames(withoutThomas)).toContain("Blessed Pier Giorgio Frassati");
   });
 
+  it("removes selected directory saints even when there are no manual custom entries", () => {
+    const invocations = normalizeSaintInvocations({
+      enabled: true,
+      selectedSaintIds: ["saint-joseph", "saint-thomas-aquinas"],
+      customSaintInvocations: [],
+      saints: ["Saint Joseph", "Saint Thomas Aquinas"],
+    });
+    const withoutJoseph = removeSaintInvocation(invocations, "Saint Joseph");
+
+    expect(withoutJoseph.selectedSaintIds).toEqual(["saint-thomas-aquinas"]);
+    expect(withoutJoseph.customSaintInvocations).toEqual([]);
+    expect(getSaintInvocationNames(withoutJoseph)).toEqual(["Saint Thomas Aquinas"]);
+  });
+
   it("preserves selected and manual saint invocations in normalized saved guides and backups", () => {
     const guide = createTestGuide({
       saintInvocations: {

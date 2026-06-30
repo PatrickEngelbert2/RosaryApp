@@ -31,7 +31,7 @@ export function normalizeSaintInvocations(
 ): SaintInvocations {
   const selectedIds = uniqueValidSaintIds(invocations?.selectedSaintIds ?? []);
   const customSource =
-    invocations?.customSaintInvocations && invocations.customSaintInvocations.length > 0
+    invocations?.customSaintInvocations !== undefined
       ? invocations.customSaintInvocations
       : invocations?.saints ?? [];
   const customSaints: string[] = [];

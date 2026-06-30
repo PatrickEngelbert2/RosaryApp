@@ -78,7 +78,7 @@ export function SaintPickerDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-lg border border-blue-900/10 bg-cream-50 shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-blue-900/10 bg-cream-50 shadow-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-blue-900/10 bg-white px-5 py-4">
           <div>
@@ -103,8 +103,8 @@ export function SaintPickerDialog({
           </button>
         </div>
 
-        <div className="grid max-h-[calc(92vh-9rem)] gap-4 overflow-hidden p-5">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
+          <div className="shrink-0 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
             <label className="block text-sm font-semibold text-blue-900" htmlFor={searchId}>
               Search saints, virtues, patronage
               <span className="relative mt-2 block">
@@ -136,7 +136,7 @@ export function SaintPickerDialog({
             </p>
           </div>
 
-          <div className="min-h-0 overflow-y-auto rounded-lg border border-blue-900/10 bg-white">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-lg border border-blue-900/10 bg-white">
             {filteredSaints.length > 0 ? (
               <ul className="divide-y divide-blue-900/10">
                 {filteredSaints.map((saint) => {

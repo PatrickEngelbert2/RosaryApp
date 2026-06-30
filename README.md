@@ -126,6 +126,8 @@ Saved guides can choose English, Latin, or Spanish per prayer. The Quick Builder
 
 The Custom Builder is organized as a guided flow: guide basics, repeated-prayer behavior, closing prayers, prayer languages, saint invocations, leader notes, custom guidance, full flow preview, browser save, and guide backup. Larger optional sections collapse so the page stays approachable while preserving all form state.
 
+The Preview the flow section supports guide-level editing before save. Users can edit an item, remove it, move it up or down, and toggle supported prayers between full and short text. These edits are saved as `guideFlowEdits` on the guide itself, so they affect `/pray/custom`, step-by-step mode, newly generated Guide Cards, and guide backups. Reset flow edits restores the generated flow from the current builder options without erasing guide basics, mysteries, language choices, saint invocations, closing-prayer choices, or other builder settings. Drag-and-drop is intentionally left for a later pass.
+
 Saint invocations can be added by typing a custom saint or title, adding the common invocation set, or opening the searchable Choose saints picker. The picker uses a local tagged saint directory, searches names and patronage/theme tags, and stores selected saints alongside manual custom invocations in the saved guide.
 
 The Build a Guide page also includes a Guide Backup section. Use it to download a backup of the selected saved guide, download all saved guides, or import a backup from this version of Walk the Rosary.
@@ -151,6 +153,8 @@ Switching between these two pacing modes preserves the current logical prayer po
 Guide cards are generated from saved Rosary guides. Build or edit a guide on `/builder`, save it locally in the browser, then choose that guide on `/cards`. The card generator creates front/back guide cards from the guide's selected mysteries, closing prayers, saint invocations, leader notes, and concise custom guidance.
 
 Users can choose the card count, card size, which prayers print in full, and the prayer language used on the cards. Card language choices can use the saved guide setting or override individual prayers to English, Latin, or Spanish. The preview can also be customized before printing: card items can be added, edited, removed, reordered with arrow controls or drag/drop, and switched between short and full prayer text where a generated canonical prayer ID is available. Added preview items can be sections, notes, leader notes, intentions, saint invocations, prayers, or custom text. Desktop users can use hover/focus controls; touch users can tap an item and use the mobile action sheet. Drag/drop shows a before/after insertion indicator so cross-section moves are clear. These card edits are saved locally as cards-only customizations and do not alter the underlying prayer guide or `/pray/custom` flow.
+
+Guide-level Preview the flow edits are different from card-only customizations. When a guide has flow edits, the Guide Cards generator starts from the resolved edited guide flow, and then card-specific customizations can still be layered on top for printing only.
 
 Supported layouts are:
 

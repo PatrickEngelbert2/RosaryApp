@@ -1,4 +1,5 @@
 import { getRosaryTemplate } from "@/lib/rosary/defaultTemplates";
+import { normalizeGuideFlowEdits } from "@/lib/rosary/guideFlowEdits";
 import { isPrayerId, normalizePrayerLanguage } from "@/lib/rosary/prayerText";
 import { normalizeSaintInvocations } from "@/lib/rosary/saintInvocations";
 import type { PrayerId, PrayerLanguage, RosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
@@ -98,6 +99,7 @@ export function normalizeRosaryConfig(config: UserRosaryConfig): UserRosaryConfi
         config.preferences?.showRepeatedPrayersIndividually ?? false,
     },
     prayerLanguageById: normalizePrayerLanguageById(config.prayerLanguageById),
+    guideFlowEdits: normalizeGuideFlowEdits(config.guideFlowEdits),
   };
 }
 

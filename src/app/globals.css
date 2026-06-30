@@ -49,6 +49,50 @@ a {
   box-shadow: 0 1px 2px rgb(16 42 86 / 0.08);
 }
 
+.flow-preview-action-button,
+.flow-preview-action-button-danger {
+  min-height: 2.25rem;
+  cursor: pointer;
+  border-radius: 9999px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.flow-preview-action-button {
+  border: 1px solid rgb(16 42 86 / 0.2);
+  background: #ffffff;
+  color: #102a56;
+}
+
+.flow-preview-action-button-danger {
+  border: 1px solid rgb(185 137 40 / 0.4);
+  background: #f7efd9;
+  color: #102a56;
+}
+
+.flow-preview-action-button:hover,
+.flow-preview-action-button-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgb(16 42 86 / 0.1);
+}
+
+.flow-preview-action-button:focus-visible,
+.flow-preview-action-button-danger:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fffaf0,
+    0 0 0 4px rgb(16 42 86 / 0.3);
+}
+
 .interactive-button-primary:hover {
   background-color: #153b75;
   box-shadow: 0 10px 22px rgb(16 42 86 / 0.16);

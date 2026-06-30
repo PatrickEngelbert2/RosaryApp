@@ -8,6 +8,10 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added guide-level Custom Builder Preview the flow editing with edit, remove, move up, move down, and prayer full/short controls.
+- Added Reset flow edits behavior that restores the generated flow from the current builder settings without erasing guide basics, mystery choices, language choices, saint settings, or other builder options.
+- Persisted guide-level flow edits with saved guides so Custom Pray scroll mode, step-by-step prayer mode, Guide Cards generated from an edited guide, and guide backup import/export use the edited flow.
+- Kept guide-level flow edits separate from Guide Card-only customizations; drag-and-drop for Custom Builder preview editing is intentionally deferred.
 - Added a searchable Saint Invocation picker to the Custom Builder with checkbox selection, selected counts, name/tag search, and a clear search control.
 - Added a structured tagged saint directory and saint invocation helpers that preserve manual custom entries, prevent duplicate invocations, and map common invocations to directory entries where possible.
 - Preserved selected saint invocations in saved guides, Custom Pray, step-by-step prayer mode, Guide Cards, and guide backup import/export.

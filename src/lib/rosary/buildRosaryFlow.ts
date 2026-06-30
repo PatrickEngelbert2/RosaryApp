@@ -5,6 +5,7 @@ import {
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
+import { applyGuideFlowEdits } from "@/lib/rosary/guideFlowEdits";
 import { getPrayerLanguage, getPrayerVariant } from "@/lib/rosary/prayerText";
 import { getSaintInvocationNames } from "@/lib/rosary/saintInvocations";
 import type {
@@ -34,7 +35,7 @@ export function buildRosaryFlow(
       ? getTodaysMysteries()
       : mysterySetsById[config.selectedMysterySetId];
 
-  return buildFromSteps(config, mysterySet);
+  return applyGuideFlowEdits(buildFromSteps(config, mysterySet), config);
 }
 
 function buildFromSteps(config: UserRosaryConfig, mysterySet: MysterySet): RenderedRosaryStep[] {

@@ -8,6 +8,9 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Fixed Custom Builder Leader Notes consistency so notes from Quick Builder, default walk-leader templates, common notes, manual notes, saved guides, and imports share the same builder resolver.
+- Updated the Leader Notes section to count, list, edit, and delete active leader notes regardless of their source while staying synchronized with Preview the flow and downstream guide output.
+- Improved leader-note save/load behavior so template-created notes can be edited or deleted without being resurrected unexpectedly.
 - Added guide-level Custom Builder Preview the flow editing with edit, remove, move up, move down, and prayer full/short controls.
 - Added Reset flow edits behavior that restores the generated flow from the current builder settings without erasing guide basics, mystery choices, language choices, saint settings, or other builder options.
 - Persisted guide-level flow edits with saved guides so Custom Pray scroll mode, step-by-step prayer mode, Guide Cards generated from an edited guide, and guide backup import/export use the edited flow.

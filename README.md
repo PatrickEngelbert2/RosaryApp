@@ -126,6 +126,8 @@ Saved guides can choose English, Latin, or Spanish per prayer. The Quick Builder
 
 The Custom Builder is organized as a guided flow: guide basics, repeated-prayer behavior, closing prayers, prayer languages, saint invocations, leader notes, custom guidance, full flow preview, browser save, and guide backup. Larger optional sections collapse so the page stays approachable while preserving all form state.
 
+The Leader Notes section resolves notes from Quick Builder output, walk-leader starter templates, common leader notes, manual Custom Builder notes, saved guides, and imported guides into one editable list. Turning Include leader notes off hides those notes from generated output without deleting them.
+
 The Preview the flow section supports guide-level editing before save. Users can edit an item, remove it, move it up or down, and toggle supported prayers between full and short text. These edits are saved as `guideFlowEdits` on the guide itself, so they affect `/pray/custom`, step-by-step mode, newly generated Guide Cards, and guide backups. Reset flow edits restores the generated flow from the current builder options without erasing guide basics, mysteries, language choices, saint invocations, closing-prayer choices, or other builder settings. Drag-and-drop is intentionally left for a later pass.
 
 Saint invocations can be added by typing a custom saint or title, adding the common invocation set, or opening the searchable Choose saints picker. The picker uses a local tagged saint directory, searches names and patronage/theme tags, and stores selected saints alongside manual custom invocations in the saved guide.

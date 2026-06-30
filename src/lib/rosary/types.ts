@@ -119,6 +119,14 @@ export type RenderedRosaryStep = {
   order: number;
 };
 
+export type GuideFlowEdits = {
+  itemOrder: string[];
+  deletedItemIds: string[];
+  itemTextOverrides: Record<string, string>;
+  itemTitleOverrides: Record<string, string>;
+  itemFullTextOverrides: Record<string, boolean>;
+};
+
 export type RepeatedPrayerStepMode = "count" | "group";
 
 export type PrayerStepModeType =
@@ -203,6 +211,7 @@ export type UserRosaryConfig = {
   customGuidance: CustomGuidance[];
   preferences: RosaryPreferences;
   prayerLanguageById?: Partial<Record<PrayerId, PrayerLanguage>>;
+  guideFlowEdits?: GuideFlowEdits;
 };
 
 export type LeaderGuide = {

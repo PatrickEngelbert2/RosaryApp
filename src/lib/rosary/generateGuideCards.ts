@@ -1,11 +1,12 @@
 import { prayersById } from "@/content/prayers";
-import { getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
+import { buildRosaryFlow, getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
 import {
   clampCardCount,
   getCardsPerPage,
   normalizeGuideCardLayoutOptions,
 } from "@/lib/rosary/cardUtils";
 import { createDefaultUserConfigFromTemplate, normalizeRosaryConfig } from "@/lib/rosary/configUtils";
+import { hasGuideFlowEdits } from "@/lib/rosary/guideFlowEdits";
 import {
   ensureEllipsis,
   getCompactPrayerText,
@@ -32,6 +33,7 @@ import type {
   Prayer,
   PrayerId,
   PrayerLanguage,
+  RenderedRosaryStep,
   RosaryStep,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
@@ -126,11 +128,10 @@ export function generateGuideCardsFromConfig(
   const mysterySet = getMysterySetForConfig(config, date);
   const warnings: string[] = [];
   const layout = getGuideCardLayout(layoutOptions.cardSize);
-  const blocks = materializeEditableBlocks(
-    buildOrderedGuideBlocks(config, mysterySet, layoutOptions, layout, warnings, customization),
-    layout,
-    customization,
-  );
+  const sourceBlocks = hasGuideFlowEdits(config.guideFlowEdits)
+    ? buildEditedFlowGuideBlocks(config, layoutOptions, layout, customization)
+    : buildOrderedGuideBlocks(config, mysterySet, layoutOptions, layout, warnings, customization);
+  const blocks = materializeEditableBlocks(sourceBlocks, layout, customization);
   const { front, back, extraSides } = layoutBlocksAcrossSides(
     blocks,
     config.id,
@@ -303,6 +304,105 @@ function buildOrderedGuideBlocks(
   ];
 
   return blocks.filter((block) => block.lines?.length || block.body);
+}
+
+function buildEditedFlowGuideBlocks(
+  config: UserRosaryConfig,
+  options: GuideCardLayoutOptions,
+  layout: GuideCardLayoutDefinition,
+  customization?: GuideCardCustomization,
+): GuideCardBlock[] {
+  return buildRosaryFlow(config)
+    .filter((step) => step.cardEligible || step.type === "section-heading")
+    .map((step, index) => createEditedFlowGuideBlock(step, index, config, options, layout, customization))
+    .filter((block): block is GuideCardBlock => Boolean(block));
+}
+
+function createEditedFlowGuideBlock(
+  step: RenderedRosaryStep,
+  index: number,
+  config: UserRosaryConfig,
+  options: GuideCardLayoutOptions,
+  layout: GuideCardLayoutDefinition,
+  customization?: GuideCardCustomization,
+): GuideCardBlock | undefined {
+  if (step.type === "section-heading") {
+    return {
+      id: `flow:${step.id}`,
+      type: "heading",
+      heading: step.title,
+      estimatedWeight: layout.headingWeight + layout.sectionGapWeight,
+      sourceItemIds: [step.id],
+      editableItems: [
+        {
+          id: step.id,
+          type: "heading",
+          sectionId: "edited-flow",
+          title: step.title,
+          currentText: step.title,
+          order: index,
+          canEdit: true,
+          canDelete: true,
+        },
+      ],
+      keepTogether: true,
+      priority: "required",
+      sectionGroup: "edited-flow",
+    };
+  }
+
+  const line = getEditedFlowCardLine(step, config, options, customization);
+
+  if (!line.text.trim()) {
+    return undefined;
+  }
+
+  return sectionBlock(
+    `flow:${step.id}`,
+    step.title,
+    [line],
+    layout,
+    step.prayer ? "prayer" : step.mystery ? "mystery-list" : step.leaderOnly ? "custom-guidance" : "instruction",
+    true,
+    step.leaderOnly,
+  );
+}
+
+function getEditedFlowCardLine(
+  step: RenderedRosaryStep,
+  config: UserRosaryConfig,
+  options: GuideCardLayoutOptions,
+  customization?: GuideCardCustomization,
+): GuideCardGeneratedLine {
+  if (step.prayer?.id) {
+    const override = customization?.fullPrayerOverrides[step.prayer.id];
+    const text =
+      override === undefined
+        ? step.text ?? step.prayer.text
+        : formatPrayerForCard(step.prayer.id, override, config, customization);
+    const repeatPrefix = step.repeatCount && step.repeatCount > 1 ? `${step.repeatCount}x - ` : "";
+
+    return editableLine(`${repeatPrefix}${text}`, "prayer", {
+      prayerId: step.prayer.id,
+      title: step.prayer.title,
+      printMode: text === step.prayer.text ? "full" : "short",
+      canToggleFullPrayer: true,
+    });
+  }
+
+  if (step.mystery) {
+    const fruit = step.mystery.fruitOfMystery
+      ? ` The fruit of this mystery is ${step.mystery.fruitOfMystery}.`
+      : "";
+
+    return editableLine(`${step.mystery.title}.${fruit}`, "mystery", {
+      title: step.mystery.title,
+    });
+  }
+
+  return editableLine(step.text ?? step.description ?? step.title, step.leaderOnly ? "instruction" : "text", {
+    title: step.title,
+  });
 }
 
 function splitClosingLinesAroundClosingPrayer(lines: GuideCardGeneratedLine[]): {

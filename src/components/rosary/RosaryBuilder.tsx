@@ -9,13 +9,20 @@ import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import { RosaryFlowPreview } from "@/components/rosary/RosaryFlowPreview";
 import { SaintPickerDialog } from "@/components/rosary/SaintPickerDialog";
 import { commonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
-import { getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
+import { buildRosaryFlow, getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
 import {
   createDefaultUserConfigFromTemplate,
   createId,
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
 import { rosaryTemplates } from "@/lib/rosary/defaultTemplates";
+import {
+  deleteGuideFlowItem,
+  moveGuideFlowItem,
+  setGuideFlowItemFullText,
+  setGuideFlowItemText,
+  setGuideFlowItemTitle,
+} from "@/lib/rosary/guideFlowEdits";
 import {
   getMissingCommonLeaderNoteTemplates,
 } from "@/lib/rosary/leaderNoteTemplates";
@@ -313,6 +320,56 @@ export function RosaryBuilder() {
       updatedAt: new Date().toISOString(),
     }));
     setSaintPickerOpen(false);
+  }
+
+  function editPreviewItem(itemId: string, values: { title: string; text: string }) {
+    setConfig((current) => {
+      const withTitle = setGuideFlowItemTitle(current.guideFlowEdits, itemId, values.title);
+      const withText = setGuideFlowItemText(withTitle, itemId, values.text);
+
+      return {
+        ...current,
+        guideFlowEdits: withText,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }
+
+  function removePreviewItem(itemId: string) {
+    setConfig((current) => ({
+      ...current,
+      guideFlowEdits: deleteGuideFlowItem(current.guideFlowEdits, itemId),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function movePreviewItem(itemId: string, direction: "up" | "down") {
+    setConfig((current) => ({
+      ...current,
+      guideFlowEdits: moveGuideFlowItem(
+        current.guideFlowEdits,
+        buildRosaryFlow(current).map((step) => step.id),
+        itemId,
+        direction,
+      ),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function togglePreviewItemFullText(itemId: string, showFullText: boolean) {
+    setConfig((current) => ({
+      ...current,
+      guideFlowEdits: setGuideFlowItemFullText(current.guideFlowEdits, itemId, showFullText),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function resetPreviewFlowEdits() {
+    setConfig((current) => ({
+      ...current,
+      guideFlowEdits: undefined,
+      updatedAt: new Date().toISOString(),
+    }));
   }
 
   function saveConfig() {
@@ -895,7 +952,17 @@ export function RosaryBuilder() {
         helpText="Review the full order of the guide before saving."
       >
         <div className="max-h-[75vh] overflow-auto pr-1">
-          <RosaryFlowPreview config={config} compact includeLeaderNotes={config.preferences.showLeaderNotes} />
+          <RosaryFlowPreview
+            config={config}
+            compact
+            editable
+            includeLeaderNotes={config.preferences.showLeaderNotes}
+            onEditItem={editPreviewItem}
+            onMoveItem={movePreviewItem}
+            onRemoveItem={removePreviewItem}
+            onResetEdits={resetPreviewFlowEdits}
+            onToggleFullText={togglePreviewItemFullText}
+          />
         </div>
       </CollapsibleBuilderSection>
 

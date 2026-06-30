@@ -35,6 +35,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Prefer small helper functions under `src/lib/rosary` for transforming structured content into display flows.
 - Keep Custom Pray scroll/read mode and step-by-step prayer mode built from the same structured rosary flow; do not duplicate long prayer sequencing logic by hand.
 - Preserve logical step identity for step-by-step prayer progress, especially when switching between counted and grouped repeated-prayer pacing.
+- Keep Custom Builder Preview the flow edits as guide-level `guideFlowEdits` that layer over generated flow. Do not store or apply these edits through Guide Card-only customization storage.
 - Assume printable PDFs will later live under `/public/printables`.
 - For print features, prefer browser print behavior and CSS print rules before adding PDF libraries.
 - Guide Cards layout should use rendered measurement as the final source of truth for face packing. Do not reintroduce rough character or line estimates as the final preview/print packing decision.

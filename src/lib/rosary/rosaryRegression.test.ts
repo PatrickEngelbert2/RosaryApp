@@ -24,6 +24,13 @@ import {
   generateGuideCardsFromConfig,
   getRelevantGuidePrayerOptions,
 } from "@/lib/rosary/generateGuideCards";
+import {
+  deleteGuideFlowItem,
+  moveGuideFlowItem,
+  setGuideFlowItemFullText,
+  setGuideFlowItemText,
+  setGuideFlowItemTitle,
+} from "@/lib/rosary/guideFlowEdits";
 import { GUIDE_CARD_LAYOUTS } from "@/lib/rosary/guideCardLayouts";
 import {
   getGuideCardBlockKey,
@@ -405,6 +412,145 @@ describe("guide creation and builder output", () => {
 
     expect(flow.length).toBeGreaterThan(24);
     expect(flow.some((step) => step.type === "leader-note" && step.title === "Quiet start cue")).toBe(true);
+  });
+});
+
+describe("guide-level flow edits", () => {
+  it("generates unique stable flow item IDs for the same guide config", () => {
+    const config = createTestGuide();
+    const first = buildRosaryFlow(config).map((step) => step.id);
+    const second = buildRosaryFlow(config).map((step) => step.id);
+
+    expect(first).toEqual(second);
+    expect(new Set(first).size).toBe(first.length);
+    expect(first.some((id) => id.includes("hail-marys"))).toBe(true);
+  });
+
+  it("applies title, text, full-short, delete, and order edits without changing canonical prayers", () => {
+    const base = createTestGuide({
+      prayerLanguageById: {
+        "hail-mary": "es",
+      },
+      customGuidance: [
+        {
+          id: "leader-note-preview",
+          title: "Original leader cue",
+          text: "Original leader text.",
+          stepType: "leader-note",
+          insertionPoint: "before-opening",
+        },
+      ],
+    });
+    const baseFlow = buildRosaryFlow(base);
+    const leaderNote = baseFlow.find((step) => step.id === "leader-note-preview");
+    const hailMary = baseFlow.find((step) => step.prayer?.id === "hail-mary");
+    const saintInvocation = baseFlow.find((step) => step.id === "saint-invocations");
+
+    if (!leaderNote || !hailMary || !saintInvocation) {
+      throw new Error("Expected test guide to include a leader note, Hail Mary, and saint invocation.");
+    }
+
+    const currentIds = baseFlow.map((step) => step.id);
+    const withMoved = moveGuideFlowItem(undefined, currentIds, hailMary.id, "up");
+    const withTitle = setGuideFlowItemTitle(withMoved, leaderNote.id, "Edited leader cue");
+    const withText = setGuideFlowItemText(withTitle, leaderNote.id, "Edited leader text.");
+    const withShortPrayer = setGuideFlowItemFullText(withText, hailMary.id, false);
+    const withDeletion = deleteGuideFlowItem(withShortPrayer, saintInvocation.id);
+    const edited = createTestGuide({
+      ...base,
+      guideFlowEdits: withDeletion,
+    });
+    const editedFlow = buildRosaryFlow(edited);
+    const editedLeaderNote = editedFlow.find((step) => step.id === leaderNote.id);
+    const editedHailMary = editedFlow.find((step) => step.id === hailMary.id);
+
+    expect(editedFlow.findIndex((step) => step.id === hailMary.id)).toBe(
+      baseFlow.findIndex((step) => step.id === hailMary.id) - 1,
+    );
+    expect(editedFlow.some((step) => step.id === saintInvocation.id)).toBe(false);
+    expect(editedLeaderNote?.title).toBe("Edited leader cue");
+    expect(editedLeaderNote?.text).toBe("Edited leader text.");
+    expect(editedHailMary?.text).toBe(getCompactPrayerText(prayersById["hail-mary"], "es"));
+    expect(prayersById["hail-mary"].text).toContain("Hail Mary, full of grace");
+  });
+
+  it("removes leader notes, saint invocations, and custom guidance from resolved output", () => {
+    const config = createTestGuide({
+      customGuidance: [
+        {
+          id: "custom-guidance-preview",
+          title: "Custom Guidance",
+          text: "Pray quietly here.",
+          stepType: "instruction",
+          insertionPoint: "before-closing",
+        },
+        {
+          id: "leader-note-preview",
+          title: "Leader Cue",
+          text: "Invite the group to pause.",
+          stepType: "leader-note",
+          insertionPoint: "before-opening",
+        },
+      ],
+    });
+    const edits = ["custom-guidance-preview", "leader-note-preview", "saint-invocations"].reduce(
+      (current, id) => deleteGuideFlowItem(current, id),
+      undefined as UserRosaryConfig["guideFlowEdits"],
+    );
+    const flow = buildRosaryFlow({ ...config, guideFlowEdits: edits });
+
+    expect(flow.some((step) => step.id === "custom-guidance-preview")).toBe(false);
+    expect(flow.some((step) => step.id === "leader-note-preview")).toBe(false);
+    expect(flow.some((step) => step.id === "saint-invocations")).toBe(false);
+  });
+
+  it("persists flow edits through saved guide normalization and guide backups", () => {
+    const config = createTestGuide({
+      guideFlowEdits: setGuideFlowItemText(undefined, "saint-invocations", "Saint Joseph, pray for us.\nSaint Anne, pray for us."),
+    });
+    const normalized = normalizeStoredRosaryConfigs(createStoredCollection([config])).items[0];
+    const backup = createGuideBackupFile({
+      type: "single-guide",
+      guides: [normalized],
+      exportedAt: fixedDate,
+    });
+    const parsed = validateGuideBackupFile(backup);
+
+    expect(normalized.guideFlowEdits?.itemTextOverrides["saint-invocations"]).toContain("Saint Anne");
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("Expected guide backup to validate.");
+    }
+    expect(parsed.result.guides[0].guideFlowEdits?.itemTextOverrides["saint-invocations"]).toContain("Saint Anne");
+  });
+
+  it("uses edited guide flow in step-by-step mode and generated guide cards", () => {
+    const config = createTestGuide({
+      guideFlowEdits: setGuideFlowItemText(undefined, "saint-invocations", "Saint Joseph, pray for us.\nSaint Anne, pray for us."),
+    });
+    const steps = createPrayerSteps(config, { repeatedPrayerMode: "group" });
+    const cards = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+
+    expect(steps.some((step) => step.type === "saint-invocation" && step.body?.includes("Saint Anne"))).toBe(true);
+    expect(generatedText(cards.cards[0])).toContain("Saint Anne, pray for us.");
+  });
+
+  it("resetting flow edits restores generated flow without erasing guide settings", () => {
+    const config = createTestGuide({
+      name: "Edited Flow Guide",
+      prayerLanguageById: {
+        "our-father": "la",
+      },
+      guideFlowEdits: deleteGuideFlowItem(undefined, "saint-invocations"),
+    });
+    const editedFlow = buildRosaryFlow(config);
+    const reset = normalizeStoredRosaryConfigs(createStoredCollection([{ ...config, guideFlowEdits: undefined }])).items[0];
+    const resetFlow = buildRosaryFlow(reset);
+
+    expect(editedFlow.some((step) => step.id === "saint-invocations")).toBe(false);
+    expect(resetFlow.some((step) => step.id === "saint-invocations")).toBe(true);
+    expect(reset.name).toBe("Edited Flow Guide");
+    expect(reset.prayerLanguageById?.["our-father"]).toBe("la");
   });
 });
 

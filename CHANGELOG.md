@@ -8,13 +8,16 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added handle-based drag-and-drop reordering to Custom Builder Preview the flow.
+- Wired preview drag/drop into the existing guide-level `guideFlowEdits.itemOrder` model so reordered guides persist into saved guides, Custom Pray, step-by-step prayer mode, Guide Cards, and guide backup import/export.
+- Preserved Move up and Move down controls for keyboard access and mobile reliability while keeping guide-level drag/drop separate from Guide Card-only customizations.
 - Fixed Custom Builder Leader Notes consistency so notes from Quick Builder, default walk-leader templates, common notes, manual notes, saved guides, and imports share the same builder resolver.
 - Updated the Leader Notes section to count, list, edit, and delete active leader notes regardless of their source while staying synchronized with Preview the flow and downstream guide output.
 - Improved leader-note save/load behavior so template-created notes can be edited or deleted without being resurrected unexpectedly.
 - Added guide-level Custom Builder Preview the flow editing with edit, remove, move up, move down, and prayer full/short controls.
 - Added Reset flow edits behavior that restores the generated flow from the current builder settings without erasing guide basics, mystery choices, language choices, saint settings, or other builder options.
 - Persisted guide-level flow edits with saved guides so Custom Pray scroll mode, step-by-step prayer mode, Guide Cards generated from an edited guide, and guide backup import/export use the edited flow.
-- Kept guide-level flow edits separate from Guide Card-only customizations; drag-and-drop for Custom Builder preview editing is intentionally deferred.
+- Kept guide-level flow edits separate from Guide Card-only customizations.
 - Added a searchable Saint Invocation picker to the Custom Builder with checkbox selection, selected counts, name/tag search, and a clear search control.
 - Added a structured tagged saint directory and saint invocation helpers that preserve manual custom entries, prevent duplicate invocations, and map common invocations to directory entries where possible.
 - Preserved selected saint invocations in saved guides, Custom Pray, step-by-step prayer mode, Guide Cards, and guide backup import/export.

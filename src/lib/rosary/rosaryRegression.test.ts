@@ -36,6 +36,7 @@ import {
 import {
   deleteGuideFlowItem,
   moveGuideFlowItem,
+  reorderGuideFlowItem,
   setGuideFlowItemFullText,
   setGuideFlowItemText,
   setGuideFlowItemTitle,
@@ -657,6 +658,156 @@ describe("guide-level flow edits", () => {
     expect(resetFlow.some((step) => step.id === "saint-invocations")).toBe(true);
     expect(reset.name).toBe("Edited Flow Guide");
     expect(reset.prayerLanguageById?.["our-father"]).toBe("la");
+  });
+
+  it("reorders guide flow items for drag/drop without duplication, loss, or invalid-id crashes", () => {
+    const visibleIds = ["opening", "our-father", "hail-mary", "closing"];
+    const movedDown = reorderGuideFlowItem(undefined, visibleIds, "our-father", "closing", "after");
+    const movedUp = reorderGuideFlowItem(movedDown, movedDown?.itemOrder ?? [], "closing", "opening", "before");
+    const sameTarget = reorderGuideFlowItem(movedUp, movedUp?.itemOrder ?? [], "closing", "closing", "after");
+    const invalidDragged = reorderGuideFlowItem(movedUp, movedUp?.itemOrder ?? [], "missing", "opening", "before");
+    const invalidTarget = reorderGuideFlowItem(movedUp, movedUp?.itemOrder ?? [], "opening", "missing", "before");
+
+    expect(movedDown?.itemOrder).toEqual(["opening", "hail-mary", "closing", "our-father"]);
+    expect(movedUp?.itemOrder).toEqual(["closing", "opening", "hail-mary", "our-father"]);
+    expect(sameTarget).toBe(movedUp);
+    expect(invalidDragged).toBe(movedUp);
+    expect(invalidTarget).toBe(movedUp);
+    expect(new Set(movedUp?.itemOrder).size).toBe(visibleIds.length);
+    expect([...(movedUp?.itemOrder ?? [])].sort()).toEqual([...visibleIds].sort());
+  });
+
+  it("stores drag/drop reorder in the same itemOrder model used by move up/down and reset", () => {
+    const config = createTestGuide();
+    const baseFlow = buildRosaryFlow(config);
+    const ourFather = baseFlow.find((step) => step.prayer?.id === "our-father");
+    const hailMary = baseFlow.find((step) => step.prayer?.id === "hail-mary");
+    const firstId = baseFlow[0].id;
+
+    if (!ourFather || !hailMary) {
+      throw new Error("Expected test guide to include Our Father and Hail Mary.");
+    }
+
+    const dragged = reorderGuideFlowItem(
+      undefined,
+      baseFlow.map((step) => step.id),
+      hailMary.id,
+      firstId,
+      "before",
+    );
+    const moved = moveGuideFlowItem(
+      dragged,
+      buildRosaryFlow({ ...config, guideFlowEdits: dragged }).map((step) => step.id),
+      hailMary.id,
+      "down",
+    );
+    const normalized = normalizeStoredRosaryConfigs(
+      createStoredCollection([{ ...config, guideFlowEdits: moved }]),
+    ).items[0];
+    const reset = normalizeStoredRosaryConfigs(
+      createStoredCollection([{ ...normalized, guideFlowEdits: undefined }]),
+    ).items[0];
+    const staleOrder = reorderGuideFlowItem(
+      {
+        itemOrder: ["stale-id", ...baseFlow.map((step) => step.id)],
+        deletedItemIds: [],
+        itemTextOverrides: {},
+        itemTitleOverrides: {},
+        itemFullTextOverrides: {},
+      },
+      ["stale-id", ...baseFlow.map((step) => step.id)],
+      "stale-id",
+      ourFather.id,
+      "after",
+    );
+    const staleFlow = buildRosaryFlow({ ...config, guideFlowEdits: staleOrder });
+
+    expect(dragged?.itemOrder[0]).toBe(hailMary.id);
+    expect(moved?.itemOrder).toEqual(
+      moveGuideFlowItem(dragged, dragged?.itemOrder ?? [], hailMary.id, "down")?.itemOrder,
+    );
+    expect(normalized.guideFlowEdits?.itemOrder).toEqual(moved?.itemOrder);
+    expect(buildRosaryFlow(normalized).map((step) => step.id)).toEqual(moved?.itemOrder);
+    expect(reset.guideFlowEdits).toBeUndefined();
+    expect(staleFlow.some((step) => step.id === "stale-id")).toBe(false);
+    expect(new Set(staleFlow.map((step) => step.id)).size).toBe(staleFlow.length);
+  });
+
+  it("preserves preview edits, deletes, full-short overrides, leader notes, saints, and downstream output after drag/drop", () => {
+    const config = createTestGuide({
+      customGuidance: [
+        {
+          id: "custom-guidance-drag",
+          title: "Custom Drag Cue",
+          text: "Custom cue text.",
+          stepType: "instruction",
+          insertionPoint: "before-closing",
+        },
+      ],
+      prayerLanguageById: {
+        "hail-mary": "es",
+      },
+    });
+    const baseFlow = buildRosaryFlow(config);
+    const leaderNote = baseFlow.find((step) => step.type === "leader-note");
+    const hailMary = baseFlow.find((step) => step.prayer?.id === "hail-mary");
+    const saintInvocation = baseFlow.find((step) => step.id === "saint-invocations");
+    const customGuidance = baseFlow.find((step) => step.id === "custom-guidance-drag");
+    const closingPrayer = baseFlow.find((step) => step.id === "selected-closing-st-michael-prayer");
+
+    if (!leaderNote || !hailMary || !saintInvocation || !customGuidance || !closingPrayer) {
+      throw new Error("Expected test guide to include leader note, Hail Mary, saint invocation, custom guidance, and St. Michael prayer.");
+    }
+
+    const reordered = reorderGuideFlowItem(
+      undefined,
+      baseFlow.map((step) => step.id),
+      saintInvocation.id,
+      leaderNote.id,
+      "before",
+    );
+    const withLeaderTitle = setGuideFlowItemTitle(reordered, leaderNote.id, "Edited walk leader note");
+    const withLeaderText = setGuideFlowItemText(withLeaderTitle, leaderNote.id, "Edited walk leader text.");
+    const withSaintText = setGuideFlowItemText(
+      withLeaderText,
+      saintInvocation.id,
+      "Saint Joseph, pray for us.\nSaint Anne, pray for us.",
+    );
+    const withShortPrayer = setGuideFlowItemFullText(withSaintText, hailMary.id, false);
+    const withDeletion = deleteGuideFlowItem(withShortPrayer, closingPrayer.id);
+    const edited = { ...config, guideFlowEdits: withDeletion };
+    const flow = buildRosaryFlow(edited);
+    const prayerSteps = createPrayerSteps(edited, { repeatedPrayerMode: "group" });
+    const cards = generateGuideCardsFromConfig(edited, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+    const backup = createGuideBackupFile({
+      type: "single-guide",
+      guides: [normalizeStoredRosaryConfigs(createStoredCollection([edited])).items[0]],
+      exportedAt: fixedDate,
+    });
+    const parsed = validateGuideBackupFile(backup);
+
+    expect(flow.findIndex((step) => step.id === saintInvocation.id)).toBeLessThan(
+      flow.findIndex((step) => step.id === leaderNote.id),
+    );
+    expect(flow.find((step) => step.id === leaderNote.id)?.title).toBe("Edited walk leader note");
+    expect(flow.find((step) => step.id === leaderNote.id)?.text).toBe("Edited walk leader text.");
+    expect(flow.find((step) => step.id === hailMary.id)?.text).toBe(
+      getCompactPrayerText(prayersById["hail-mary"], "es"),
+    );
+    expect(flow.some((step) => step.id === closingPrayer.id)).toBe(false);
+    expect(flow.some((step) => step.id === customGuidance.id)).toBe(true);
+    expect(getActiveLeaderNotesForBuilder(edited).some((note) => note.id === leaderNote.id)).toBe(true);
+    expect(getSaintInvocationNames(edited.saintInvocations)).toContain("Saint Joseph");
+    expect(prayerSteps.findIndex((step) => step.sourceFlowItemId === saintInvocation.id)).toBeLessThan(
+      prayerSteps.findIndex((step) => step.sourceFlowItemId === leaderNote.id),
+    );
+    expect(generatedText(cards.cards[0])).toContain("Saint Anne, pray for us.");
+    expect(generatedText(cards.cards[0])).not.toContain("St. Michael the Archangel");
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("Expected guide backup to validate.");
+    }
+    expect(parsed.result.guides[0].guideFlowEdits?.itemOrder).toEqual(withDeletion?.itemOrder);
   });
 });
 

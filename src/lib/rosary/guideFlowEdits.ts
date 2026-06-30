@@ -1,6 +1,8 @@
 import { getCompactPrayerText, getPrayerLanguage } from "@/lib/rosary/prayerText";
 import type { GuideFlowEdits, RenderedRosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
 
+export type GuideFlowDropPosition = "before" | "after";
+
 export const emptyGuideFlowEdits: GuideFlowEdits = {
   itemOrder: [],
   deletedItemIds: [],
@@ -163,6 +165,45 @@ export function moveGuideFlowItem(
   });
 }
 
+export function reorderGuideFlowItem(
+  edits: GuideFlowEdits | undefined,
+  currentItemIds: string[],
+  draggedItemId: string,
+  targetItemId: string,
+  position: GuideFlowDropPosition,
+): GuideFlowEdits | undefined {
+  const visibleIds = uniqueStrings(currentItemIds);
+
+  if (draggedItemId === targetItemId) {
+    return edits;
+  }
+
+  const draggedIndex = visibleIds.indexOf(draggedItemId);
+
+  if (draggedIndex < 0 || !visibleIds.includes(targetItemId)) {
+    return edits;
+  }
+
+  const nextOrder = visibleIds.filter((id) => id !== draggedItemId);
+  const targetIndex = nextOrder.indexOf(targetItemId);
+
+  if (targetIndex < 0) {
+    return edits;
+  }
+
+  const insertionIndex = position === "after" ? targetIndex + 1 : targetIndex;
+  nextOrder.splice(insertionIndex, 0, draggedItemId);
+
+  if (arraysEqual(nextOrder, visibleIds)) {
+    return edits;
+  }
+
+  return compactGuideFlowEdits({
+    ...createGuideFlowEdits(edits),
+    itemOrder: nextOrder,
+  });
+}
+
 export function compactGuideFlowEdits(edits: GuideFlowEdits): GuideFlowEdits | undefined {
   const compacted: GuideFlowEdits = {
     itemOrder: uniqueStrings(edits.itemOrder),
@@ -251,6 +292,10 @@ function compactStringRecord(record: Record<string, string>): Record<string, str
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter((value) => value.trim()).map((value) => value.trim()))];
+}
+
+function arraysEqual(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

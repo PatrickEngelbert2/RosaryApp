@@ -8,9 +8,18 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Renamed the user-facing Easy Builder to Quick Builder and Advanced Builder to Custom Builder.
+- Reorganized the Custom Builder into a clearer flow for guide basics, repeated-prayer behavior, leader notes, closing prayers, saint invocations, custom guidance, prayer languages, full preview, browser save, and guide backup.
+- Moved guide backup controls after browser save and added concise copy explaining that browser-saved guides can be backed up for a more portable copy.
+- Moved the repeated-prayer default setting out of the save section and into its own earlier Custom Builder section.
+- Made Closing prayers, Add custom guidance, and Prayer languages collapsible with compact status summaries.
+- Separated Saint invocations into their own Custom Builder section and added an append-only common invocation helper.
+- Added explicit Custom Builder leader-note controls, including a common leader-note starter set.
+- Expanded Custom Builder Preview the flow to make the full generated flow available instead of truncating at the first 24 items.
+- Added practical help popovers for major Custom Builder sections.
 - Added Spanish variants for the core Rosary prayers: Sign of the Cross, Apostles' Creed, Our Father, Hail Mary, Glory Be, Fatima Prayer, Hail Holy Queen, Rosary Closing Prayer, Memorare, and St. Michael Prayer.
 - Expanded the existing per-prayer language system so saved guides can mix English, Latin, and Spanish prayer variants without adding a global Spanish mode.
-- Updated Advanced Builder, Easy Guide Builder, and Guide Cards language controls to offer English, Latin, and Spanish prayer choices.
+- Updated Custom Builder, Quick Builder, and Guide Cards language controls to offer English, Latin, and Spanish prayer choices.
 - Updated Custom Pray, step-by-step prayer mode, Guide Cards preview, and print generation to resolve Spanish through the same structured prayer-variant helpers used by English and Latin.
 - Added regression coverage for Spanish language resolution, short/full prayer text, mixed-language guide flows, Easy Guide output, card overrides, print parity, storage validation, and guide backup import/export.
 - Added step-by-step prayer mode to the Custom Pray page so saved guides can be prayed one focused prayer or action at a time.
@@ -46,7 +55,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added a friendly storage recovery notice when older preview data or malformed local app data has to be ignored.
 - Updated `npm run check` to include the regression test suite.
 - Added Latin variants for the core Rosary prayers while preserving English as the default for existing saved guides.
-- Added per-prayer English/Latin selection to saved guide configs, the Advanced Builder, and the Easy Guide Builder.
+- Added per-prayer English/Latin selection to saved guide configs, the Custom Builder, and the Quick Builder.
 - Added card-specific prayer language controls so Guide Cards can differ from the underlying guide without changing it.
 - Updated Custom Pray and Guide Cards rendering so full/short prayer text resolves from the selected language.
 - Structured prayer variant data so future language variants can be added without changing canonical prayer IDs.
@@ -74,12 +83,12 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added guide-card layout orientation options for Pocket 4-up, Tall 3-up, Wide 3-up, Tall 2-up, Wide 2-up, and Full page 1-up printing.
 - Centralized guide-card layout definitions so print grid rows, columns, cards per page, labels, descriptions, and fit estimates share one configuration source.
 - Clarified that Number of cards needed controls generated card slots while browser print Copies controls duplicate printed sets.
-- Added the Easy Guide Builder wizard on the Build a Guide page for low-friction guide creation.
+- Added the Quick Builder wizard on the Build a Guide page for low-friction guide creation.
 - Added a beginner-friendly one-question-at-a-time flow for purpose, mysteries, help level, closing prayers, saint invocations, print intent, and guide name.
 - Added accessible info popovers for mysteries, closing prayers, full-prayer choices, saint invocations, and guide cards.
 - Added tasteful modal, progress, step, and option-card interactions with reduced-motion support.
-- Saved Easy Guide Builder output as normal rosary guide configs that work with custom prayer, guide cards, print cards, and advanced editing.
-- Linked completion actions to Pray this guide, Make guide cards, and Edit advanced settings.
+- Saved Quick Builder output as normal rosary guide configs that work with custom prayer, guide cards, print cards, and Custom Builder editing.
+- Linked completion actions to Pray this guide, Make guide cards, and Edit in Custom Builder.
 - Updated active favicon, manifest icon, and header brand mark to use the new brand SVG assets while preserving the old favicon as a backup.
 - Set the active browser-tab favicon and web app manifest icon to `public/favicon.svg`.
 - Added tasteful `favicon.svg` and `faviconRiver.svg` usage across the header, homepage Today's Rosary panel, and footer.

@@ -12,21 +12,21 @@ export default function BuilderPage() {
           Build a Rosary guide without getting lost
         </h1>
         <p className="mt-4 text-lg leading-8 text-slate-700">
-          Start with the Easy Builder if you want a simple path. Use the advanced
-          builder when you want exact prayers, languages, saint invocations, and structure.
+          Start with the Quick Builder if you want a simple question-based path. Use the
+          Custom Builder when you want detailed control without losing the thread.
         </p>
       </header>
       <EasyGuideBuilder />
-      <section id="advanced-builder" className="mb-6 rounded-xl border border-blue-900/10 bg-cream-100 px-5 py-4">
+      <section id="custom-builder" className="mb-6 rounded-xl border border-blue-900/10 bg-cream-100 px-5 py-4">
         <p className="text-sm font-semibold uppercase tracking-wide text-gold-500">
-          Want full control?
+          Want detailed control?
         </p>
         <h2 className="mt-1 text-2xl font-semibold text-blue-900">
-          Continue with the advanced builder
+          Continue with the Custom Builder
         </h2>
         <p className="mt-2 leading-7 text-slate-700">
-          Choose exact prayers, mysteries, languages, saint invocations, leader notes,
-          and guide structure. You can also back up guides you save in this browser.
+          Choose mysteries, repeated-prayer behavior, leader notes, closing prayers, saint
+          invocations, prayer languages, custom guidance, preview, save, and backup options.
         </p>
       </section>
       <RosaryBuilder />

@@ -4,9 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { mysterySets } from "@/content/mysteries";
 import { prayersById } from "@/content/prayers";
+import {
+  BuilderSectionCard,
+  CollapsibleBuilderSection,
+} from "@/components/rosary/BuilderSection";
 import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import { RosaryFlowPreview } from "@/components/rosary/RosaryFlowPreview";
-import { Card } from "@/components/ui/Card";
+import { InfoPopover } from "@/components/ui/InfoPopover";
+import { appendCommonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
 import { getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
 import {
   createDefaultUserConfigFromTemplate,
@@ -14,6 +19,9 @@ import {
   normalizeRosaryConfig,
 } from "@/lib/rosary/configUtils";
 import { rosaryTemplates } from "@/lib/rosary/defaultTemplates";
+import {
+  getMissingCommonLeaderNoteTemplates,
+} from "@/lib/rosary/leaderNoteTemplates";
 import {
   getPrayerLanguage,
   getPrayerLanguageLabel,
@@ -44,6 +52,11 @@ const optionalClosingPrayers: PrayerId[] = [
   "st-michael-prayer",
 ];
 
+const customGuidanceTypes: Extract<RosaryStepType, "instruction" | "custom-text">[] = [
+  "instruction",
+  "custom-text",
+];
+
 export function RosaryBuilder() {
   const [savedConfigs, setSavedConfigs] = useState<UserRosaryConfig[]>([]);
   const [templateId, setTemplateId] = useState("standard-rosary");
@@ -52,9 +65,14 @@ export function RosaryBuilder() {
   );
   const [customTitle, setCustomTitle] = useState("");
   const [customBody, setCustomBody] = useState("");
-  const [customType, setCustomType] = useState<RosaryStepType>("instruction");
+  const [customType, setCustomType] =
+    useState<Extract<RosaryStepType, "instruction" | "custom-text">>("instruction");
   const [customInsertionPoint, setCustomInsertionPoint] =
     useState<CustomGuidanceInsertionPoint>("before-closing");
+  const [leaderNoteTitle, setLeaderNoteTitle] = useState("");
+  const [leaderNoteBody, setLeaderNoteBody] = useState("");
+  const [leaderNoteInsertionPoint, setLeaderNoteInsertionPoint] =
+    useState<CustomGuidanceInsertionPoint>("before-opening");
   const [saintName, setSaintName] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
 
@@ -73,7 +91,7 @@ export function RosaryBuilder() {
   }, []);
 
   useEffect(() => {
-    function refreshFromEasyGuide() {
+    function refreshFromQuickGuide() {
       const saved = getSavedRosaryConfigs();
       const active = getActiveRosaryConfig();
       setSavedConfigs(saved);
@@ -82,12 +100,12 @@ export function RosaryBuilder() {
         const normalized = normalizeRosaryConfig(active);
         setConfig(normalized);
         setTemplateId(normalized.baseTemplateId);
-        setSaveMessage("Saved from Easy Guide Builder.");
+        setSaveMessage("Saved from Quick Builder.");
       }
     }
 
-    window.addEventListener("easy-guide-created", refreshFromEasyGuide);
-    return () => window.removeEventListener("easy-guide-created", refreshFromEasyGuide);
+    window.addEventListener("easy-guide-created", refreshFromQuickGuide);
+    return () => window.removeEventListener("easy-guide-created", refreshFromQuickGuide);
   }, []);
 
   const selectedClosingPrayers = useMemo(
@@ -99,6 +117,12 @@ export function RosaryBuilder() {
     config.mysterySetMode === "today"
       ? `Using today's mysteries: ${mysterySet.title}`
       : `Using selected mysteries: ${mysterySet.title}`;
+  const leaderNotes = config.customGuidance.filter((step) => step.stepType === "leader-note");
+  const customGuidanceSteps = config.customGuidance.filter((step) => step.stepType !== "leader-note");
+  const nonEnglishPrayerCount = Object.values(config.prayerLanguageById ?? {}).filter(
+    (language) => language === "la" || language === "es",
+  ).length;
+  const missingCommonLeaderNotes = getMissingCommonLeaderNoteTemplates(config.customGuidance);
 
   function changeTemplate(nextTemplateId: string) {
     setTemplateId(nextTemplateId);
@@ -144,18 +168,88 @@ export function RosaryBuilder() {
     });
   }
 
+  function updateShowRepeatedPrayers(showRepeatedPrayersIndividually: boolean) {
+    setConfig((current) => ({
+      ...current,
+      preferences: {
+        ...current.preferences,
+        showRepeatedPrayersIndividually,
+      },
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function updateShowLeaderNotes(showLeaderNotes: boolean) {
+    setConfig((current) => ({
+      ...current,
+      preferences: {
+        ...current.preferences,
+        showLeaderNotes,
+      },
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
   function addCustomStep() {
     if (!customTitle.trim() || !customBody.trim()) {
       return;
     }
 
-    const guidance: CustomGuidance = {
-      id: createId("custom-step"),
+    addCustomGuidance({
       title: customTitle.trim(),
       text: customBody.trim(),
-      stepType:
-        customType === "leader-note" || customType === "custom-text" ? customType : "instruction",
+      stepType: customType,
       insertionPoint: customInsertionPoint,
+    });
+    setCustomTitle("");
+    setCustomBody("");
+  }
+
+  function addLeaderNote() {
+    if (!leaderNoteTitle.trim() || !leaderNoteBody.trim()) {
+      return;
+    }
+
+    addCustomGuidance({
+      title: leaderNoteTitle.trim(),
+      text: leaderNoteBody.trim(),
+      stepType: "leader-note",
+      insertionPoint: leaderNoteInsertionPoint,
+    });
+    updateShowLeaderNotes(true);
+    setLeaderNoteTitle("");
+    setLeaderNoteBody("");
+  }
+
+  function addCommonLeaderNotes() {
+    if (missingCommonLeaderNotes.length === 0) {
+      return;
+    }
+
+    setConfig((current) => ({
+      ...current,
+      customGuidance: [
+        ...current.customGuidance,
+        ...getMissingCommonLeaderNoteTemplates(current.customGuidance).map((note) => ({
+          id: createId("leader-note"),
+          title: note.title,
+          text: note.text,
+          stepType: "leader-note" as const,
+          insertionPoint: note.insertionPoint,
+        })),
+      ],
+      preferences: {
+        ...current.preferences,
+        showLeaderNotes: true,
+      },
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function addCustomGuidance(input: Omit<CustomGuidance, "id">) {
+    const guidance: CustomGuidance = {
+      id: createId(input.stepType === "leader-note" ? "leader-note" : "custom-step"),
+      ...input,
     };
 
     setConfig((current) => ({
@@ -163,8 +257,6 @@ export function RosaryBuilder() {
       customGuidance: [...current.customGuidance, guidance],
       updatedAt: new Date().toISOString(),
     }));
-    setCustomTitle("");
-    setCustomBody("");
   }
 
   function removeCustomStep(stepId: string) {
@@ -185,11 +277,22 @@ export function RosaryBuilder() {
       ...current,
       saintInvocations: {
         enabled: true,
-        saints: [...current.saintInvocations.saints, nextSaint],
+        saints: appendCommonSaintInvocations(current.saintInvocations.saints, [nextSaint]),
       },
       updatedAt: new Date().toISOString(),
     }));
     setSaintName("");
+  }
+
+  function addCommonSaints() {
+    setConfig((current) => ({
+      ...current,
+      saintInvocations: {
+        enabled: true,
+        saints: appendCommonSaintInvocations(current.saintInvocations.saints),
+      },
+      updatedAt: new Date().toISOString(),
+    }));
   }
 
   function removeSaintInvocation(saint: string) {
@@ -216,7 +319,7 @@ export function RosaryBuilder() {
     saveRosaryConfig(savedConfig);
     setConfig(savedConfig);
     setSavedConfigs(getSavedRosaryConfigs());
-    setSaveMessage("Saved on this device.");
+    setSaveMessage("Saved in this browser.");
   }
 
   function selectSavedGuide(configId: string) {
@@ -271,249 +374,420 @@ export function RosaryBuilder() {
     }
   }
 
-  const customSteps = config.customGuidance;
-
   return (
-    <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-      <div className="space-y-5">
-        <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">1. Choose a starter template</h2>
-          {savedConfigs.length > 0 ? (
-            <div className="mt-4 rounded-lg bg-cream-50 p-4">
-              <label className="block text-sm font-semibold text-blue-900" htmlFor="saved-guide">
-                Saved custom guides
-              </label>
-              <select
-                id="saved-guide"
-                value={savedConfigs.some((guide) => guide.id === config.id) ? config.id : ""}
-                onChange={(event) => selectSavedGuide(event.target.value)}
-                className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+    <div className="mx-auto max-w-5xl space-y-5">
+      <BuilderSectionCard
+        eyebrow="Step 1"
+        title="Guide basics"
+        description="Name the guide, choose the guide type, and decide which mysteries it should use."
+        helpLabel="Guide basics help"
+        helpText="Choose which set of mysteries this guide will use. Today's mysteries follows the traditional daily pattern."
+        status={mysteryModeLabel}
+      >
+        {savedConfigs.length > 0 ? (
+          <div className="rounded-lg bg-cream-50 p-4">
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="saved-guide">
+              Saved custom guides
+            </label>
+            <select
+              id="saved-guide"
+              value={savedConfigs.some((guide) => guide.id === config.id) ? config.id : ""}
+              onChange={(event) => selectSavedGuide(event.target.value)}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            >
+              <option value="">Select a saved guide</option>
+              {savedConfigs.map((guide) => (
+                <option key={guide.id} value={guide.id}>
+                  {guide.name}
+                </option>
+              ))}
+            </select>
+            <ul className="mt-3 space-y-2">
+              {savedConfigs.map((guide) => (
+                <li key={guide.id} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium text-slate-800">{guide.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => deleteSavedGuide(guide.id)}
+                    className="interactive-link font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="rosary-name">
+            Guide name
+            <input
+              id="rosary-name"
+              value={config.name}
+              onChange={(event) =>
+                setConfig((current) => ({ ...current, name: event.target.value }))
+              }
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+              placeholder="My Walk the Rosary Guide"
+            />
+          </label>
+
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="template">
+            Guide type
+            <select
+              id="template"
+              value={templateId}
+              onChange={(event) => changeTemplate(event.target.value)}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base text-slate-900"
+            >
+              {rosaryTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="mt-3 leading-7 text-slate-700">
+          {rosaryTemplates.find((template) => template.id === templateId)?.description}
+        </p>
+        <button
+          type="button"
+          onClick={startNewGuide}
+          className="interactive-button interactive-button-secondary mt-4 rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+        >
+          Start a new guide
+        </button>
+
+        <fieldset className="mt-5">
+          <legend className="text-sm font-semibold text-blue-900">Mystery behavior</legend>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="flex gap-3 rounded-md bg-cream-50 p-3">
+              <input
+                type="radio"
+                name="mystery-mode"
+                checked={config.mysterySetMode === "today"}
+                onChange={() =>
+                  setConfig((current) => ({ ...current, mysterySetMode: "today" }))
+                }
+              />
+              <span>Use today&apos;s mysteries</span>
+            </label>
+            <label className="flex gap-3 rounded-md bg-cream-50 p-3">
+              <input
+                type="radio"
+                name="mystery-mode"
+                checked={config.mysterySetMode === "manual"}
+                onChange={() =>
+                  setConfig((current) => ({ ...current, mysterySetMode: "manual" }))
+                }
+              />
+              <span>Manually choose a mystery set</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="mystery-set">
+          Manual mystery set
+        </label>
+        <select
+          id="mystery-set"
+          value={config.selectedMysterySetId}
+          onChange={(event) =>
+            setConfig((current) => ({
+              ...current,
+              selectedMysterySetId: event.target.value as UserRosaryConfig["selectedMysterySetId"],
+            }))
+          }
+          className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+        >
+          {mysterySets.map((set) => (
+            <option key={set.id} value={set.id}>
+              {set.title}
+            </option>
+          ))}
+        </select>
+      </BuilderSectionCard>
+
+      <BuilderSectionCard
+        eyebrow="Step 2"
+        title="Repeated prayers"
+        description="Choose how repeated prayers appear when this guide is opened."
+        helpLabel="Repeated prayers help"
+        helpText="Choose whether repeated prayers like the Hail Marys are shown one-by-one or grouped."
+        status={
+          config.preferences.showRepeatedPrayersIndividually
+            ? "Repeated prayers shown individually"
+            : "Repeated prayers stay grouped"
+        }
+      >
+        <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={config.preferences.showRepeatedPrayersIndividually}
+            onChange={(event) => updateShowRepeatedPrayers(event.target.checked)}
+          />
+          <span>
+            <span className="block font-medium text-slate-900">
+              Show each repeated prayer individually by default
+            </span>
+            <span className="mt-1 block text-sm leading-6 text-slate-700">
+              Useful if someone does not have a physical rosary and wants the guide to count each
+              Hail Mary. If unchecked, repeated prayers stay grouped to keep the guide shorter.
+            </span>
+          </span>
+        </label>
+      </BuilderSectionCard>
+
+      <BuilderSectionCard
+        eyebrow="Step 3"
+        title="Leader notes"
+        description="Add cues for the person leading a group Rosary or Rosary walk."
+        helpLabel="Leader notes help"
+        helpText="Add cues for the person leading a group Rosary or Rosary walk."
+        status={
+          config.preferences.showLeaderNotes
+            ? `${leaderNotes.length} leader notes enabled`
+            : `${leaderNotes.length} leader notes hidden by default`
+        }
+      >
+        <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={config.preferences.showLeaderNotes}
+            onChange={(event) => updateShowLeaderNotes(event.target.checked)}
+          />
+          <span>
+            <span className="block font-medium text-slate-900">Include leader notes</span>
+            <span className="mt-1 block text-sm leading-6 text-slate-700">
+              Leader notes appear in the guide flow for practical cues, pacing, and outdoor
+              reminders.
+            </span>
+          </span>
+        </label>
+
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm leading-6 text-slate-700">
+            Add a simple starter set for gathering the group, outdoor pacing, and closing thanks.
+          </p>
+          <button
+            type="button"
+            onClick={addCommonLeaderNotes}
+            disabled={missingCommonLeaderNotes.length === 0}
+            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Add common leader notes
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="leader-note-title">
+            Leader note title
+            <input
+              id="leader-note-title"
+              value={leaderNoteTitle}
+              onChange={(event) => setLeaderNoteTitle(event.target.value)}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+              placeholder="Outdoor pacing reminder"
+            />
+          </label>
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="leader-note-position">
+            Where should it appear?
+            <select
+              id="leader-note-position"
+              value={leaderNoteInsertionPoint}
+              onChange={(event) =>
+                setLeaderNoteInsertionPoint(event.target.value as CustomGuidanceInsertionPoint)
+              }
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            >
+              <BuilderPositionOptions />
+            </select>
+          </label>
+        </div>
+        <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="leader-note-body">
+          Leader note text
+          <textarea
+            id="leader-note-body"
+            value={leaderNoteBody}
+            onChange={(event) => setLeaderNoteBody(event.target.value)}
+            rows={3}
+            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            placeholder="Pause before crossings and keep the pace slow enough for prayer."
+          />
+        </label>
+        <button
+          type="button"
+          onClick={addLeaderNote}
+          className="interactive-button interactive-button-primary mt-4 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white"
+        >
+          Add leader note
+        </button>
+
+        {leaderNotes.length > 0 ? (
+          <GuidanceList items={leaderNotes} onRemove={removeCustomStep} />
+        ) : null}
+      </BuilderSectionCard>
+
+      <CollapsibleBuilderSection
+        eyebrow="Step 4"
+        title="Closing prayers"
+        description="Choose which prayers to include at the end of the Rosary."
+        helpLabel="Closing prayers help"
+        helpText="Choose which prayers your group will pray at the end. Different groups include different optional prayers."
+        status={`${selectedClosingPrayers.length} closing prayers selected`}
+      >
+        <div className="space-y-3">
+          {optionalClosingPrayers.map((prayerId) => (
+            <label key={prayerId} className="flex gap-3 rounded-md bg-cream-50 p-3">
+              <input
+                type="checkbox"
+                checked={selectedClosingPrayers.includes(prayerId)}
+                onChange={(event) => updateClosingPrayer(prayerId, event.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold text-blue-900">
+                  {prayersById[prayerId].title}
+                </span>
+                <span className="block text-sm text-slate-700">{prayersById[prayerId].incipit}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleBuilderSection>
+
+      <BuilderSectionCard
+        eyebrow="Step 5"
+        title="Saint invocations"
+        description="Add optional petitions such as Saint Joseph, pray for us."
+        helpLabel="Saint invocations help"
+        helpText="Add short petitions such as Saint Joseph, pray for us. These are optional and often reflect a group's devotion or intention."
+        status={
+          config.saintInvocations.enabled
+            ? `${config.saintInvocations.saints.length} saint invocations`
+            : "Saint invocations off"
+        }
+      >
+        <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={config.saintInvocations.enabled}
+            onChange={(event) =>
+              setConfig((current) => ({
+                ...current,
+                saintInvocations: {
+                  ...current.saintInvocations,
+                  enabled: event.target.checked,
+                },
+                updatedAt: new Date().toISOString(),
+              }))
+            }
+          />
+          <span>
+            <span className="block font-medium text-slate-900">Include saint invocations</span>
+            <span className="mt-1 block text-sm leading-6 text-slate-700">
+              These are optional petitions after the main Rosary prayers.
+            </span>
+          </span>
+        </label>
+
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm leading-6 text-slate-700">
+            Add a short common set without duplicating names already in this guide.
+          </p>
+          <button
+            type="button"
+            onClick={addCommonSaints}
+            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
+          >
+            Add common invocations
+          </button>
+        </div>
+
+        {config.saintInvocations.enabled ? (
+          <div className="mt-4">
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="saint-name">
+              Saint or title
+            </label>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <input
+                id="saint-name"
+                value={saintName}
+                onChange={(event) => setSaintName(event.target.value)}
+                className="interactive-field w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                placeholder="Saint Joseph"
+              />
+              <button
+                type="button"
+                onClick={addSaintInvocation}
+                className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white"
               >
-                <option value="">Select a saved guide</option>
-                {savedConfigs.map((guide) => (
-                  <option key={guide.id} value={guide.id}>
-                    {guide.name}
-                  </option>
-                ))}
-              </select>
+                Add
+              </button>
+            </div>
+            {config.saintInvocations.saints.length > 0 ? (
               <ul className="mt-3 space-y-2">
-                {savedConfigs.map((guide) => (
-                  <li key={guide.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-medium text-slate-800">{guide.name}</span>
+                {config.saintInvocations.saints.map((saint) => (
+                  <li key={saint} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
+                    <span className="text-sm text-slate-800">{saint}, pray for us.</span>
                     <button
                       type="button"
-                      onClick={() => deleteSavedGuide(guide.id)}
-                      className="interactive-link font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+                      onClick={() => removeSaintInvocation(saint)}
+                      className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
                     >
-                      Delete
+                      Remove
                     </button>
                   </li>
                 ))}
               </ul>
-            </div>
-          ) : null}
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="template">
-            Template
-          </label>
-          <select
-            id="template"
-            value={templateId}
-            onChange={(event) => changeTemplate(event.target.value)}
-            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base text-slate-900"
-          >
-            {rosaryTemplates.map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.name}
-              </option>
-            ))}
-          </select>
-          <p className="mt-3 leading-7 text-slate-700">
-            {rosaryTemplates.find((template) => template.id === templateId)?.description}
-          </p>
-          <button
-            type="button"
-            onClick={startNewGuide}
-            className="interactive-button interactive-button-secondary mt-4 rounded-md border border-blue-900/20 bg-white px-4 py-2 font-semibold text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-          >
-            Start a new guide
-          </button>
-        </Card>
-
-        <GuideBackupManager
-          guides={savedConfigs}
-          selectedGuideId={savedConfigs.some((guide) => guide.id === config.id) ? config.id : undefined}
-          onImported={handleBackupImported}
-        />
-
-        <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">2. Name and mysteries</h2>
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="rosary-name">
-            Rosary style name
-          </label>
-          <input
-            id="rosary-name"
-            value={config.name}
-            onChange={(event) =>
-              setConfig((current) => ({ ...current, name: event.target.value }))
-            }
-            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
-            placeholder="My Walk the Rosary Guide"
-          />
-
-          <fieldset className="mt-5">
-            <legend className="text-sm font-semibold text-blue-900">Mystery behavior</legend>
-            <div className="mt-3 space-y-3">
-              <label className="flex gap-3 rounded-md bg-cream-50 p-3">
-                <input
-                  type="radio"
-                  name="mystery-mode"
-                  checked={config.mysterySetMode === "today"}
-                  onChange={() =>
-                    setConfig((current) => ({ ...current, mysterySetMode: "today" }))
-                  }
-                />
-                <span>Use today&apos;s mysteries</span>
-              </label>
-              <label className="flex gap-3 rounded-md bg-cream-50 p-3">
-                <input
-                  type="radio"
-                  name="mystery-mode"
-                  checked={config.mysterySetMode === "manual"}
-                  onChange={() =>
-                    setConfig((current) => ({ ...current, mysterySetMode: "manual" }))
-                  }
-                />
-                <span>Manually choose a mystery set</span>
-              </label>
-            </div>
-          </fieldset>
-
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="mystery-set">
-            Manual mystery set
-          </label>
-          <select
-            id="mystery-set"
-            value={config.selectedMysterySetId}
-            onChange={(event) =>
-              setConfig((current) => ({
-                ...current,
-                selectedMysterySetId: event.target.value as UserRosaryConfig["selectedMysterySetId"],
-              }))
-            }
-            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
-          >
-            {mysterySets.map((set) => (
-              <option key={set.id} value={set.id}>
-                {set.title}
-              </option>
-            ))}
-          </select>
-          <p className="mt-4 rounded-md bg-cream-100 px-4 py-3 text-sm font-semibold text-blue-900">
-            {mysteryModeLabel}
-          </p>
-        </Card>
-
-        <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">3. Closing prayers</h2>
-          <div className="mt-4 space-y-3">
-            {optionalClosingPrayers.map((prayerId) => (
-              <label key={prayerId} className="flex gap-3 rounded-md bg-cream-50 p-3">
-                <input
-                  type="checkbox"
-                  checked={selectedClosingPrayers.includes(prayerId)}
-                  onChange={(event) => updateClosingPrayer(prayerId, event.target.checked)}
-                />
-                <span>
-                  <span className="block font-semibold text-blue-900">
-                    {prayersById[prayerId].title}
-                  </span>
-                  <span className="block text-sm text-slate-700">{prayersById[prayerId].incipit}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-          <div className="mt-5 rounded-md bg-cream-100 px-4 py-3">
-            <p className="text-sm font-semibold text-blue-900">Selected conclusion prayers</p>
-            <p className="mt-1 text-sm leading-6 text-slate-700">
-              {selectedClosingPrayers.length > 0
-                ? selectedClosingPrayers.map((prayerId) => prayersById[prayerId].title).join(", ")
-                : "No optional closing prayers selected."}
-            </p>
-          </div>
-          <div className="mt-5 rounded-lg border border-blue-900/10 p-4">
-            <label className="flex items-center gap-3 font-semibold text-blue-900">
-              <input
-                type="checkbox"
-                checked={config.saintInvocations.enabled}
-                onChange={(event) =>
-                  setConfig((current) => ({
-                    ...current,
-                    saintInvocations: {
-                      ...current.saintInvocations,
-                      enabled: event.target.checked,
-                    },
-                    updatedAt: new Date().toISOString(),
-                  }))
-                }
-              />
-              Add saint invocations
-            </label>
-            {config.saintInvocations.enabled ? (
-              <div className="mt-4">
-                <label className="block text-sm font-semibold text-blue-900" htmlFor="saint-name">
-                  Saint or title
-                </label>
-                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                  <input
-                    id="saint-name"
-                    value={saintName}
-                    onChange={(event) => setSaintName(event.target.value)}
-                    className="interactive-field w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
-                    placeholder="Saint Joseph"
-                  />
-                  <button
-                    type="button"
-                    onClick={addSaintInvocation}
-                    className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-                  >
-                    Add
-                  </button>
-                </div>
-                {config.saintInvocations.saints.length > 0 ? (
-                  <ul className="mt-3 space-y-2">
-                    {config.saintInvocations.saints.map((saint) => (
-                      <li key={saint} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
-                        <span className="text-sm text-slate-800">{saint}, pray for us.</span>
-                        <button
-                          type="button"
-                          onClick={() => removeSaintInvocation(saint)}
-                          className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
             ) : null}
           </div>
-        </Card>
+        ) : null}
+      </BuilderSectionCard>
 
-        <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">4. Add custom guidance</h2>
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-title">
+      <CollapsibleBuilderSection
+        eyebrow="Step 6"
+        title="Add custom guidance"
+        description="Add notes or instructions at specific points in the guide."
+        helpLabel="Custom guidance help"
+        helpText="Add your own notes or instructions at specific points in the guide."
+        status={`${customGuidanceSteps.length} custom notes`}
+        defaultOpen={customGuidanceSteps.length > 0}
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="custom-title">
             Title
+            <input
+              id="custom-title"
+              value={customTitle}
+              onChange={(event) => setCustomTitle(event.target.value)}
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+            />
           </label>
-          <input
-            id="custom-title"
-            value={customTitle}
-            onChange={(event) => setCustomTitle(event.target.value)}
-            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
-          />
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-body">
-            Body
+          <label className="block text-sm font-semibold text-blue-900" htmlFor="custom-type">
+            Type
+            <select
+              id="custom-type"
+              value={customType}
+              onChange={(event) =>
+                setCustomType(event.target.value as Extract<RosaryStepType, "instruction" | "custom-text">)
+              }
+              className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
+            >
+              {customGuidanceTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type === "instruction" ? "Normal instruction" : "Custom prayer or text"}
+                </option>
+              ))}
+            </select>
           </label>
+        </div>
+        <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-body">
+          Body
           <textarea
             id="custom-body"
             value={customBody}
@@ -521,22 +795,9 @@ export function RosaryBuilder() {
             rows={4}
             className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
           />
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-type">
-            Type
-          </label>
-          <select
-            id="custom-type"
-            value={customType}
-            onChange={(event) => setCustomType(event.target.value as RosaryStepType)}
-            className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
-          >
-            <option value="instruction">Normal instruction</option>
-            <option value="leader-note">Leader note</option>
-            <option value="custom-text">Custom prayer or text</option>
-          </select>
-          <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-position">
-            Insertion position
-          </label>
+        </label>
+        <label className="mt-4 block text-sm font-semibold text-blue-900" htmlFor="custom-position">
+          Insertion position
           <select
             id="custom-position"
             value={customInsertionPoint}
@@ -545,142 +806,166 @@ export function RosaryBuilder() {
             }
             className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
           >
-            <option value="beginning">At the beginning</option>
-            <option value="before-opening">Before the opening prayers</option>
-            <option value="after-opening">After the opening prayers</option>
-            <option value="before-decades">Before the decades</option>
-            <option value="before-each-decade">Before each mystery/decade</option>
-            <option value="after-each-decade">After each mystery/decade</option>
-            <option value="before-closing">Before closing prayers</option>
-            <option value="after-closing">After closing prayers</option>
-            <option value="end">At the end</option>
+            <BuilderPositionOptions />
           </select>
-          <button
-            type="button"
-            onClick={addCustomStep}
-            className="interactive-button interactive-button-primary mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-          >
-            Add to flow
-          </button>
-          {customSteps.length > 0 ? (
-            <ul className="mt-5 space-y-2">
-              {customSteps.map((step) => (
-                <li key={step.id} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
-                  <span className="text-sm font-medium text-slate-800">
-                    {step.title} - {step.insertionPoint.replaceAll("-", " ")}
+        </label>
+        <button
+          type="button"
+          onClick={addCustomStep}
+          className="interactive-button interactive-button-primary mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white"
+        >
+          Add to flow
+        </button>
+        {customGuidanceSteps.length > 0 ? (
+          <GuidanceList items={customGuidanceSteps} onRemove={removeCustomStep} />
+        ) : null}
+      </CollapsibleBuilderSection>
+
+      <CollapsibleBuilderSection
+        eyebrow="Step 7"
+        title="Prayer languages"
+        description="Choose English, Latin, or Spanish for each prayer."
+        helpLabel="Prayer languages help"
+        helpText="Choose English, Latin, or Spanish for each prayer. You can mix languages in the same guide."
+        status={`${nonEnglishPrayerCount} prayers changed from English`}
+        defaultOpen={nonEnglishPrayerCount > 0}
+      >
+        <div className="grid gap-3">
+          {prayerLanguagePrayerIds.map((prayerId) => {
+            const prayer = prayersById[prayerId];
+            const latinVariant = getPrayerVariant(prayer, "la");
+            const spanishVariant = getPrayerVariant(prayer, "es");
+
+            return (
+              <label
+                key={prayerId}
+                htmlFor={`guide-prayer-language-${prayerId}`}
+                className="grid gap-3 rounded-md border border-blue-900/10 bg-cream-50 p-3 sm:grid-cols-[1fr_auto] sm:items-center"
+              >
+                <span>
+                  <span className="block font-semibold text-blue-900">{prayer.title}</span>
+                  <span className="block text-sm leading-6 text-slate-700">
+                    English: {prayer.incipit} Latin: {latinVariant.incipit} Spanish:{" "}
+                    {spanishVariant.incipit}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeCustomStep(step.id)}
-                    className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </Card>
-
-        <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">5. Prayer languages</h2>
-          <p className="mt-3 leading-7 text-slate-700">
-            Choose English, Latin, or Spanish for each prayer. You can mix languages in the same
-            guide.
-          </p>
-          <div className="mt-5 grid gap-3">
-            {prayerLanguagePrayerIds.map((prayerId) => {
-              const prayer = prayersById[prayerId];
-              const latinVariant = getPrayerVariant(prayer, "la");
-              const spanishVariant = getPrayerVariant(prayer, "es");
-
-              return (
-                <label
-                  key={prayerId}
-                  htmlFor={`guide-prayer-language-${prayerId}`}
-                  className="grid gap-3 rounded-md border border-blue-900/10 bg-cream-50 p-3 sm:grid-cols-[1fr_auto] sm:items-center"
+                </span>
+                <select
+                  id={`guide-prayer-language-${prayerId}`}
+                  value={getPrayerLanguage(prayerId, config.prayerLanguageById)}
+                  onChange={(event) => updatePrayerLanguage(prayerId, event.target.value as PrayerLanguage)}
+                  className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
                 >
-                  <span>
-                    <span className="block font-semibold text-blue-900">{prayer.title}</span>
-                    <span className="block text-sm leading-6 text-slate-700">
-                      English: {prayer.incipit} Latin: {latinVariant.incipit} Spanish:{" "}
-                      {spanishVariant.incipit}
-                    </span>
-                  </span>
-                  <select
-                    id={`guide-prayer-language-${prayerId}`}
-                    value={getPrayerLanguage(prayerId, config.prayerLanguageById)}
-                    onChange={(event) => updatePrayerLanguage(prayerId, event.target.value as PrayerLanguage)}
-                    className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
-                  >
-                    {prayerLanguageOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {getPrayerLanguageLabel(option.value)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              );
-            })}
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="text-2xl font-semibold text-blue-900">6. Save locally</h2>
-          <p className="mt-3 leading-7 text-slate-700">
-            This saves your Rosary style in this browser only. No account or backend is used.
-          </p>
-          <label className="mt-5 flex items-center gap-3 rounded-md bg-cream-50 px-4 py-3">
-            <input
-              type="checkbox"
-              checked={config.preferences.showRepeatedPrayersIndividually}
-              onChange={(event) =>
-                setConfig((current) => ({
-                  ...current,
-                  preferences: {
-                    ...current.preferences,
-                    showRepeatedPrayersIndividually: event.target.checked,
-                  },
-                  updatedAt: new Date().toISOString(),
-                }))
-              }
-            />
-            <span className="font-medium text-slate-800">
-              Show each repeated prayer individually by default
-            </span>
-          </label>
-          <button
-            type="button"
-            onClick={saveConfig}
-            className="interactive-button interactive-button-primary mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-          >
-            Save my Rosary
-          </button>
-          {saveMessage ? <p className="mt-3 font-semibold text-blue-900">{saveMessage}</p> : null}
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Link className="interactive-link font-semibold text-blue-900 underline" href="/pray/custom">
-              Pray this Rosary
-            </Link>
-            <Link className="interactive-link font-semibold text-blue-900 underline" href="/cards">
-              Make Guide Cards
-            </Link>
-          </div>
-        </Card>
-      </div>
-
-      <section aria-labelledby="builder-preview">
-        <div className="sticky top-4">
-          <h2 id="builder-preview" className="text-2xl font-semibold text-blue-900">
-            Preview the flow
-          </h2>
-          <p className="mt-2 leading-7 text-slate-700">
-            This is the same structured sequence used by the prayer page and guide cards.
-          </p>
-          <div className="mt-5 max-h-[75vh] overflow-auto pr-1">
-            <RosaryFlowPreview config={config} compact />
-          </div>
+                  {prayerLanguageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {getPrayerLanguageLabel(option.value)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          })}
         </div>
+      </CollapsibleBuilderSection>
+
+      <BuilderSectionCard
+        eyebrow="Step 8"
+        title="Preview the flow"
+        description="Review the full order of the guide before saving."
+        helpLabel="Preview the flow help"
+        helpText="Review the full order of the guide before saving."
+      >
+        <div className="max-h-[75vh] overflow-auto pr-1">
+          <RosaryFlowPreview config={config} compact includeLeaderNotes={config.preferences.showLeaderNotes} />
+        </div>
+      </BuilderSectionCard>
+
+      <BuilderSectionCard
+        eyebrow="Step 9"
+        title="Save to browser"
+        description="Save this guide in your current browser so you can pray it or make cards."
+        helpLabel="Save to browser help"
+        helpText="Save this guide in your current browser so you can pray it or make cards."
+      >
+        <p className="leading-7 text-slate-700">
+          Saved guides live in this browser. Use guide backup below if you want a more permanent
+          copy or want to move guides to another device.
+        </p>
+        <button
+          type="button"
+          onClick={saveConfig}
+          className="interactive-button interactive-button-primary mt-5 rounded-md bg-blue-900 px-5 py-3 font-semibold text-white"
+        >
+          Save my Rosary
+        </button>
+        {saveMessage ? <p className="mt-3 font-semibold text-blue-900">{saveMessage}</p> : null}
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <Link className="interactive-link font-semibold text-blue-900 underline" href="/pray/custom">
+            Pray this Rosary
+          </Link>
+          <Link className="interactive-link font-semibold text-blue-900 underline" href="/cards">
+            Make Guide Cards
+          </Link>
+        </div>
+      </BuilderSectionCard>
+
+      <section aria-labelledby="guide-backup-section">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 id="guide-backup-section" className="text-2xl font-semibold text-blue-900">
+            10. Guide backup
+          </h2>
+          <InfoPopover label="Guide backup help">
+            Download or import guide backups so your guides are not limited to this browser.
+          </InfoPopover>
+        </div>
+        <GuideBackupManager
+          guides={savedConfigs}
+          selectedGuideId={savedConfigs.some((guide) => guide.id === config.id) ? config.id : undefined}
+          onImported={handleBackupImported}
+        />
       </section>
     </div>
+  );
+}
+
+function BuilderPositionOptions() {
+  return (
+    <>
+      <option value="beginning">At the beginning</option>
+      <option value="before-opening">Before the opening prayers</option>
+      <option value="after-opening">After the opening prayers</option>
+      <option value="before-decades">Before the decades</option>
+      <option value="before-each-decade">Before each mystery/decade</option>
+      <option value="after-each-decade">After each mystery/decade</option>
+      <option value="before-closing">Before closing prayers</option>
+      <option value="after-closing">After closing prayers</option>
+      <option value="end">At the end</option>
+    </>
+  );
+}
+
+function GuidanceList({
+  items,
+  onRemove,
+}: {
+  items: CustomGuidance[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <ul className="mt-5 space-y-2">
+      {items.map((step) => (
+        <li key={step.id} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
+          <span className="text-sm font-medium text-slate-800">
+            {step.title} - {step.insertionPoint.replaceAll("-", " ")}
+          </span>
+          <button
+            type="button"
+            onClick={() => onRemove(step.id)}
+            className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+          >
+            Remove
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }

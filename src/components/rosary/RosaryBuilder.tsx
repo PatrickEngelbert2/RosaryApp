@@ -4,13 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { mysterySets } from "@/content/mysteries";
 import { prayersById } from "@/content/prayers";
-import {
-  BuilderSectionCard,
-  CollapsibleBuilderSection,
-} from "@/components/rosary/BuilderSection";
+import { CollapsibleBuilderSection } from "@/components/rosary/BuilderSection";
 import { GuideBackupManager } from "@/components/rosary/GuideBackupManager";
 import { RosaryFlowPreview } from "@/components/rosary/RosaryFlowPreview";
-import { InfoPopover } from "@/components/ui/InfoPopover";
 import { appendCommonSaintInvocations } from "@/lib/rosary/commonSaintInvocations";
 import { getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
 import {
@@ -383,6 +379,7 @@ export function RosaryBuilder() {
         helpLabel="Guide basics help"
         helpText="Choose which set of mysteries this guide will use. Today's mysteries follows the traditional daily pattern."
         status={mysteryModeLabel}
+        defaultOpen
       >
         {savedConfigs.length > 0 ? (
           <div className="rounded-lg bg-cream-50 p-4">
@@ -510,7 +507,7 @@ export function RosaryBuilder() {
         </select>
       </CollapsibleBuilderSection>
 
-      <BuilderSectionCard
+      <CollapsibleBuilderSection
         eyebrow="Step 2"
         title="Repeated prayers"
         description="Choose how repeated prayers appear when this guide is opened."
@@ -521,6 +518,7 @@ export function RosaryBuilder() {
             ? "Repeated prayers shown individually"
             : "Repeated prayers stay grouped"
         }
+        defaultOpen
       >
         <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
           <input
@@ -539,10 +537,173 @@ export function RosaryBuilder() {
             </span>
           </span>
         </label>
-      </BuilderSectionCard>
+      </CollapsibleBuilderSection>
 
       <CollapsibleBuilderSection
-        eyebrow="Step 3"
+        eyebrow="Step 4"
+        title="Closing prayers"
+        description="Choose which prayers to include at the end of the Rosary."
+        helpLabel="Closing prayers help"
+        helpText="Choose which prayers your group will pray at the end. Different groups include different optional prayers."
+        status={`${selectedClosingPrayers.length} closing prayers selected`}
+        defaultOpen
+      >
+        <div className="space-y-3">
+          {optionalClosingPrayers.map((prayerId) => (
+            <label key={prayerId} className="flex gap-3 rounded-md bg-cream-50 p-3">
+              <input
+                type="checkbox"
+                checked={selectedClosingPrayers.includes(prayerId)}
+                onChange={(event) => updateClosingPrayer(prayerId, event.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold text-blue-900">
+                  {prayersById[prayerId].title}
+                </span>
+                <span className="block text-sm text-slate-700">{prayersById[prayerId].incipit}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleBuilderSection>
+
+      <CollapsibleBuilderSection
+        eyebrow="Step 5"
+        title="Prayer languages"
+        description="Choose English, Latin, or Spanish for each prayer."
+        helpLabel="Prayer languages help"
+        helpText="Choose English, Latin, or Spanish for each prayer. You can mix languages in the same guide."
+        status={`${nonEnglishPrayerCount} prayers changed from English`}
+      >
+        <div className="grid gap-3">
+          {prayerLanguagePrayerIds.map((prayerId) => {
+            const prayer = prayersById[prayerId];
+            const latinVariant = getPrayerVariant(prayer, "la");
+            const spanishVariant = getPrayerVariant(prayer, "es");
+
+            return (
+              <label
+                key={prayerId}
+                htmlFor={`guide-prayer-language-${prayerId}`}
+                className="grid gap-3 rounded-md border border-blue-900/10 bg-cream-50 p-3 sm:grid-cols-[1fr_auto] sm:items-center"
+              >
+                <span>
+                  <span className="block font-semibold text-blue-900">{prayer.title}</span>
+                  <span className="block text-sm leading-6 text-slate-700">
+                    English: {prayer.incipit} Latin: {latinVariant.incipit} Spanish:{" "}
+                    {spanishVariant.incipit}
+                  </span>
+                </span>
+                <select
+                  id={`guide-prayer-language-${prayerId}`}
+                  value={getPrayerLanguage(prayerId, config.prayerLanguageById)}
+                  onChange={(event) => updatePrayerLanguage(prayerId, event.target.value as PrayerLanguage)}
+                  className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
+                >
+                  {prayerLanguageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {getPrayerLanguageLabel(option.value)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          })}
+        </div>
+      </CollapsibleBuilderSection>
+
+      <CollapsibleBuilderSection
+        eyebrow="Step 6"
+        title="Saint invocations"
+        description="Add optional petitions such as Saint Joseph, pray for us."
+        helpLabel="Saint invocations help"
+        helpText="Add short petitions such as Saint Joseph, pray for us. These are optional and often reflect a group's devotion or intention."
+        status={
+          config.saintInvocations.enabled
+            ? `${config.saintInvocations.saints.length} saint invocations`
+            : "Saint invocations off"
+        }
+      >
+        <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={config.saintInvocations.enabled}
+            onChange={(event) =>
+              setConfig((current) => ({
+                ...current,
+                saintInvocations: {
+                  ...current.saintInvocations,
+                  enabled: event.target.checked,
+                },
+                updatedAt: new Date().toISOString(),
+              }))
+            }
+          />
+          <span>
+            <span className="block font-medium text-slate-900">Include saint invocations</span>
+            <span className="mt-1 block text-sm leading-6 text-slate-700">
+              These are optional petitions after the main Rosary prayers.
+            </span>
+          </span>
+        </label>
+
+        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm leading-6 text-slate-700">
+            Add a short common set without duplicating names already in this guide.
+          </p>
+          <button
+            type="button"
+            onClick={addCommonSaints}
+            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
+          >
+            Add common invocations
+          </button>
+        </div>
+
+        {config.saintInvocations.enabled ? (
+          <div className="mt-4">
+            <label className="block text-sm font-semibold text-blue-900" htmlFor="saint-name">
+              Saint or title
+            </label>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <input
+                id="saint-name"
+                value={saintName}
+                onChange={(event) => setSaintName(event.target.value)}
+                className="interactive-field w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
+                placeholder="Saint Joseph"
+              />
+              <button
+                type="button"
+                onClick={addSaintInvocation}
+                className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white"
+              >
+                Add
+              </button>
+            </div>
+            {config.saintInvocations.saints.length > 0 ? (
+              <ul className="mt-3 space-y-2">
+                {config.saintInvocations.saints.map((saint) => (
+                  <li key={saint} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
+                    <span className="text-sm text-slate-800">{saint}, pray for us.</span>
+                    <button
+                      type="button"
+                      onClick={() => removeSaintInvocation(saint)}
+                      className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </CollapsibleBuilderSection>
+
+      <CollapsibleBuilderSection
+        eyebrow="Step 7"
         title="Leader notes"
         description="Add cues for the person leading a group Rosary or Rosary walk."
         helpLabel="Leader notes help"
@@ -633,124 +794,7 @@ export function RosaryBuilder() {
       </CollapsibleBuilderSection>
 
       <CollapsibleBuilderSection
-        eyebrow="Step 4"
-        title="Closing prayers"
-        description="Choose which prayers to include at the end of the Rosary."
-        helpLabel="Closing prayers help"
-        helpText="Choose which prayers your group will pray at the end. Different groups include different optional prayers."
-        status={`${selectedClosingPrayers.length} closing prayers selected`}
-      >
-        <div className="space-y-3">
-          {optionalClosingPrayers.map((prayerId) => (
-            <label key={prayerId} className="flex gap-3 rounded-md bg-cream-50 p-3">
-              <input
-                type="checkbox"
-                checked={selectedClosingPrayers.includes(prayerId)}
-                onChange={(event) => updateClosingPrayer(prayerId, event.target.checked)}
-              />
-              <span>
-                <span className="block font-semibold text-blue-900">
-                  {prayersById[prayerId].title}
-                </span>
-                <span className="block text-sm text-slate-700">{prayersById[prayerId].incipit}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </CollapsibleBuilderSection>
-
-      <CollapsibleBuilderSection
-        eyebrow="Step 5"
-        title="Saint invocations"
-        description="Add optional petitions such as Saint Joseph, pray for us."
-        helpLabel="Saint invocations help"
-        helpText="Add short petitions such as Saint Joseph, pray for us. These are optional and often reflect a group's devotion or intention."
-        status={
-          config.saintInvocations.enabled
-            ? `${config.saintInvocations.saints.length} saint invocations`
-            : "Saint invocations off"
-        }
-      >
-        <label className="flex items-start gap-3 rounded-md bg-cream-50 px-4 py-3">
-          <input
-            type="checkbox"
-            className="mt-1"
-            checked={config.saintInvocations.enabled}
-            onChange={(event) =>
-              setConfig((current) => ({
-                ...current,
-                saintInvocations: {
-                  ...current.saintInvocations,
-                  enabled: event.target.checked,
-                },
-                updatedAt: new Date().toISOString(),
-              }))
-            }
-          />
-          <span>
-            <span className="block font-medium text-slate-900">Include saint invocations</span>
-            <span className="mt-1 block text-sm leading-6 text-slate-700">
-              These are optional petitions after the main Rosary prayers.
-            </span>
-          </span>
-        </label>
-
-        <div className="mt-4 flex flex-col gap-3 rounded-lg border border-blue-900/10 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm leading-6 text-slate-700">
-            Add a short common set without duplicating names already in this guide.
-          </p>
-          <button
-            type="button"
-            onClick={addCommonSaints}
-            className="interactive-button interactive-button-secondary rounded-md border border-blue-900/20 bg-white px-4 py-3 font-semibold text-blue-900"
-          >
-            Add common invocations
-          </button>
-        </div>
-
-        {config.saintInvocations.enabled ? (
-          <div className="mt-4">
-            <label className="block text-sm font-semibold text-blue-900" htmlFor="saint-name">
-              Saint or title
-            </label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-              <input
-                id="saint-name"
-                value={saintName}
-                onChange={(event) => setSaintName(event.target.value)}
-                className="interactive-field w-full rounded-md border border-blue-900/20 px-3 py-3 text-base"
-                placeholder="Saint Joseph"
-              />
-              <button
-                type="button"
-                onClick={addSaintInvocation}
-                className="interactive-button interactive-button-primary rounded-md bg-blue-900 px-4 py-3 font-semibold text-white"
-              >
-                Add
-              </button>
-            </div>
-            {config.saintInvocations.saints.length > 0 ? (
-              <ul className="mt-3 space-y-2">
-                {config.saintInvocations.saints.map((saint) => (
-                  <li key={saint} className="flex items-center justify-between gap-3 rounded-md bg-cream-50 p-3">
-                    <span className="text-sm text-slate-800">{saint}, pray for us.</span>
-                    <button
-                      type="button"
-                      onClick={() => removeSaintInvocation(saint)}
-                      className="interactive-link text-sm font-semibold text-blue-900 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ) : null}
-      </CollapsibleBuilderSection>
-
-      <CollapsibleBuilderSection
-        eyebrow="Step 6"
+        eyebrow="Step 8"
         title="Add custom guidance"
         description="Add notes or instructions at specific points in the guide."
         helpLabel="Custom guidance help"
@@ -821,52 +865,7 @@ export function RosaryBuilder() {
       </CollapsibleBuilderSection>
 
       <CollapsibleBuilderSection
-        eyebrow="Step 7"
-        title="Prayer languages"
-        description="Choose English, Latin, or Spanish for each prayer."
-        helpLabel="Prayer languages help"
-        helpText="Choose English, Latin, or Spanish for each prayer. You can mix languages in the same guide."
-        status={`${nonEnglishPrayerCount} prayers changed from English`}
-      >
-        <div className="grid gap-3">
-          {prayerLanguagePrayerIds.map((prayerId) => {
-            const prayer = prayersById[prayerId];
-            const latinVariant = getPrayerVariant(prayer, "la");
-            const spanishVariant = getPrayerVariant(prayer, "es");
-
-            return (
-              <label
-                key={prayerId}
-                htmlFor={`guide-prayer-language-${prayerId}`}
-                className="grid gap-3 rounded-md border border-blue-900/10 bg-cream-50 p-3 sm:grid-cols-[1fr_auto] sm:items-center"
-              >
-                <span>
-                  <span className="block font-semibold text-blue-900">{prayer.title}</span>
-                  <span className="block text-sm leading-6 text-slate-700">
-                    English: {prayer.incipit} Latin: {latinVariant.incipit} Spanish:{" "}
-                    {spanishVariant.incipit}
-                  </span>
-                </span>
-                <select
-                  id={`guide-prayer-language-${prayerId}`}
-                  value={getPrayerLanguage(prayerId, config.prayerLanguageById)}
-                  onChange={(event) => updatePrayerLanguage(prayerId, event.target.value as PrayerLanguage)}
-                  className="interactive-field rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
-                >
-                  {prayerLanguageOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {getPrayerLanguageLabel(option.value)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            );
-          })}
-        </div>
-      </CollapsibleBuilderSection>
-
-      <CollapsibleBuilderSection
-        eyebrow="Step 8"
+        eyebrow="Step 9"
         title="Preview the flow"
         description="Review the full order of the guide before saving."
         helpLabel="Preview the flow help"
@@ -877,12 +876,13 @@ export function RosaryBuilder() {
         </div>
       </CollapsibleBuilderSection>
 
-      <BuilderSectionCard
-        eyebrow="Step 9"
+      <CollapsibleBuilderSection
+        eyebrow="Step 10"
         title="Save to browser"
         description="Save this guide in your current browser so you can pray it or make cards."
         helpLabel="Save to browser help"
         helpText="Save this guide in your current browser so you can pray it or make cards."
+        defaultOpen
       >
         <p className="leading-7 text-slate-700">
           Saved guides live in this browser. Use guide backup below if you want a more permanent
@@ -904,23 +904,22 @@ export function RosaryBuilder() {
             Make Guide Cards
           </Link>
         </div>
-      </BuilderSectionCard>
+      </CollapsibleBuilderSection>
 
-      <section aria-labelledby="guide-backup-section">
-        <div className="mb-3 flex items-center gap-2">
-          <h2 id="guide-backup-section" className="text-2xl font-semibold text-blue-900">
-            10. Guide backup
-          </h2>
-          <InfoPopover label="Guide backup help">
-            Download or import guide backups so your guides are not limited to this browser.
-          </InfoPopover>
-        </div>
+      <CollapsibleBuilderSection
+        eyebrow="Step 11"
+        title="Guide backup"
+        description="Download or import guide backups so your guides are not limited to this browser."
+        helpLabel="Guide backup help"
+        helpText="Download or import guide backups so your guides are not limited to this browser."
+        defaultOpen
+      >
         <GuideBackupManager
           guides={savedConfigs}
           selectedGuideId={savedConfigs.some((guide) => guide.id === config.id) ? config.id : undefined}
           onImported={handleBackupImported}
         />
-      </section>
+      </CollapsibleBuilderSection>
     </div>
   );
 }

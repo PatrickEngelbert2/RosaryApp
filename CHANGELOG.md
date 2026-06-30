@@ -14,6 +14,8 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Moved the repeated-prayer default setting out of the save section and into its own earlier Custom Builder section.
 - Made Closing prayers, Add custom guidance, and Prayer languages collapsible with compact status summaries.
 - Made all Custom Builder steps except Repeated prayers, Save to browser, and Guide backup use Show/Hide controls that default closed.
+- Updated Custom Builder Show/Hide behavior so every step is collapsible, with Guide basics, Repeated prayers, Closing prayers, Save to browser, and Guide backup open by default.
+- Moved Prayer languages ahead of Saint invocations and moved Leader notes directly above Add custom guidance.
 - Separated Saint invocations into their own Custom Builder section and added an append-only common invocation helper.
 - Added explicit Custom Builder leader-note controls, including a common leader-note starter set.
 - Expanded Custom Builder Preview the flow to make the full generated flow available instead of truncating at the first 24 items.

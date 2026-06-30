@@ -53,6 +53,18 @@ import {
   getPrayerVariant,
 } from "@/lib/rosary/prayerText";
 import {
+  saintDirectory,
+  searchSaintDirectory,
+} from "@/lib/rosary/saintDirectory";
+import {
+  addCommonSaintInvocations,
+  addManualSaintInvocation,
+  getSaintInvocationNames,
+  normalizeSaintInvocations,
+  removeSaintInvocation,
+  setSelectedSaintInvocationIds,
+} from "@/lib/rosary/saintInvocations";
+import {
   createStoredCollection,
   normalizeStoredGuideCardCustomizations,
   normalizeStoredGuideCardLayoutOptions,
@@ -228,6 +240,129 @@ describe("guide creation and builder output", () => {
       "Saint Michael the Archangel",
       "All holy angels and saints",
     ]);
+  });
+
+  it("keeps the saint directory structured with stable unique searchable entries", () => {
+    const ids = saintDirectory.map((saint) => saint.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(saintDirectory.every((saint) => saint.id && saint.name && saint.tags.length > 0)).toBe(true);
+    expect(saintDirectory.some((saint) => saint.name === "Saint Thomas Aquinas")).toBe(true);
+  });
+
+  it("searches the saint directory by name, tag, case, and empty query", () => {
+    expect(searchSaintDirectory("Joseph").map((saint) => saint.name)).toContain("Saint Joseph");
+    expect(searchSaintDirectory("wisdom").map((saint) => saint.name)).toContain("Saint Thomas Aquinas");
+    expect(searchSaintDirectory("CHASTITY").map((saint) => saint.name)).toContain("Saint Maria Goretti");
+    expect(searchSaintDirectory("students").map((saint) => saint.name)).toContain("Saint Thomas Aquinas");
+    expect(searchSaintDirectory("zzzz-no-saint")).toEqual([]);
+    expect(searchSaintDirectory("")).toHaveLength(saintDirectory.length);
+  });
+
+  it("resolves selected saint IDs and manual custom invocations without duplicates", () => {
+    const invocations = normalizeSaintInvocations({
+      enabled: true,
+      selectedSaintIds: ["saint-joseph"],
+      customSaintInvocations: ["Blessed Pier Giorgio Frassati", "Saint Joseph"],
+      saints: [],
+    });
+
+    expect(invocations.selectedSaintIds).toEqual(["saint-joseph"]);
+    expect(invocations.customSaintInvocations).toEqual(["Blessed Pier Giorgio Frassati"]);
+    expect(getSaintInvocationNames(invocations)).toEqual([
+      "Saint Joseph",
+      "Blessed Pier Giorgio Frassati",
+    ]);
+  });
+
+  it("updates selected saints while preserving manual entries and avoiding common duplicates", () => {
+    const startingInvocations = normalizeSaintInvocations({
+      enabled: true,
+      selectedSaintIds: ["saint-joseph"],
+      customSaintInvocations: ["Blessed Pier Giorgio Frassati"],
+      saints: [],
+    });
+    const selected = setSelectedSaintInvocationIds(startingInvocations, ["saint-thomas-aquinas"]);
+    const withManualDuplicate = addManualSaintInvocation(selected, "Saint Thomas Aquinas");
+    const withCommon = addCommonSaintInvocations(withManualDuplicate, commonSaintInvocations);
+    const withoutThomas = removeSaintInvocation(withCommon, "Saint Thomas Aquinas");
+
+    expect(getSaintInvocationNames(selected)).toEqual([
+      "Saint Thomas Aquinas",
+      "Blessed Pier Giorgio Frassati",
+    ]);
+    expect(getSaintInvocationNames(withManualDuplicate).filter((saint) => saint === "Saint Thomas Aquinas")).toHaveLength(1);
+    expect(getSaintInvocationNames(withCommon).filter((saint) => saint === "Saint Joseph")).toHaveLength(1);
+    expect(getSaintInvocationNames(withoutThomas)).not.toContain("Saint Thomas Aquinas");
+    expect(getSaintInvocationNames(withoutThomas)).toContain("Blessed Pier Giorgio Frassati");
+  });
+
+  it("removes selected directory saints even when there are no manual custom entries", () => {
+    const invocations = normalizeSaintInvocations({
+      enabled: true,
+      selectedSaintIds: ["saint-joseph", "saint-thomas-aquinas"],
+      customSaintInvocations: [],
+      saints: ["Saint Joseph", "Saint Thomas Aquinas"],
+    });
+    const withoutJoseph = removeSaintInvocation(invocations, "Saint Joseph");
+
+    expect(withoutJoseph.selectedSaintIds).toEqual(["saint-thomas-aquinas"]);
+    expect(withoutJoseph.customSaintInvocations).toEqual([]);
+    expect(getSaintInvocationNames(withoutJoseph)).toEqual(["Saint Thomas Aquinas"]);
+  });
+
+  it("preserves selected and manual saint invocations in normalized saved guides and backups", () => {
+    const guide = createTestGuide({
+      saintInvocations: {
+        enabled: true,
+        selectedSaintIds: ["saint-joseph", "saint-thomas-aquinas"],
+        customSaintInvocations: ["Blessed Pier Giorgio Frassati"],
+        saints: [],
+      },
+    });
+    const normalized = normalizeStoredRosaryConfigs(createStoredCollection([guide])).items[0];
+    const backup = createGuideBackupFile({
+      type: "single-guide",
+      guides: [normalized],
+      exportedAt: fixedDate,
+    });
+    const parsed = validateGuideBackupFile(backup);
+
+    expect(normalized.saintInvocations.selectedSaintIds).toEqual([
+      "saint-joseph",
+      "saint-thomas-aquinas",
+    ]);
+    expect(normalized.saintInvocations.customSaintInvocations).toEqual([
+      "Blessed Pier Giorgio Frassati",
+    ]);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      throw new Error("Expected guide backup to validate.");
+    }
+    expect(parsed.result.guides[0].saintInvocations.selectedSaintIds).toEqual([
+      "saint-joseph",
+      "saint-thomas-aquinas",
+    ]);
+  });
+
+  it("renders selected saint invocations in flow, step-by-step mode, and guide cards", () => {
+    const config = createTestGuide({
+      saintInvocations: {
+        enabled: true,
+        selectedSaintIds: ["saint-joseph", "saint-thomas-aquinas"],
+        customSaintInvocations: ["Blessed Pier Giorgio Frassati"],
+        saints: [],
+      },
+    });
+    const flow = buildRosaryFlow(config);
+    const steps = createPrayerSteps(config, { repeatedPrayerMode: "group" });
+    const cards = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+    const cardText = generatedText(cards.cards[0]);
+
+    expect(flow.some((step) => step.text?.includes("Saint Thomas Aquinas, pray for us."))).toBe(true);
+    expect(steps.some((step) => step.type === "saint-invocation" && step.body?.includes("Saint Thomas Aquinas"))).toBe(true);
+    expect(cardText).toContain("Saint Thomas Aquinas, pray for us.");
+    expect(cardText).toContain("Blessed Pier Giorgio Frassati, pray for us.");
   });
 
   it("detects which common leader notes are missing from custom guide guidance", () => {
@@ -1165,6 +1300,8 @@ function createTestGuide(overrides: Partial<UserRosaryConfig> = {}): UserRosaryC
     saintInvocations: {
       enabled: true,
       saints: ["Saint Joseph"],
+      selectedSaintIds: ["saint-joseph"],
+      customSaintInvocations: [],
     },
     ...overrides,
   };

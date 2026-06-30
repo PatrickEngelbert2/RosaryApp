@@ -1,10 +1,17 @@
-export const commonSaintInvocations = [
-  "Saint Joseph",
-  "Our Lady of the Rosary",
-  "Saint John Paul II",
-  "Saint Michael the Archangel",
-  "All holy angels and saints",
+import { saintDirectoryById } from "@/lib/rosary/saintDirectory";
+import { normalizeSaintName } from "@/lib/rosary/saintInvocations";
+
+export const commonSaintInvocationIds = [
+  "saint-joseph",
+  "our-lady-of-the-rosary",
+  "saint-john-paul-ii",
+  "saint-michael-the-archangel",
+  "all-holy-angels-and-saints",
 ];
+
+export const commonSaintInvocations = commonSaintInvocationIds.map(
+  (saintId) => saintDirectoryById[saintId].name,
+);
 
 export function appendCommonSaintInvocations(
   currentSaints: string[],
@@ -28,8 +35,4 @@ export function appendCommonSaintInvocations(
   }
 
   return nextSaints;
-}
-
-function normalizeSaintName(value: string): string {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
 }

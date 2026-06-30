@@ -167,6 +167,8 @@ export type CustomGuidance = {
 export type SaintInvocations = {
   enabled: boolean;
   saints: string[];
+  selectedSaintIds: string[];
+  customSaintInvocations: string[];
 };
 
 export type RosaryPreferences = {

@@ -1,5 +1,6 @@
 import { getRosaryTemplate } from "@/lib/rosary/defaultTemplates";
 import { isPrayerId, normalizePrayerLanguage } from "@/lib/rosary/prayerText";
+import { normalizeSaintInvocations } from "@/lib/rosary/saintInvocations";
 import type { PrayerId, PrayerLanguage, RosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
 
 export const defaultClosingPrayerIds: PrayerId[] = ["hail-holy-queen", "closing-prayer"];
@@ -31,6 +32,8 @@ export function createDefaultUserConfigFromTemplate(
     saintInvocations: {
       enabled: false,
       saints: [],
+      selectedSaintIds: [],
+      customSaintInvocations: [],
     },
     customGuidance: [],
     preferences: {
@@ -73,10 +76,7 @@ export function normalizeRosaryConfig(config: UserRosaryConfig): UserRosaryConfi
   return {
     ...config,
     selectedClosingPrayerIds,
-    saintInvocations: config.saintInvocations ?? {
-      enabled: false,
-      saints: [],
-    },
+    saintInvocations: normalizeSaintInvocations(config.saintInvocations),
     customGuidance:
       config.customGuidance ??
       config.steps

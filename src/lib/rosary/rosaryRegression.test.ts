@@ -807,7 +807,18 @@ describe("guide-level flow edits", () => {
     if (!parsed.ok) {
       throw new Error("Expected guide backup to validate.");
     }
+    const imported = prepareGuideBackupImport({
+      backup: {
+        guides: parsed.result.guides,
+        cardCustomizations: parsed.result.cardCustomizations,
+      },
+      existingGuides: [],
+      createId: (prefix) => `${prefix}-imported`,
+      now: fixedDate,
+    });
+
     expect(parsed.result.guides[0].guideFlowEdits?.itemOrder).toEqual(withDeletion?.itemOrder);
+    expect(imported.guides[0].guideFlowEdits?.itemOrder).toEqual(withDeletion?.itemOrder);
   });
 });
 

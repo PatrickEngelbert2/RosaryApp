@@ -376,7 +376,7 @@ export function RosaryBuilder() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <BuilderSectionCard
+      <CollapsibleBuilderSection
         eyebrow="Step 1"
         title="Guide basics"
         description="Name the guide, choose the guide type, and decide which mysteries it should use."
@@ -508,7 +508,7 @@ export function RosaryBuilder() {
             </option>
           ))}
         </select>
-      </BuilderSectionCard>
+      </CollapsibleBuilderSection>
 
       <BuilderSectionCard
         eyebrow="Step 2"
@@ -541,7 +541,7 @@ export function RosaryBuilder() {
         </label>
       </BuilderSectionCard>
 
-      <BuilderSectionCard
+      <CollapsibleBuilderSection
         eyebrow="Step 3"
         title="Leader notes"
         description="Add cues for the person leading a group Rosary or Rosary walk."
@@ -630,7 +630,7 @@ export function RosaryBuilder() {
         {leaderNotes.length > 0 ? (
           <GuidanceList items={leaderNotes} onRemove={removeCustomStep} />
         ) : null}
-      </BuilderSectionCard>
+      </CollapsibleBuilderSection>
 
       <CollapsibleBuilderSection
         eyebrow="Step 4"
@@ -659,7 +659,7 @@ export function RosaryBuilder() {
         </div>
       </CollapsibleBuilderSection>
 
-      <BuilderSectionCard
+      <CollapsibleBuilderSection
         eyebrow="Step 5"
         title="Saint invocations"
         description="Add optional petitions such as Saint Joseph, pray for us."
@@ -747,7 +747,7 @@ export function RosaryBuilder() {
             ) : null}
           </div>
         ) : null}
-      </BuilderSectionCard>
+      </CollapsibleBuilderSection>
 
       <CollapsibleBuilderSection
         eyebrow="Step 6"
@@ -756,7 +756,6 @@ export function RosaryBuilder() {
         helpLabel="Custom guidance help"
         helpText="Add your own notes or instructions at specific points in the guide."
         status={`${customGuidanceSteps.length} custom notes`}
-        defaultOpen={customGuidanceSteps.length > 0}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-semibold text-blue-900" htmlFor="custom-title">
@@ -828,7 +827,6 @@ export function RosaryBuilder() {
         helpLabel="Prayer languages help"
         helpText="Choose English, Latin, or Spanish for each prayer. You can mix languages in the same guide."
         status={`${nonEnglishPrayerCount} prayers changed from English`}
-        defaultOpen={nonEnglishPrayerCount > 0}
       >
         <div className="grid gap-3">
           {prayerLanguagePrayerIds.map((prayerId) => {
@@ -867,7 +865,7 @@ export function RosaryBuilder() {
         </div>
       </CollapsibleBuilderSection>
 
-      <BuilderSectionCard
+      <CollapsibleBuilderSection
         eyebrow="Step 8"
         title="Preview the flow"
         description="Review the full order of the guide before saving."
@@ -877,7 +875,7 @@ export function RosaryBuilder() {
         <div className="max-h-[75vh] overflow-auto pr-1">
           <RosaryFlowPreview config={config} compact includeLeaderNotes={config.preferences.showLeaderNotes} />
         </div>
-      </BuilderSectionCard>
+      </CollapsibleBuilderSection>
 
       <BuilderSectionCard
         eyebrow="Step 9"

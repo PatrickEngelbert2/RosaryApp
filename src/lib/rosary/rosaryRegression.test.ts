@@ -60,11 +60,13 @@ import type {
   GuideCardSide,
   PrayerStep,
   PrayerId,
+  PrayerLanguage,
   UserRosaryConfig,
 } from "@/lib/rosary/types";
 
 const fixedDate = new Date("2026-06-26T12:00:00-05:00");
 const testedPrayerIds: PrayerId[] = [
+  "sign-of-the-cross",
   "apostles-creed",
   "our-father",
   "hail-mary",
@@ -81,21 +83,30 @@ describe("prayer language resolution", () => {
     expect(getPrayerLanguage("hail-mary")).toBe("en");
     expect(getPrayerLanguage("hail-mary", { "hail-mary": "la" })).toBe("la");
     expect(getPrayerLanguage("hail-mary", { "hail-mary": "es" })).toBe("es");
+    expect(
+      normalizePrayerLanguageById({ "our-father": "es", "hail-mary": "bad" } as unknown as Partial<
+        Record<PrayerId, PrayerLanguage>
+      >),
+    ).toEqual({
+      "our-father": "es",
+      "hail-mary": "en",
+    });
     expect(normalizePrayerLanguageById({ "not-a-prayer": "la" } as Record<string, "la">)).toEqual({});
   });
 
-  it("renders mixed English and Latin in the same guide flow", () => {
+  it("renders mixed English, Latin, and Spanish in the same guide flow", () => {
     const config = createTestGuide({
       prayerLanguageById: {
         "our-father": "la",
-        "fatima-prayer": "la",
+        "hail-mary": "es",
+        "fatima-prayer": "en",
       },
     });
     const flow = buildRosaryFlow(config);
 
     expect(flow.some((step) => step.title === "Pater Noster" && step.text?.includes("Pater noster"))).toBe(true);
-    expect(flow.some((step) => step.title === "Oratio Fatimae" && step.text?.includes("O mi Iesu"))).toBe(true);
-    expect(flow.some((step) => step.title === "Hail Mary" && step.text?.includes("Hail Mary"))).toBe(true);
+    expect(flow.some((step) => step.title === "Ave María" && step.text?.includes("Dios te salve, María"))).toBe(true);
+    expect(flow.some((step) => step.title === "Fatima Prayer" && step.text?.includes("O my Jesus"))).toBe(true);
   });
 
   it("resolves short and full prayer text from the selected language", () => {
@@ -103,7 +114,9 @@ describe("prayer language resolution", () => {
     const fatimaPrayer = prayersById["fatima-prayer"];
 
     expect(getCompactPrayerText(fatimaPrayer, "la")).toBe("O mi Iesu...");
+    expect(getCompactPrayerText(fatimaPrayer, "es")).toBe("Oh Jesús mío...");
     expect(getFullPrayerTextForCards(hailMary, "la")).toContain("Ave Maria, gratia plena");
+    expect(getFullPrayerTextForCards(hailMary, "es")).toContain("Dios te salve, María");
     expect(getCompactPrayerText(hailMary, "en")).toContain("Hail Mary");
     expect(getFullPrayerTextForCards(hailMary, "en")).toContain("Hail Mary, full of grace");
   });
@@ -124,7 +137,7 @@ describe("prayer language resolution", () => {
     );
   });
 
-  it.each(testedPrayerIds)("%s has short/full English and Latin text", (prayerId) => {
+  it.each(testedPrayerIds)("%s has short/full English, Latin, and Spanish text", (prayerId) => {
     const prayer = prayersById[prayerId];
 
     expect(getCompactPrayerText(prayer, "en")).toBeTruthy();
@@ -132,6 +145,9 @@ describe("prayer language resolution", () => {
     expect(getCompactPrayerText(prayer, "la")).toBeTruthy();
     expect(getFullPrayerTextForCards(prayer, "la")).toBeTruthy();
     expect(getPrayerVariant(prayer, "la").language).toBe("la");
+    expect(getCompactPrayerText(prayer, "es")).toBeTruthy();
+    expect(getFullPrayerTextForCards(prayer, "es")).toBeTruthy();
+    expect(getPrayerVariant(prayer, "es").language).toBe("es");
   });
 });
 
@@ -140,12 +156,12 @@ describe("guide creation and builder output", () => {
     const config = createTestGuide({
       prayerLanguageById: {
         "our-father": "la",
-        "hail-mary": "en",
+        "hail-mary": "es",
       },
     });
 
     expect(config.prayerLanguageById?.["our-father"]).toBe("la");
-    expect(getPrayerLanguage("hail-mary", config.prayerLanguageById)).toBe("en");
+    expect(getPrayerLanguage("hail-mary", config.prayerLanguageById)).toBe("es");
   });
 
   it("easy builder defaults remain English and produce stable non-empty names", () => {
@@ -156,19 +172,23 @@ describe("guide creation and builder output", () => {
     expect(result.config.prayerLanguageById).toEqual({});
   });
 
-  it("easy builder only sets selected Latin prayers when requested", () => {
+  it("easy builder only sets selected non-English prayers when requested", () => {
     const result = createUserRosaryConfigFromWizardAnswers(
       {
         ...defaultEasyGuideAnswers,
-        latinChoice: "choose",
-        latinPrayerIds: ["our-father", "fatima-prayer"],
+        languageChoice: "choose",
+        prayerLanguageById: {
+          "our-father": "la",
+          "hail-mary": "es",
+          "fatima-prayer": "en",
+        },
       },
       fixedDate,
     );
 
     expect(result.config.prayerLanguageById).toEqual({
       "our-father": "la",
-      "fatima-prayer": "la",
+      "hail-mary": "es",
     });
   });
 });
@@ -316,21 +336,34 @@ describe("step-by-step prayer mode", () => {
     ).toBe(2);
   });
 
-  it("respects mixed English and Latin guide settings", () => {
+  it("respects mixed English, Latin, and Spanish guide settings", () => {
     const steps = createPrayerSteps(
       createTestGuide({
         prayerLanguageById: {
           "our-father": "la",
-          "hail-mary": "en",
-          "fatima-prayer": "la",
+          "hail-mary": "es",
+          "fatima-prayer": "en",
         },
       }),
       { repeatedPrayerMode: "group" },
     );
 
     expect(steps.some((step) => step.prayerId === "our-father" && step.body?.includes("Pater noster"))).toBe(true);
-    expect(steps.some((step) => step.prayerId === "hail-mary" && step.body?.includes("Hail Mary"))).toBe(true);
-    expect(steps.some((step) => step.prayerId === "fatima-prayer" && step.body?.includes("O mi Iesu"))).toBe(true);
+    expect(steps.some((step) => step.prayerId === "hail-mary" && step.body?.includes("Dios te salve, María"))).toBe(true);
+    expect(steps.some((step) => step.prayerId === "fatima-prayer" && step.body?.includes("O my Jesus"))).toBe(true);
+  });
+
+  it("uses Spanish repeated Hail Mary text in grouped and counted modes", () => {
+    const config = createTestGuide({
+      prayerLanguageById: {
+        "hail-mary": "es",
+      },
+    });
+    const groupedSteps = createPrayerSteps(config, { repeatedPrayerMode: "group" });
+    const countedSteps = createPrayerSteps(config, { repeatedPrayerMode: "count" });
+
+    expect(groupedSteps.some((step) => step.prayerId === "hail-mary" && step.body?.includes("Dios te salve, María"))).toBe(true);
+    expect(countedSteps.some((step) => step.prayerId === "hail-mary" && step.body?.includes("Dios te salve, María"))).toBe(true);
   });
 
   it("handles navigation boundaries", () => {
@@ -348,7 +381,8 @@ describe("card content generation", () => {
   it("includes selected sections, prayers, saints, and language variants", () => {
     const config = createTestGuide({
       prayerLanguageById: {
-        "our-father": "la",
+        "our-father": "es",
+        "glory-be": "la",
       },
     });
     const generated = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate);
@@ -359,23 +393,28 @@ describe("card content generation", () => {
     expect(text).toContain("St. Michael the Archangel");
     expect(text).toContain("Saint Joseph, pray for us.");
     expect(text).not.toContain("Memorare");
-    expect(text).toContain("Pater noster");
+    expect(text).toContain("Padre nuestro");
+    expect(text).toContain("Gloria Patri");
   });
 
   it("lets card-specific language overrides beat guide-level language", () => {
     const config = createTestGuide({
       prayerLanguageById: {
         "our-father": "en",
+        "hail-mary": "es",
       },
     });
     const customization = createCustomization(config.id, {
       prayerLanguageOverrides: {
         "our-father": "la",
+        "hail-mary": "en",
       },
     });
     const generated = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate, customization);
 
     expect(generatedText(generated.cards[0])).toContain("Pater noster");
+    expect(generatedText(generated.cards[0])).toContain("Hail Mary...");
+    expect(generatedText(generated.cards[0])).not.toContain("Dios te salve, María...");
   });
 
   it("applies text overrides, deleted items, and full-prayer overrides without changing source identity", () => {
@@ -409,20 +448,22 @@ describe("card content generation", () => {
   it("renders compact and full prayer text without card-only label prefixes", () => {
     const config = createTestGuide({
       prayerLanguageById: {
-        "hail-mary": "la",
+        "hail-mary": "es",
+        "fatima-prayer": "es",
       },
     });
     const generated = generateGuideCardsFromConfig(
       config,
-      { cardSize: "full-1", cardCount: 1, fullPrayerIds: ["our-father", "sign-of-the-cross"] },
+      { cardSize: "full-1", cardCount: 1, fullPrayerIds: ["fatima-prayer", "sign-of-the-cross"] },
       fixedDate,
     );
     const text = generatedText(generated.cards[0]);
 
-    expect(text).toContain("10x - Ave Maria, gratia plena...");
+    expect(text).toContain("10x - Dios te salve, María...");
     expect(text).toContain("Glory be...");
+    expect(text).toContain("Oh Jesús mío, perdona nuestros pecados");
     expect(text).toContain("In the name of the Father, and of the Son, and of the Holy Spirit. Amen.");
-    expect(text).not.toContain("Our Father:");
+    expect(text).not.toContain("Oración de Fátima:");
     expect(text).not.toContain("Sign of the Cross:");
     expect(text).not.toContain("10 Ave Maria prayers");
   });
@@ -467,6 +508,24 @@ describe("card content generation", () => {
     expect(text).not.toContain("Final");
     expect(finalSign?.heading).toBeUndefined();
     expect(finalSign?.lines?.[0]).toBe("In nomine Patris, et Filii, et Spiritus Sancti. Amen.");
+  });
+
+  it("uses Spanish Sign of the Cross title for short cards and prayer text for full cards", () => {
+    const config = createTestGuide({
+      prayerLanguageById: {
+        "sign-of-the-cross": "es",
+      },
+    });
+    const compact = generateGuideCardsFromConfig(config, { cardSize: "full-1", cardCount: 1 }, fixedDate);
+    const full = generateGuideCardsFromConfig(
+      config,
+      { cardSize: "full-1", cardCount: 1, fullPrayerIds: ["sign-of-the-cross"] },
+      fixedDate,
+    );
+
+    expect(generatedText(compact.cards[0])).toContain("Señal de la Cruz");
+    expect(generatedText(full.cards[0])).toContain("En el nombre del Padre, y del Hijo, y del Espíritu Santo. Amén.");
+    expect(generatedText(full.cards[0])).not.toContain("Señal de la Cruz:");
   });
 
   it("keeps mystery fruit text with its mystery as one editable unit", () => {
@@ -525,7 +584,7 @@ describe("card content generation", () => {
         sectionId: "custom-section",
         text: "Hail Mary",
         prayerId: "hail-mary",
-        prayerLanguage: "la",
+        prayerLanguage: "es",
         printMode: "short",
       }),
       createGuideCardCustomItem({
@@ -554,7 +613,7 @@ describe("card content generation", () => {
     expect(text).toContain("Wait until the group has crossed safely.");
     expect(text).toContain("For our parish families.");
     expect(text).toContain("Saint Anne, pray for us.");
-    expect(text).toContain("Ave Maria, gratia plena...");
+    expect(text).toContain("Dios te salve, María...");
     expect(text).toContain("Bring extra printed cards.");
     expect(generatedText(reset.cards[0])).not.toContain("Walk Notes");
   });
@@ -792,7 +851,7 @@ describe("preview and print data parity", () => {
   it("uses the same generated content model for preview and print inputs", () => {
     const config = createTestGuide({
       prayerLanguageById: {
-        "fatima-prayer": "la",
+        "fatima-prayer": "es",
       },
     });
     const options = normalizeGuideCardLayoutOptions({
@@ -803,6 +862,7 @@ describe("preview and print data parity", () => {
     const customization = createCustomization(config.id, {
       prayerLanguageOverrides: {
         "hail-mary": "la",
+        "our-father": "es",
       },
       textOverrides: {
         "card:title": "Parity Test",
@@ -813,6 +873,9 @@ describe("preview and print data parity", () => {
 
     expect(print.cards[0]).toEqual(preview.cards[0]);
     expect(generatedText(print.cards[0])).toContain("Parity Test");
+    expect(generatedText(print.cards[0])).toContain("Oh Jesús mío");
+    expect(generatedText(print.cards[0])).toContain("Ave Maria");
+    expect(generatedText(print.cards[0])).toContain("Padre nuestro");
     expect(generatedText(print.cards[0])).not.toMatch(/Edit|Remove|Grip|Drag item/);
   });
 });
@@ -838,9 +901,9 @@ describe("storage validation", () => {
         "not-a-prayer": true,
       } as Record<string, boolean>,
       prayerLanguageOverrides: {
-        "our-father": "la",
+        "our-father": "es",
         "not-a-prayer": "la",
-      } as Record<string, "la">,
+      } as Record<string, "la" | "es">,
       customItems: [
         createGuideCardCustomItem({
           id: "good-custom-item",
@@ -865,7 +928,7 @@ describe("storage validation", () => {
     expect(normalized.items[0].itemOrder).toEqual(["a", "b"]);
     expect(normalized.items[0].removedItemIds).toEqual(["x"]);
     expect(normalized.items[0].fullPrayerOverrides).toEqual({ "our-father": true });
-    expect(normalized.items[0].prayerLanguageOverrides).toEqual({ "our-father": "la" });
+    expect(normalized.items[0].prayerLanguageOverrides).toEqual({ "our-father": "es" });
     expect(normalized.items[0].customItems?.map((item) => item.id)).toEqual(["good-custom-item"]);
     expect(normalized.items[0].textOverrides).toEqual({ keep: "yes" });
     expect(normalizeStoredGuideCardLayoutOptions({ cardSize: "bad", cardCount: 999 }).cardSize).toBe("pocket-4");
@@ -874,8 +937,16 @@ describe("storage validation", () => {
 
 describe("guide backup import and export", () => {
   it("exports a selected guide with backup metadata and related card customization", () => {
-    const guide = createTestGuide();
+    const guide = createTestGuide({
+      prayerLanguageById: {
+        "our-father": "es",
+        "hail-mary": "la",
+      },
+    });
     const customization = createCustomization(guide.id, {
+      prayerLanguageOverrides: {
+        "fatima-prayer": "es",
+      },
       textOverrides: {
         "opening:line-1": "Custom backup line.",
       },
@@ -893,7 +964,14 @@ describe("guide backup import and export", () => {
     expect(backup.type).toBe("single-guide");
     expect(backup.guides).toHaveLength(1);
     expect(backup.guides[0].id).toBe(guide.id);
+    expect(backup.guides[0].prayerLanguageById).toEqual({
+      "our-father": "es",
+      "hail-mary": "la",
+    });
     expect(backup.cardCustomizations).toEqual([customization]);
+    expect(backup.cardCustomizations[0].prayerLanguageOverrides).toEqual({
+      "fatima-prayer": "es",
+    });
     expect(createGuideBackupFilename(guide.name, "single-guide")).toBe(
       "walk-the-rosary-regression-test-guide.json",
     );
@@ -922,7 +1000,13 @@ describe("guide backup import and export", () => {
 
   it("imports a single guide and remaps duplicate guide IDs safely", () => {
     const existingGuide = createTestGuide({ id: "test-guide", name: "Regression Test Guide" });
-    const backupGuide = createTestGuide({ id: "test-guide", name: "Regression Test Guide" });
+    const backupGuide = createTestGuide({
+      id: "test-guide",
+      name: "Regression Test Guide",
+      prayerLanguageById: {
+        "hail-mary": "es",
+      },
+    });
     const backup = createGuideBackupFile({
       type: "single-guide",
       guides: [backupGuide],
@@ -946,6 +1030,7 @@ describe("guide backup import and export", () => {
     expect(result.guides[0].id).toBe(existingGuide.id);
     expect(result.guides[1].id).toBe("imported-guide-id");
     expect(result.guides[1].name).toBe("Regression Test Guide Copy");
+    expect(result.guides[1].prayerLanguageById).toEqual(backupGuide.prayerLanguageById);
     expect(result.cardCustomizations.map((customization) => customization.guideId)).toEqual([
       "test-guide",
       "imported-guide-id",

@@ -8,16 +8,21 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added Spanish variants for the core Rosary prayers: Sign of the Cross, Apostles' Creed, Our Father, Hail Mary, Glory Be, Fatima Prayer, Hail Holy Queen, Rosary Closing Prayer, Memorare, and St. Michael Prayer.
+- Expanded the existing per-prayer language system so saved guides can mix English, Latin, and Spanish prayer variants without adding a global Spanish mode.
+- Updated Advanced Builder, Easy Guide Builder, and Guide Cards language controls to offer English, Latin, and Spanish prayer choices.
+- Updated Custom Pray, step-by-step prayer mode, Guide Cards preview, and print generation to resolve Spanish through the same structured prayer-variant helpers used by English and Latin.
+- Added regression coverage for Spanish language resolution, short/full prayer text, mixed-language guide flows, Easy Guide output, card overrides, print parity, storage validation, and guide backup import/export.
 - Added step-by-step prayer mode to the Custom Pray page so saved guides can be prayed one focused prayer or action at a time.
 - Preserved the existing scroll/read prayer mode and added a clear Read guide / Pray step by step switch.
 - Added local repeated-prayer pacing preferences for step-by-step mode, with Count each prayer for app-counted beads and Group repeated prayers for users praying with a physical rosary.
-- Built step-by-step prayer data from the existing rosary flow and prayer language resolution so saved guide settings, mysteries, closing prayers, saint invocations, and English/Latin choices remain consistent.
+- Built step-by-step prayer data from the existing rosary flow and prayer language resolution so saved guide settings, mysteries, closing prayers, saint invocations, and prayer-language choices remain consistent.
 - Added mobile-friendly step navigation with progress, Back, Next, Finish, protected restart, and local per-guide progress restoration.
 - Removed unnecessary Exit and Return to guide controls from step-by-step mode so the existing Read guide / Pray step by step switch remains the way back to scroll mode.
 - Made Restart safer by moving it out of the main bottom navigation and requiring confirmation before resetting prayer progress.
 - Improved step-mode button cursor, hover, focus, and active states with motion-aware lift/press interactions.
 - Preserved logical prayer progress when switching between Count each prayer and Group repeated prayers.
-- Added regression coverage for step generation, repeated-prayer expansion/grouping, mixed English/Latin settings, saint invocations, closings, and navigation boundaries.
+- Added regression coverage for step generation, repeated-prayer expansion/grouping, mixed prayer-language settings, saint invocations, closings, and navigation boundaries.
 - Added regression coverage for logical step matching between counted and grouped repeated-prayer modes.
 - Polished homepage, Builder, Guide Cards, Pray, and Resources copy so first-time users can more quickly understand how to pray, build, print, and lead.
 - Added local guide backup UI for backing up the selected guide, backing up all guides, and importing guide backup files without a backend.
@@ -44,7 +49,7 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 - Added per-prayer English/Latin selection to saved guide configs, the Advanced Builder, and the Easy Guide Builder.
 - Added card-specific prayer language controls so Guide Cards can differ from the underlying guide without changing it.
 - Updated Custom Pray and Guide Cards rendering so full/short prayer text resolves from the selected language.
-- Structured prayer variant data so future Spanish variants can be added without changing canonical prayer IDs.
+- Structured prayer variant data so future language variants can be added without changing canonical prayer IDs.
 - Rebranded the project to Walk the Rosary.
 - Updated site metadata, browser tab title, README, changelog, AGENTS instructions, and public-facing copy.
 - Added a new original SVG favicon/icon concept for the Walk the Rosary brand.

@@ -55,7 +55,15 @@ import {
   saveGuideCardSelectedGuideId,
   setActiveRosaryConfig,
 } from "@/lib/rosary/storage";
-import { getPrayerIncipit, getPrayerLanguage, getPrayerVariant, isPrayerId, latinPrayerIds } from "@/lib/rosary/prayerText";
+import {
+  getPrayerIncipit,
+  getPrayerLanguage,
+  getPrayerLanguageLabel,
+  getPrayerVariant,
+  isPrayerId,
+  prayerLanguageOptions,
+  prayerLanguagePrayerIds,
+} from "@/lib/rosary/prayerText";
 import type {
   GuideCardCustomization,
   GuideCardCustomItemKind,
@@ -135,7 +143,7 @@ export function CardSetEditor() {
   const prayerOptions = useMemo(() => getRelevantGuidePrayerOptions(selectedGuide), [selectedGuide]);
   const languagePrayerOptions = useMemo(() => {
     const ids = new Set<PrayerId>(["sign-of-the-cross", ...prayerOptions.map((prayer) => prayer.id)]);
-    return latinPrayerIds.filter((prayerId) => ids.has(prayerId)).map((prayerId) => prayersById[prayerId]);
+    return prayerLanguagePrayerIds.filter((prayerId) => ids.has(prayerId)).map((prayerId) => prayersById[prayerId]);
   }, [prayerOptions]);
   const selectedPrayerIdKey = prayerOptions.map((prayer) => prayer.id).join("|");
   const sanitizedLayoutOptions = useMemo(
@@ -645,6 +653,7 @@ export function CardSetEditor() {
             {languagePrayerOptions.map((prayer) => {
               const guideLanguage = getPrayerLanguage(prayer.id, selectedGuide.prayerLanguageById);
               const latinVariant = getPrayerVariant(prayer, "la");
+              const spanishVariant = getPrayerVariant(prayer, "es");
               const override = selectedCustomization.prayerLanguageOverrides?.[prayer.id] ?? "guide-default";
 
               return (
@@ -655,7 +664,8 @@ export function CardSetEditor() {
                 >
                   <span className="block font-semibold text-blue-900">{prayer.title}</span>
                   <span className="mt-1 block text-xs leading-5 text-slate-600">
-                    English: {prayer.incipit} Latin: {latinVariant.incipit}
+                    English: {prayer.incipit} Latin: {latinVariant.incipit} Spanish:{" "}
+                    {spanishVariant.incipit}
                   </span>
                   <select
                     id={`card-language-${prayer.id}`}
@@ -669,10 +679,13 @@ export function CardSetEditor() {
                     className="interactive-field mt-3 w-full rounded-md border border-blue-900/20 bg-white px-3 py-2 text-sm"
                   >
                     <option value="guide-default">
-                      Use guide setting ({guideLanguage === "la" ? "Latin" : "English"})
+                      Use guide setting ({getPrayerLanguageLabel(guideLanguage)})
                     </option>
-                    <option value="en">English</option>
-                    <option value="la">Latin</option>
+                    {prayerLanguageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
               );
@@ -975,8 +988,11 @@ function AddCardItemDialog({
                   onChange={(event) => setPrayerLanguage(event.target.value as PrayerLanguage)}
                   className="interactive-field mt-2 w-full rounded-md border border-blue-900/20 bg-white px-3 py-3 text-base"
                 >
-                  <option value="en">English</option>
-                  <option value="la">Latin</option>
+                  {prayerLanguageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="block text-sm font-semibold text-blue-900" htmlFor="card-item-print-mode">

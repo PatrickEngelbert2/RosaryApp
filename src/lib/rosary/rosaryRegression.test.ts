@@ -1,4 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+  beginnerFaqs,
+  beginnerHomeSection,
+  beginnerPageSections,
+  beginnerResourceLink,
+  beginnerRosaryRoute,
+  beginnerStartLinks,
+  rosaryStructureParts,
+} from "@/content/beginner-rosary";
 import { prayersById } from "@/content/prayers";
 import { buildRosaryFlow } from "@/lib/rosary/buildRosaryFlow";
 import { normalizeGuideCardLayoutOptions } from "@/lib/rosary/cardUtils";
@@ -112,6 +121,103 @@ const testedPrayerIds: PrayerId[] = [
   "memorare",
   "st-michael-prayer",
 ];
+
+const knownStaticRoutes = new Set([
+  "/",
+  "/builder",
+  "/cards",
+  "/lead",
+  "/learn/rosary",
+  "/pray/custom",
+  "/prayers",
+  "/resources",
+]);
+
+function routeWithoutHash(href: string): string {
+  return href.split("#")[0] || "#";
+}
+
+function isKnownRouteOrPageAnchor(href: string): boolean {
+  if (href.startsWith("#")) {
+    return true;
+  }
+
+  return knownStaticRoutes.has(routeWithoutHash(href));
+}
+
+describe("beginner Rosary onboarding content", () => {
+  it("exposes a homepage beginner path with valid calls to action", () => {
+    expect(beginnerHomeSection.title).toBe("New to the Rosary?");
+    expect(beginnerHomeSection.body).toContain("You are welcome here");
+    expect(beginnerHomeSection.ctas.map((cta) => cta.label)).toEqual([
+      "What is the Rosary?",
+      "Pray your first Rosary",
+      "Learn the parts",
+    ]);
+    expect(beginnerHomeSection.ctas.every((cta) => isKnownRouteOrPageAnchor(cta.href))).toBe(true);
+    expect(beginnerHomeSection.ctas.some((cta) => cta.href === "/learn/rosary#parts")).toBe(true);
+    expect(beginnerHomeSection.ctas.some((cta) => /bead-map|interactive/i.test(cta.href))).toBe(false);
+    expect(beginnerHomeSection.paths.map((path) => path.title)).toEqual([
+      "I'm new",
+      "I want to pray",
+      "I'm leading a group",
+    ]);
+  });
+
+  it("keeps the beginner page concise and covers required first-time reader topics", () => {
+    const sectionTitles = beginnerPageSections.map((section) => section.title);
+    const pageText = beginnerPageSections
+      .flatMap((section) => [section.title, ...section.body])
+      .join(" ");
+
+    expect(beginnerRosaryRoute).toBe("/learn/rosary");
+    expect(sectionTitles).toEqual([
+      "You are welcome here",
+      "The Rosary in 60 seconds",
+      "What happens during a Rosary?",
+      "What are the mysteries?",
+      "Why are there repeated prayers?",
+      "Do I need physical beads?",
+      "Can non-Catholics follow along or pray it?",
+      "What if I do not know the prayers?",
+    ]);
+    expect(pageText).toContain("five decades");
+    expect(pageText).toContain("meditate on the life of Jesus with Mary");
+    expect(pageText).toContain("worship belongs to God alone");
+    expect(pageText).toContain("Rosary beads help you keep your place, but they are not required");
+    expect(pageText).toContain("The repeated prayers help you slow down");
+  });
+
+  it("includes beginner FAQ, Rosary structure, and Start here links without dead feature routes", () => {
+    expect(beginnerFaqs.map((faq) => faq.question)).toEqual([
+      "Do I have to be Catholic to pray the Rosary?",
+      "Is praying the Rosary worshiping Mary?",
+      "Why do Catholics repeat the Hail Mary so many times?",
+      "What if I lose my place?",
+      "Do I need Rosary beads?",
+      "What if my group includes prayers I do not know?",
+      "Can I just listen the first time?",
+    ]);
+    expect(beginnerFaqs.find((faq) => faq.question.includes("worshiping Mary"))?.answer).toContain(
+      "Catholics worship God alone",
+    );
+    expect(rosaryStructureParts.map((part) => part.title)).toEqual([
+      "Crucifix",
+      "First large bead",
+      "Three small beads",
+      "Decades",
+      "Mysteries",
+      "Closing prayers",
+    ]);
+    expect(beginnerStartLinks.every((link) => isKnownRouteOrPageAnchor(link.href))).toBe(true);
+    expect(beginnerStartLinks.map((link) => link.href)).toEqual([
+      "/pray/custom",
+      "/builder",
+      "#parts",
+    ]);
+    expect(beginnerResourceLink.href).toBe(beginnerRosaryRoute);
+  });
+});
 
 describe("prayer language resolution", () => {
   it("defaults missing or invalid language settings to English", () => {

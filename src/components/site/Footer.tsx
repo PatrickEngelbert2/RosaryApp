@@ -3,6 +3,7 @@ import Image from "next/image";
 
 export function Footer() {
   const links = [
+    { href: "/learn/rosary", label: "New to the Rosary?" },
     { href: "/pray/custom", label: "Pray" },
     { href: "/builder", label: "Build a Guide" },
     { href: "/cards", label: "Guide Cards" },

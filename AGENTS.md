@@ -22,6 +22,7 @@ This is Walk the Rosary, a Catholic Rosary website for helping people pray the R
 - Prefer semantic HTML, accessible landmarks, responsive design, and readable source order.
 - Build clean reusable components for shared UI and Rosary-specific presentation.
 - Keep mobile readability high, especially for prayer text and step-by-step flows.
+- Keep beginner doorway content warm and plainspoken for non-Catholics, new Catholics, and people who feel they should already know the Rosary. Do not assume prior Catholic vocabulary without explanation.
 
 ## Content Guidance
 

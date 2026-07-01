@@ -9,6 +9,7 @@ Current Vercel deployment: [walktherosary.vercel.app](https://walktherosary.verc
 ## Core Features
 
 - Pray the Rosary from the website.
+- Learn what the Rosary is through a beginner-friendly "New to the Rosary?" path.
 - Create a saved guide quickly with the Quick Builder wizard.
 - Build custom rosary guides.
 - Choose today's mysteries or manually select a mystery set.
@@ -78,6 +79,7 @@ $env:NO_OPEN="1"; npm start
 ## Important Routes
 
 - `/` - Home
+- `/learn/rosary` - Beginner-friendly explanation of the Rosary and how to follow along
 - `/builder` - Build and save a Rosary guide with the Quick Builder or Custom Builder
 - `/pray` - Static default Rosary flow
 - `/pray/custom` - Pray a saved custom Rosary
@@ -91,7 +93,7 @@ $env:NO_OPEN="1"; npm start
 
 ## Project And Contact
 
-Walk the Rosary is designed for individual prayer, parish groups, and outdoor rosary walks. The homepage focuses on the current core actions: praying a saved guide, building a guide, printing guide cards, leading a walk, and learning the prayers.
+Walk the Rosary is designed for individual prayer, parish groups, outdoor rosary walks, and people encountering the Rosary for the first time. The homepage focuses on the current core actions: learning what the Rosary is, praying a saved guide, building a guide, printing guide cards, leading a walk, and learning the prayers.
 
 For questions, corrections, or parish use, contact `patrickengelbert2@gmail.com`.
 

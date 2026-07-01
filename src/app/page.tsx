@@ -5,6 +5,7 @@ import {
   ExploreIcon,
   type ExploreIconName,
 } from "@/components/site/icons/ExploreIcon";
+import { NewToRosarySection } from "@/components/home/NewToRosarySection";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getTodaysMysteries } from "@/lib/rosary/getTodaysMysteries";
@@ -105,7 +106,10 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-        <Card className="bg-white/80">
+
+        <NewToRosarySection className="mb-0 md:order-3 md:col-span-2 lg:mb-0" />
+
+        <Card className="bg-white/80 md:order-2">
           <div className="flex items-start gap-4">
             <Image
               src="/faviconRiver.svg"

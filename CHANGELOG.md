@@ -8,6 +8,11 @@ This project is currently pre-1.0. Version dates use the local project timeline.
 
 ### Changed
 
+- Added a beginner-friendly "New to the Rosary?" homepage path for people who are new, curious, or joining a group Rosary for the first time.
+- Added a `/learn/rosary` "What is the Rosary?" page with plain-language explanations of the Rosary, mysteries, repeated prayers, physical beads, and following along respectfully.
+- Added a concise beginner FAQ explaining Catholic worship, Marian intercession, repeated prayers, beads, losing your place, unfamiliar group prayers, and listening the first time.
+- Added a simple static Rosary structure explanation for crucifix, opening beads, decades, mysteries, and closing prayers.
+- Added practical Start here links for praying with guidance, building a simple guide, and learning the parts of the Rosary.
 - Added handle-based drag-and-drop reordering to Custom Builder Preview the flow.
 - Wired preview drag/drop into the existing guide-level `guideFlowEdits.itemOrder` model so reordered guides persist into saved guides, Custom Pray, step-by-step prayer mode, Guide Cards, and guide backup import/export.
 - Preserved Move up and Move down controls for keyboard access and mobile reliability while keeping guide-level drag/drop separate from Guide Card-only customizations.

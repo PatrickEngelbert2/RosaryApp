@@ -1,6 +1,9 @@
+import Link from "next/link";
+import { beginnerResourceLink } from "@/content/beginner-rosary";
 import { Card } from "@/components/ui/Card";
 
 const resources = [
+  beginnerResourceLink,
   {
     title: "How to pray the Rosary",
     body: "Start slowly. It is fine to follow the words from the page, pause between prayers, and let the rhythm become familiar over time.",
@@ -44,10 +47,23 @@ export default function ResourcesPage() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         {resources.map((resource) => (
-          <Card key={resource.title}>
-            <h2 className="text-xl font-semibold text-blue-900">{resource.title}</h2>
-            <p className="mt-3 leading-7 text-slate-700">{resource.body}</p>
-          </Card>
+          "href" in resource ? (
+            <Link
+              key={resource.title}
+              href={resource.href}
+              className="group block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
+            >
+              <Card className="interactive-card-link h-full">
+                <h2 className="text-xl font-semibold text-blue-900">{resource.title}</h2>
+                <p className="mt-3 leading-7 text-slate-700">{resource.body}</p>
+              </Card>
+            </Link>
+          ) : (
+            <Card key={resource.title}>
+              <h2 className="text-xl font-semibold text-blue-900">{resource.title}</h2>
+              <p className="mt-3 leading-7 text-slate-700">{resource.body}</p>
+            </Card>
+          )
         ))}
       </div>
     </div>

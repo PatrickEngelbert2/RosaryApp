@@ -19,9 +19,11 @@ import { rosaryTemplates } from "@/lib/rosary/defaultTemplates";
 import {
   deleteGuideFlowItem,
   moveGuideFlowItem,
+  reorderGuideFlowItem,
   setGuideFlowItemFullText,
   setGuideFlowItemText,
   setGuideFlowItemTitle,
+  type GuideFlowDropPosition,
 } from "@/lib/rosary/guideFlowEdits";
 import {
   addLeaderNoteToConfig,
@@ -391,6 +393,24 @@ export function RosaryBuilder() {
         buildRosaryFlow(current).map((step) => step.id),
         itemId,
         direction,
+      ),
+      updatedAt: new Date().toISOString(),
+    }));
+  }
+
+  function reorderPreviewItem(
+    draggedItemId: string,
+    targetItemId: string,
+    position: GuideFlowDropPosition,
+  ) {
+    setConfig((current) => ({
+      ...current,
+      guideFlowEdits: reorderGuideFlowItem(
+        current.guideFlowEdits,
+        buildRosaryFlow(current).map((step) => step.id),
+        draggedItemId,
+        targetItemId,
+        position,
       ),
       updatedAt: new Date().toISOString(),
     }));
@@ -1019,6 +1039,7 @@ export function RosaryBuilder() {
             onEditItem={editPreviewItem}
             onMoveItem={movePreviewItem}
             onRemoveItem={removePreviewItem}
+            onReorderItem={reorderPreviewItem}
             onResetEdits={resetPreviewFlowEdits}
             onToggleFullText={togglePreviewItemFullText}
           />

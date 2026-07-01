@@ -1,8 +1,12 @@
 "use client";
 
 import { buildRosaryFlow, getMysterySetForConfig } from "@/lib/rosary/buildRosaryFlow";
-import { hasGuideFlowEdits } from "@/lib/rosary/guideFlowEdits";
-import { useState } from "react";
+import {
+  hasGuideFlowEdits,
+  type GuideFlowDropPosition,
+} from "@/lib/rosary/guideFlowEdits";
+import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type { RenderedRosaryStep, UserRosaryConfig } from "@/lib/rosary/types";
 
 type RosaryFlowPreviewProps = {
@@ -14,7 +18,18 @@ type RosaryFlowPreviewProps = {
   onRemoveItem?: (itemId: string) => void;
   onMoveItem?: (itemId: string, direction: "up" | "down") => void;
   onToggleFullText?: (itemId: string, showFullText: boolean) => void;
+  onReorderItem?: (
+    draggedItemId: string,
+    targetItemId: string,
+    position: GuideFlowDropPosition,
+  ) => void;
   onResetEdits?: () => void;
+};
+
+type FlowDragState = {
+  activeItemId?: string;
+  targetItemId?: string;
+  position?: GuideFlowDropPosition;
 };
 
 export function RosaryFlowPreview({
@@ -24,6 +39,7 @@ export function RosaryFlowPreview({
   onEditItem,
   onMoveItem,
   onRemoveItem,
+  onReorderItem,
   onResetEdits,
   onToggleFullText,
 }: RosaryFlowPreviewProps) {
@@ -32,14 +48,89 @@ export function RosaryFlowPreview({
   const visibleFlow = includeLeaderNotes ? flow : flow.filter((step) => !step.leaderOnly);
   const hasEdits = hasGuideFlowEdits(config.guideFlowEdits);
   const [resetOpen, setResetOpen] = useState(false);
+  const [dragState, setDragState] = useState<FlowDragState>({});
+  const dragStateRef = useRef<FlowDragState>({});
+  const canDragReorder = editable && Boolean(onReorderItem);
+
+  useEffect(() => {
+    dragStateRef.current = dragState;
+  }, [dragState]);
 
   function resetEdits() {
     onResetEdits?.();
     setResetOpen(false);
   }
 
+  function startDrag(event: ReactPointerEvent<HTMLButtonElement>, itemId: string) {
+    if (event.pointerType === "touch" || !canDragReorder) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const initialState = { activeItemId: itemId };
+    dragStateRef.current = initialState;
+    setDragState(initialState);
+
+    function updateTarget(pointerEvent: PointerEvent) {
+      const target = document
+        .elementFromPoint(pointerEvent.clientX, pointerEvent.clientY)
+        ?.closest<HTMLElement>("[data-flow-preview-item-id]");
+
+      if (!target || target.dataset.flowPreviewItemId === itemId) {
+        const nextState = { activeItemId: itemId };
+        dragStateRef.current = nextState;
+        setDragState(nextState);
+        return;
+      }
+
+      const rect = target.getBoundingClientRect();
+      const position: GuideFlowDropPosition =
+        pointerEvent.clientY < rect.top + rect.height / 2 ? "before" : "after";
+      const nextState = {
+        activeItemId: itemId,
+        targetItemId: target.dataset.flowPreviewItemId,
+        position,
+      };
+
+      dragStateRef.current = nextState;
+      setDragState(nextState);
+    }
+
+    function finishDrag() {
+      const current = dragStateRef.current;
+
+      if (
+        current.activeItemId &&
+        current.targetItemId &&
+        current.position &&
+        current.activeItemId !== current.targetItemId
+      ) {
+        onReorderItem?.(current.activeItemId, current.targetItemId, current.position);
+      }
+
+      dragStateRef.current = {};
+      setDragState({});
+      window.removeEventListener("pointermove", updateTarget);
+      window.removeEventListener("pointerup", finishDrag);
+      window.removeEventListener("pointercancel", finishDrag);
+    }
+
+    window.addEventListener("pointermove", updateTarget);
+    window.addEventListener("pointerup", finishDrag, { once: true });
+    window.addEventListener("pointercancel", finishDrag, { once: true });
+  }
+
   return (
-    <div className="space-y-3">
+    <div
+      className="space-y-3"
+      onPointerLeave={() => {
+        setDragState((current) =>
+          current.activeItemId ? { activeItemId: current.activeItemId } : {},
+        );
+      }}
+    >
       <div className="rounded-lg border border-blue-900/10 bg-cream-100 px-4 py-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-blue-900">
@@ -97,7 +188,10 @@ export function RosaryFlowPreview({
           onEditItem={onEditItem}
           onMoveItem={onMoveItem}
           onRemoveItem={onRemoveItem}
+          onReorderItem={canDragReorder ? onReorderItem : undefined}
+          onPointerDragStart={startDrag}
           onToggleFullText={onToggleFullText}
+          dragState={dragState}
         />
       ))}
     </div>
@@ -110,22 +204,32 @@ function PreviewStep({
   isLast,
   number,
   onEditItem,
+  onPointerDragStart,
   onMoveItem,
   onRemoveItem,
+  onReorderItem,
   onToggleFullText,
   showFullText,
   step,
+  dragState,
 }: {
   editable: boolean;
   isFirst: boolean;
   isLast: boolean;
   number: number;
   onEditItem?: (itemId: string, values: { title: string; text: string }) => void;
+  onPointerDragStart: (event: ReactPointerEvent<HTMLButtonElement>, itemId: string) => void;
   onMoveItem?: (itemId: string, direction: "up" | "down") => void;
   onRemoveItem?: (itemId: string) => void;
+  onReorderItem?: (
+    draggedItemId: string,
+    targetItemId: string,
+    position: GuideFlowDropPosition,
+  ) => void;
   onToggleFullText?: (itemId: string, showFullText: boolean) => void;
   showFullText: boolean;
   step: RenderedRosaryStep;
+  dragState: FlowDragState;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(step.title);
@@ -143,11 +247,32 @@ function PreviewStep({
     setIsEditing(false);
   }
 
+  const canDrag = Boolean(onReorderItem);
+  const isDragging = dragState.activeItemId === step.id;
+  const dropPosition =
+    dragState.targetItemId === step.id && dragState.activeItemId !== step.id
+      ? dragState.position
+      : undefined;
+
   if (step.type === "section-heading") {
     return (
-      <div className="border-b border-blue-900/10 pb-2 pt-2">
+      <div
+        className={`flow-preview-draggable-item border-b border-blue-900/10 pb-2 pt-2 ${
+          isDragging ? "flow-preview-dragging-item" : ""
+        } ${dropPosition ? `flow-preview-drop-${dropPosition}` : ""}`}
+        data-flow-preview-item-id={step.id}
+      >
+        {dropPosition === "before" ? <FlowDropIndicator /> : null}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="font-semibold text-blue-900">{step.title}</h3>
+          <div className="flex min-w-0 items-center gap-2">
+            {canDrag ? (
+              <FlowDragHandle
+                itemTitle={step.title}
+                onPointerDown={(event) => onPointerDragStart(event, step.id)}
+              />
+            ) : null}
+            <h3 className="font-semibold text-blue-900">{step.title}</h3>
+          </div>
           {editable ? (
             <PreviewControls
               itemTitle={step.title}
@@ -163,6 +288,7 @@ function PreviewStep({
             />
           ) : null}
         </div>
+        {dropPosition === "after" ? <FlowDropIndicator /> : null}
         {isEditing ? (
           <PreviewEditForm
             itemId={step.id}
@@ -183,11 +309,25 @@ function PreviewStep({
   const border = step.leaderOnly ? "border-gold-500/50 bg-amber-50" : "border-blue-900/10 bg-white";
 
   return (
-    <article className={`rounded-lg border p-4 shadow-sm ${border}`}>
+    <article
+      className={`flow-preview-draggable-item rounded-lg border p-4 shadow-sm ${border} ${
+        isDragging ? "flow-preview-dragging-item" : ""
+      } ${dropPosition ? `flow-preview-drop-${dropPosition}` : ""}`}
+      data-flow-preview-item-id={step.id}
+    >
+      {dropPosition === "before" ? <FlowDropIndicator /> : null}
       <div className="flex gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-900 text-xs font-bold text-white">
-          {number}
-        </span>
+        <div className="flex shrink-0 flex-col items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-900 text-xs font-bold text-white">
+            {number}
+          </span>
+          {canDrag ? (
+            <FlowDragHandle
+              itemTitle={step.title}
+              onPointerDown={(event) => onPointerDragStart(event, step.id)}
+            />
+          ) : null}
+        </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-wide text-gold-500">{label}</p>
           <h3 className="mt-1 font-semibold text-blue-900">
@@ -240,7 +380,36 @@ function PreviewStep({
           ) : null}
         </div>
       </div>
+      {dropPosition === "after" ? <FlowDropIndicator /> : null}
     </article>
+  );
+}
+
+function FlowDragHandle({
+  itemTitle,
+  onPointerDown,
+}: {
+  itemTitle: string;
+  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`Reorder item: ${itemTitle}`}
+      title="Reorder item"
+      className="flow-preview-drag-handle"
+      onPointerDown={onPointerDown}
+    >
+      <span aria-hidden="true">Grip</span>
+    </button>
+  );
+}
+
+function FlowDropIndicator() {
+  return (
+    <div className="flow-preview-drop-indicator" aria-hidden="true">
+      <span />
+    </div>
   );
 }
 
